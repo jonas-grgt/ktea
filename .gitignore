@@ -28,4 +28,8 @@ go.work.sum
 debug.log
 
 # goland
-.idea
+.idea/
+.idea/workspace.xml
+
+# Added by goreleaser init:
+dist/

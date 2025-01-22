@@ -1,6 +1,5 @@
 package notifier
 
-import "C"
 import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"

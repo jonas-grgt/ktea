@@ -23,6 +23,8 @@ import (
 	"time"
 )
 
+var version string
+
 type Model struct {
 	tabs                  tab.Model
 	tabCtrl               tabs.TabController
@@ -58,7 +60,7 @@ func (m *Model) View() string {
 	}
 
 	var views []string
-	logoView := m.renderer.Render("   ___        \n |/ |  _   _.\n |\\ | (/_ (_|  v0.1.0")
+	logoView := m.renderer.Render("   ___        \n |/ |  _   _.\n |\\ | (/_ (_|  " + version)
 	views = append(views, logoView)
 
 	tabsView := m.tabs.View(m.ktx, m.renderer)

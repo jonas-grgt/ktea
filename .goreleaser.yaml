@@ -1,0 +1,47 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: ktea
+    binary: ktea
+    env:
+      - CGO_ENABLED=0
+    tags: prd
+    goos:
+      - darwin
+    goarch:
+      - arm64
+      - arm
+      - amd64
+
+archives:
+  - formats: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+brews:
+  - name: ktea
+    url_template: "https://github.com/jonas-grgt/ktea/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    repository:
+      owner: jonas-grgt
+      name: ktea-brew
+      branch: main
+      token: "{{ .Env.KTEA_HOMEBREW_TOKEN }}"
+
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
