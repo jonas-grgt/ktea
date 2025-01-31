@@ -36,7 +36,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		{Title: "Config", Width: int(float64(ktx.WindowWidth-5) * 0.5)},
 		{Title: "Value", Width: int(float64(ktx.WindowWidth-5) * 0.5)},
 	})
-	m.table.SetHeight(ktx.AvailableHeight)
+	m.table.SetHeight(ktx.AvailableHeight - 2)
 	m.table.SetRows(m.rows)
 	m.table.Focus()
 	if m.cmdBar.IsFocused() {

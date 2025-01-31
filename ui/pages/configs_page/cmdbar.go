@@ -50,9 +50,9 @@ func (m *CmdBarModel) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) strin
 	var views []string
 
 	if m.state == SEARCHING || m.state == SEARCHED {
-		views = append(views, styles.CmdBar.Render(m.searchInput.View()))
+		views = append(views, renderer.RenderWithStyle(m.searchInput.View(), styles.CmdBar.Width(ktx.WindowWidth-2)))
 	} else if m.state == EDITING {
-		views = append(views, styles.CmdBar.Render(m.editInput.View()))
+		views = append(views, renderer.RenderWithStyle(m.editInput.View(), styles.CmdBar.Width(ktx.WindowWidth-2)))
 	} else if m.state == UPDATING || m.state == UPDATE_FAILED || m.state == UPDATE_SUCCEEDED || m.state == LOADING {
 		views = append(views, m.notifier.View(ktx, renderer))
 	}
