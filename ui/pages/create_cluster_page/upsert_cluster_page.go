@@ -116,7 +116,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 		m.srSelectionState = srDisabledSelected
 	} else if m.formValues.SrEnabled &&
-		((m.srSelectionState == srNothingSelected && m.mode != editMode) || m.srSelectionState == srDisabledSelected) {
+		((m.srSelectionState == srNothingSelected) || m.srSelectionState == srDisabledSelected) {
 		// Schema Registry enabled selected and previously nothing or enabled selected
 		m.form = m.createForm()
 		m.NextField(4)

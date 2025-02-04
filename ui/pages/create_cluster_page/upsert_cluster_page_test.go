@@ -538,16 +538,14 @@ func TestCreateClusterPage(t *testing.T) {
 		// and: enter SASL password
 		keys.UpdateKeys(createEnvPage, "password")
 		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
-		createEnvPage.Update(cmd())
 		// next field
-		cmd = createEnvPage.Update(cmd())
-		// next group
-		cmd = createEnvPage.Update(cmd())
-		// execute cmd
-		msg := cmd()
+		createEnvPage.Update(cmd())
+		// submit
+		msgs := keys.Submit(createEnvPage)
 
 		// then
-		assert.IsType(t, CapturedRegistrationDetails{}, msg)
+		assert.Len(t, msgs, 1)
+		assert.IsType(t, CapturedRegistrationDetails{}, msgs[0])
 		// and
 		assert.Equal(t, CapturedRegistrationDetails{
 			RegistrationDetails: config.RegistrationDetails{
@@ -560,7 +558,105 @@ func TestCreateClusterPage(t *testing.T) {
 				Username:         "username",
 				Password:         "password",
 			},
-		}, msg)
+		}, msgs[0])
 	})
 
+	t.Run("Selecting Schema Registry Enabled opens up schema registry credentials fields", func(t *testing.T) {
+		// given
+		programKtx := kontext.ProgramKtx{
+			WindowWidth:  100,
+			WindowHeight: 100,
+			Config: &config.Config{
+				Clusters: []config.Cluster{
+					{
+						Name:             "PRD",
+						BootstrapServers: []string{"localhost:9092"},
+						SASLConfig:       nil,
+					},
+				},
+			},
+		}
+		createEnvPage := NewForm(MockClusterRegisterer{}, &programKtx)
+		// and: enter name
+		keys.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		createEnvPage.Update(cmd())
+		// select Primary
+		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		createEnvPage.Update(cmd())
+		// and: select Color
+		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		// and: Host is entered
+		keys.UpdateKeys(createEnvPage, "localhost:9092")
+		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		createEnvPage.Update(cmd())
+		// and: auth method none is selected
+		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		// next field
+		cmd = createEnvPage.Update(cmd())
+		// and: select SASL_SSL security protocol
+		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		createEnvPage.Update(cmd())
+		// and: enter SASL username
+		keys.UpdateKeys(createEnvPage, "username")
+		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		createEnvPage.Update(cmd())
+		// and: enter SASL password
+		keys.UpdateKeys(createEnvPage, "password")
+		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		// next field
+		createEnvPage.Update(cmd())
+		// select schema-registry enabled
+		createEnvPage.Update(keys.Key(tea.KeyDown))
+
+		render := createEnvPage.View(&ktx, ui.TestRenderer)
+		assert.Contains(t, render, "Schema Registry URL")
+		assert.Contains(t, render, "Schema Registry Username")
+		assert.Contains(t, render, "Schema Registry Password")
+
+		t.Run("Filling in the credentials and submitting creates the cluster", func(t *testing.T) {
+			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			// next field
+			createEnvPage.Update(cmd())
+
+			// url
+			keys.UpdateKeys(createEnvPage, "sr-url")
+			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			// next field
+			createEnvPage.Update(cmd())
+
+			// username
+			keys.UpdateKeys(createEnvPage, "sr-user")
+			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			// next field
+			createEnvPage.Update(cmd())
+
+			// pwd
+			keys.UpdateKeys(createEnvPage, "sr-pwd")
+			msgs := keys.Submit(createEnvPage)
+
+			assert.Len(t, msgs, 1)
+			assert.IsType(t, CapturedRegistrationDetails{}, msgs[0])
+			// and
+			assert.Equal(t, CapturedRegistrationDetails{
+				RegistrationDetails: config.RegistrationDetails{
+					Name:             "TST",
+					NewName:          nil,
+					Color:            styles.ColorRed,
+					Host:             "localhost:9092",
+					AuthMethod:       config.SASLAuthMethod,
+					SecurityProtocol: config.SSLSecurityProtocol,
+					Username:         "username",
+					Password:         "password",
+					SchemaRegistry: &config.SchemaRegistryDetails{
+						Url:      "sr-url",
+						Username: "sr-user",
+						Password: "sr-pwd",
+					},
+				},
+			}, msgs[0])
+		})
+	})
 }
