@@ -62,7 +62,7 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 	return []statusbar.Shortcut{
 		{"Switch Cluster", "enter"},
 		{"Edit", "C-e"},
-		{"Delete", "C-d"},
+		{"Delete", "F2"},
 		{"Create", "C-n"},
 	}
 }
