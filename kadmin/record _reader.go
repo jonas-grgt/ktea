@@ -2,12 +2,14 @@ package kadmin
 
 import (
 	"context"
-	"github.com/IBM/sarama"
-	tea "github.com/charmbracelet/bubbletea"
 	"ktea/serdes"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/IBM/sarama"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type FilterType string
@@ -104,8 +106,7 @@ func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea
 	}
 
 	var (
-		msgCount   int
-		mu         sync.Mutex
+		msgCount   atomic.Int64
 		closeOnce  sync.Once
 		wg         sync.WaitGroup
 		offsets    map[int]offsets
@@ -180,12 +181,9 @@ func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea
 
 						var shouldClose bool
 
-						mu.Lock()
-						msgCount++
-						if msgCount >= rd.Limit {
+						if msgCount.Add(1) >= int64(rd.Limit) {
 							shouldClose = true
 						}
-						mu.Unlock()
 
 						select {
 						case startedMsg.ConsumerRecord <- consumerRecord:
