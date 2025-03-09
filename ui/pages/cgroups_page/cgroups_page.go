@@ -1,9 +1,7 @@
 package cgroups_page
 
 import (
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"fmt"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -15,6 +13,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {
@@ -45,7 +47,16 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	} else {
 		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
 	}
-	views = append(views, tableView)
+
+	embeddedText := map[styles.BorderPosition]string{
+		styles.TopMiddleBorder: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(styles.ColorPink)).
+			Bold(true).
+			Render(fmt.Sprintf("Total Consumer Groups: %d", len(m.rows))),
+	}
+
+	borderedView := styles.Borderize(tableView, m.tableFocussed, embeddedText)
+	views = append(views, borderedView)
 
 	return ui.JoinVertical(lipgloss.Top, views...)
 }

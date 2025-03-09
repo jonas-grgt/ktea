@@ -1,10 +1,7 @@
 package cgroups_topics_page
 
 import (
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	lg "github.com/charmbracelet/lipgloss"
-	"github.com/dustin/go-humanize"
+	"fmt"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -15,6 +12,11 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	lg "github.com/charmbracelet/lipgloss"
+	"github.com/dustin/go-humanize"
 )
 
 const (
@@ -68,15 +70,32 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	}
 
 	topicsTableView := renderer.RenderWithStyle(m.topicsTable.View(), topicTableStyle)
+	topicsTableEmbeddedText := map[styles.BorderPosition]string{
+		styles.TopMiddleBorder: lg.NewStyle().
+			Foreground(lg.Color(styles.ColorPink)).
+			Bold(true).
+			Render(fmt.Sprintf("Total Topics: %d", len(m.topicsRows))),
+	}
+	topicsTableBorderedView := styles.Borderize(topicsTableView, m.tableFocus == topicFocus, topicsTableEmbeddedText)
 	offsetsTableView := renderer.RenderWithStyle(m.offsetsTable.View(), offsetTableStyle)
+	offsetsTableEmbeddedText := map[styles.BorderPosition]string{
+		styles.TopMiddleBorder: lg.NewStyle().
+			Foreground(lg.Color(styles.ColorPink)).
+			Bold(true).
+			Render(fmt.Sprintf("Total Offsets: %d", len(m.offsetRows))),
+	}
+	offsetsTableBorderedView := styles.Borderize(offsetsTableView, m.tableFocus == offsetFocus, offsetsTableEmbeddedText)
 
 	return ui.JoinVertical(lg.Left,
 		cmdBarView,
 		lg.JoinHorizontal(
 			lg.Top,
-			topicsTableView,
-			offsetsTableView,
-		))
+			[]string{
+				topicsTableBorderedView,
+				offsetsTableBorderedView,
+			}...,
+		),
+	)
 }
 
 type partOffset struct {

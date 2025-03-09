@@ -2,11 +2,7 @@ package topics_page
 
 import (
 	"context"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/dustin/go-humanize"
+	"fmt"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -19,6 +15,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/dustin/go-humanize"
 )
 
 type Model struct {
@@ -53,10 +55,20 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	} else {
 		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
 	}
-	views = append(views, tableView)
+
+	embeddedText := map[styles.BorderPosition]string{
+		styles.TopMiddleBorder: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(styles.ColorPink)).
+			Bold(true).
+			Render(fmt.Sprintf("Total Topics: %d", len(m.rows))),
+	}
+
+	borderedView := styles.Borderize(tableView, m.tableFocussed, embeddedText)
+	views = append(views, borderedView)
 
 	return ui.JoinVertical(lipgloss.Top, views...)
 }
+
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, 2)
 	switch msg := msg.(type) {
