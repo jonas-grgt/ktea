@@ -275,48 +275,6 @@ func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea
 	}
 }
 
-func determineType(data []byte) string {
-	// Check for UTF-8 string
-	if utf8.Valid(data) {
-		return "string"
-	}
-
-	// Check for integer (try int32 and int64)
-	if len(data) >= 4 {
-		var int32Val int32
-		err := binary.Read(bytes.NewReader(data), binary.BigEndian, &int32Val)
-		if err == nil {
-			return "integer (int32)"
-		}
-	}
-	if len(data) >= 8 {
-		var int64Val int64
-		err := binary.Read(bytes.NewReader(data), binary.BigEndian, &int64Val)
-		if err == nil {
-			return "integer (int64)"
-		}
-	}
-
-	//Check for float (try float32 and float64)
-	if len(data) >= 4 {
-		var float32Val float32
-		err := binary.Read(bytes.NewReader(data), binary.BigEndian, &float32Val)
-		if err == nil {
-			return "float (float32)"
-		}
-	}
-	if len(data) >= 8 {
-		var float64Val float64
-		err := binary.Read(bytes.NewReader(data), binary.BigEndian, &float64Val)
-		if err == nil {
-			return "float (float64)"
-		}
-	}
-
-	// If none of the above, it's unknown
-	return "unknown"
-}
-
 func (ka *SaramaKafkaAdmin) matchesFilter(key, value string, filterDetails *Filter) bool {
 	if filterDetails == nil {
 		return true
