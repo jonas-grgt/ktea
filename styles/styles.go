@@ -91,7 +91,15 @@ func Borderize(content string, active bool, embeddedText map[BorderPosition]stri
 	}
 
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(borderColor))
-	width := lipgloss.Width(content)
+
+	// Split content into lines to get the maximum width
+	lines := strings.Split(content, "\n")
+	maxWidth := 0
+	for _, line := range lines {
+		if w := lipgloss.Width(line); w > maxWidth {
+			maxWidth = w
+		}
+	}
 
 	encloseText := func(text string) string {
 		if text != "" {
@@ -106,7 +114,7 @@ func Borderize(content string, active bool, embeddedText map[BorderPosition]stri
 		rightText = encloseText(rightText)
 
 		// Calculate remaining space for borders
-		remaining := width - lipgloss.Width(leftText) - lipgloss.Width(middleText) - lipgloss.Width(rightText)
+		remaining := maxWidth - lipgloss.Width(leftText) - lipgloss.Width(middleText) - lipgloss.Width(rightText)
 		leftBorderLen := (remaining / 2)
 		rightBorderLen := remaining - leftBorderLen
 
@@ -120,7 +128,7 @@ func Borderize(content string, active bool, embeddedText map[BorderPosition]stri
 		// Make it fit and add corners
 		s = lipgloss.NewStyle().
 			Inline(true).
-			MaxWidth(width).
+			MaxWidth(maxWidth).
 			Render(s)
 
 		return style.Render(leftCorner) + s + style.Render(rightCorner)
@@ -135,10 +143,14 @@ func Borderize(content string, active bool, embeddedText map[BorderPosition]stri
 	)
 
 	// Create side borders for content
-	lines := strings.Split(content, "\n")
 	borderedLines := make([]string, len(lines))
 	for i, line := range lines {
-		borderedLines[i] = style.Render("│") + line + style.Render("│")
+		// Pad the line to match maxWidth
+		paddedLine := line
+		if lineWidth := lipgloss.Width(line); lineWidth < maxWidth {
+			paddedLine = line + strings.Repeat(" ", maxWidth-lineWidth)
+		}
+		borderedLines[i] = style.Render("│") + paddedLine + style.Render("│")
 	}
 	borderedContent := strings.Join(borderedLines, "\n")
 
@@ -368,20 +380,18 @@ func init() {
 
 	{
 		blur := lipgloss.NewStyle().
-			BorderStyle(lipgloss.RoundedBorder()).
 			Padding(0).
-			Margin(0).
-			BorderForeground(lipgloss.Color(ColorBlurBorder))
+			Margin(0)
 		focus := lipgloss.NewStyle().
-			BorderForeground(lipgloss.Color(ColorFocusBorder)).
 			Padding(0).
 			Margin(0).
 			Inherit(blur)
 		styles := table.DefaultStyles()
 		styles.Header = styles.Header.
-			BorderStyle(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("240")).
 			BorderBottom(true).
+			BorderTop(false).
+			BorderLeft(false).
+			BorderRight(false).
 			Bold(false)
 		styles.Selected = styles.Selected.
 			Foreground(lipgloss.Color("#000000")).
