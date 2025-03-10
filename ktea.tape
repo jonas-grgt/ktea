@@ -11,34 +11,49 @@ Type "ktea"
 Enter
 
 Wait+Screen /Topics/
-Sleep 2s
+Sleep 4s
 
 # search
 Type "/"
-Type "shipping"
-Sleep 0.5s
+Type "c"
+Sleep 0.3s
+Type "a"
+Sleep 0.3s
+Type "t"
+Sleep 0.3s
+Type "e"
+Sleep 1.5s
 Enter
 
-# open consumption page
+# open category topic
 Sleep 2s
 Enter
-Sleep 0.2s
+Sleep 0.8s
 Enter
-Sleep 0.2s
+Sleep 0.8s
 Enter
-Sleep 0.2s
+Sleep 0.8s
+Enter
+Sleep 0.8s
+Enter
+Sleep 0.8s
 Enter
 Sleep 2.0s
 
 # view record
+Type "j"
+Sleep 0.9s
+Type "j"
+Sleep 0.9s
+Type "j"
+Sleep 0.9s
+Type "j"
+Sleep 0.9s
 Enter
-Sleep 1s
+Sleep 2s
 
-# switch to headers
-Right
-Sleep 0.5s
-Down
-Sleep 0.5s
-Down
+Type "j"
+Type "j"
+Type "j"
 
 Sleep 5s
