@@ -2,8 +2,6 @@ package clusters_tab
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -12,6 +10,9 @@ import (
 	"ktea/ui"
 	"ktea/ui/pages/clusters_page"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
 )
 
 type MockConnectionCheckStartedMsg struct {

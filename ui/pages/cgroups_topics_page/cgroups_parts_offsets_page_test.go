@@ -1,10 +1,11 @@
 package cgroups_topics_page
 
 import (
-	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/ui"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCgroupPartsOffsetsPage(t *testing.T) {
@@ -19,7 +20,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 			`╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
 │  ⣾ ⏳ Loading Offsets                                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭────────────────────────────────────────────────╮╭────────────────────────────────────────────────╮
+╭─────────────── Total Topics: 0 ────────────────╮╭───────────── Total Partitions: 0 ──────────────╮
 │ Topic Name                                     ││ Partition               Offset                 │
 │────────────────────────────────────────────────││────────────────────────────────────────────────│
 `)

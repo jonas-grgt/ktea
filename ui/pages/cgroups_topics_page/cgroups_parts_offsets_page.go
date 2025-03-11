@@ -82,7 +82,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		styles.TopMiddleBorder: lg.NewStyle().
 			Foreground(lg.Color(styles.ColorPink)).
 			Bold(true).
-			Render(fmt.Sprintf("Total Offsets: %d", len(m.offsetRows))),
+			Render(fmt.Sprintf("Total Partitions: %d", len(m.offsetRows))),
 	}
 	offsetsTableBorderedView := styles.Borderize(offsetsTableView, m.tableFocus == offsetFocus, offsetsTableEmbeddedText)
 

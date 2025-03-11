@@ -392,6 +392,9 @@ func init() {
 			BorderTop(false).
 			BorderLeft(false).
 			BorderRight(false).
+			BorderStyle(lipgloss.Border{
+				Bottom: "─",
+			}).
 			Bold(false)
 		styles.Selected = styles.Selected.
 			Foreground(lipgloss.Color("#000000")).
