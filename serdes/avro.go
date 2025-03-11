@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"github.com/linkedin/goavro/v2"
+	"github.com/pkg/errors"
 	"ktea/sradmin"
 )
 
@@ -12,6 +14,8 @@ type GoAvroAvroDeserializer struct {
 	subjects []sradmin.Subject
 	sra      sradmin.SrAdmin
 }
+
+var ErrNoSchemaRegistry = errors.New("no schema registry configured")
 
 func (d *GoAvroAvroDeserializer) Deserialize(data []byte) (string, error) {
 	if data == nil || len(data) == 0 {
@@ -21,6 +25,11 @@ func (d *GoAvroAvroDeserializer) Deserialize(data []byte) (string, error) {
 	schemaId, isAvro := isAvroWithSchemaID(data)
 
 	if isAvro {
+
+		if d.sra == nil {
+			return "", fmt.Errorf("avro deserialization failed: %w", ErrNoSchemaRegistry)
+		}
+
 		if schema, err := d.getSchema(schemaId); err != nil {
 			return "", err
 		} else {

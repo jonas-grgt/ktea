@@ -95,6 +95,20 @@ func (m *Model) ShowErrorMsg(msg string, error error) tea.Cmd {
 	return nil
 }
 
+func (m *Model) ShowError(error error) tea.Cmd {
+	m.state = err
+	msg := error.Error()
+	split := strings.Split(msg, ":")
+	if len(split) > 1 {
+		m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(split[0]) + ": " +
+			styles.FG(styles.ColorWhite).Render(strings.TrimSuffix(split[1], "\n"))
+	} else {
+		m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(msg) +
+			styles.FG(styles.ColorWhite).Render(strings.TrimSuffix(error.Error(), "\n"))
+	}
+	return nil
+}
+
 func (m *Model) ShowSuccessMsg(msg string) tea.Cmd {
 	m.state = success
 	m.msg = "🎉 " + msg

@@ -40,6 +40,7 @@ type Model struct {
 	headerRows     []table.Row
 	focus          focus
 	payload        string
+	err            error
 	metaInfo       string
 	clipWriter     clipper.Writer
 }
@@ -63,6 +64,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	height := ktx.AvailableHeight - 2
 
 	m.createPayloadViewPort(payloadWidth, height)
+	contentView := renderer.RenderWithStyle(m.payloadVp.View(), contentStyle)
 
 	headerSideBar := m.createSidebar(ktx, payloadWidth, height, headersTableStyle)
 
@@ -71,9 +73,36 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		notifierCmdbarView,
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			renderer.RenderWithStyle(m.payloadVp.View(), contentStyle),
+			contentView,
 			headerSideBar,
 		))
+}
+
+func (m *Model) Update(msg tea.Msg) tea.Cmd {
+	if m.payloadVp == nil && m.err == nil {
+		return nil
+	}
+
+	var cmds []tea.Cmd
+
+	_, _, cmd := m.notifierCmdbar.Update(msg)
+	cmds = append(cmds, cmd)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			return ui.PublishMsg(nav.LoadCachedConsumptionPageMsg{})
+		case "ctrl+h", "left", "right":
+			m.focus = !m.focus
+		case "c":
+			cmds = m.handleCopy(cmds)
+		default:
+			cmds = m.updatedFocussedArea(msg, cmds)
+		}
+	}
+
+	return tea.Batch(cmds...)
 }
 
 func (m *Model) createSidebar(ktx *kontext.ProgramKtx, payloadWidth int, height int, headersTableStyle lipgloss.Style) string {
@@ -130,7 +159,20 @@ func (m *Model) createPayloadViewPort(payloadWidth int, height int) {
 	if m.payloadVp == nil {
 		payloadVp := viewport.New(payloadWidth, height)
 		m.payloadVp = &payloadVp
-		m.payloadVp.SetContent(m.payload)
+		if m.err == nil {
+			m.payloadVp.SetContent(m.payload)
+		} else {
+			m.payloadVp.SetContent(lipgloss.NewStyle().
+				AlignHorizontal(lipgloss.Center).
+				AlignVertical(lipgloss.Center).
+				Width(payloadWidth).
+				Height(height).
+				Render(lipgloss.NewStyle().
+					Bold(true).
+					Padding(1).
+					Foreground(lipgloss.Color(styles.ColorGrey)).
+					Render("Unable to render payload")))
+		}
 	} else {
 		m.payloadVp.Height = height
 		m.payloadVp.Width = payloadWidth
@@ -162,33 +204,6 @@ func (m *Model) determineStyles() (lipgloss.Style, lipgloss.Style) {
 	return contentStyle, headersTableStyle
 }
 
-func (m *Model) Update(msg tea.Msg) tea.Cmd {
-	if m.payloadVp == nil {
-		return nil
-	}
-
-	var cmds []tea.Cmd
-
-	_, _, cmd := m.notifierCmdbar.Update(msg)
-	cmds = append(cmds, cmd)
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc":
-			return ui.PublishMsg(nav.LoadCachedConsumptionPageMsg{})
-		case "ctrl+h", "left", "right":
-			m.focus = !m.focus
-		case "c":
-			cmds = m.handleCopy(cmds)
-		default:
-			cmds = m.updatedFocussedArea(msg, cmds)
-		}
-	}
-
-	return tea.Batch(cmds...)
-}
-
 func (m *Model) handleCopy(cmds []tea.Cmd) []tea.Cmd {
 	if m.focus == payloadFocus {
 		err := m.clipWriter.Write(ansi.Strip(m.payload))
@@ -209,6 +224,11 @@ func (m *Model) handleCopy(cmds []tea.Cmd) []tea.Cmd {
 }
 
 func (m *Model) updatedFocussedArea(msg tea.Msg, cmds []tea.Cmd) []tea.Cmd {
+	// only update component if no error is present
+	if m.err != nil {
+		return cmds
+	}
+
 	if m.focus == payloadFocus {
 		vp, cmd := m.payloadVp.Update(msg)
 		cmds = append(cmds, cmd)
@@ -226,10 +246,16 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 	if m.focus == payloadFocus {
 		whatToCopy = "Content"
 	}
-	return []statusbar.Shortcut{
-		{"Toggle Headers/Content", "C-h/Arrows"},
-		{"Go Back", "esc"},
-		{"Copy " + whatToCopy, "c"},
+	if m.err == nil {
+		return []statusbar.Shortcut{
+			{"Toggle Headers/Content", "C-h/Arrows"},
+			{"Go Back", "esc"},
+			{"Copy " + whatToCopy, "c"},
+		}
+	} else {
+		return []statusbar.Shortcut{
+			{"Go Back", "esc"},
+		}
 	}
 }
 
@@ -252,7 +278,18 @@ func New(
 		headerRows = append(headerRows, table.Row{header.Key})
 	}
 
-	payload := ui.PrettyPrintJson(record.Value)
+	notifierCmdBar := cmdbar.NewNotifierCmdBar("record-details-page")
+
+	var (
+		payload string
+		err     error
+	)
+	if record.Err == nil {
+		payload = ui.PrettyPrintJson(record.Value)
+	} else {
+		err = record.Err
+		notifierCmdBar.Notifier.ShowError(record.Err)
+	}
 
 	key := record.Key
 	if key == "" {
@@ -261,7 +298,6 @@ func New(
 
 	metaInfo := fmt.Sprintf("key: %s\ntimestamp: %s", key, record.Timestamp.Format(time.UnixDate))
 
-	notifierCmdBar := cmdbar.NewNotifierCmdBar("record-details-page")
 	cmdbar.WithMsgHandler(notifierCmdBar, func(msg PayloadCopiedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		m.ShowSuccessMsg("Payload copied")
 		return true, m.AutoHideCmd("record-details-page")
@@ -282,6 +318,7 @@ func New(
 		focus:          payloadFocus,
 		headerRows:     headerRows,
 		payload:        payload,
+		err:            err,
 		metaInfo:       metaInfo,
 		clipWriter:     clipWriter,
 		notifierCmdbar: notifierCmdBar,
