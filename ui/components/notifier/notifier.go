@@ -9,6 +9,7 @@ import (
 	"ktea/styles"
 	"ktea/ui"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -26,6 +27,7 @@ type Model struct {
 	successMsg string
 	msg        string
 	state      state
+	autoHide   atomic.Bool
 }
 
 type HideNotificationMsg struct {
@@ -73,18 +75,21 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (m *Model) SpinWithLoadingMsg(msg string) tea.Cmd {
+	m.autoHide.Store(false)
 	m.state = spinning
 	m.msg = "⏳ " + msg
 	return m.spinner.Tick
 }
 
 func (m *Model) SpinWithRocketMsg(msg string) tea.Cmd {
+	m.autoHide.Store(false)
 	m.state = spinning
 	m.msg = "🚀 " + msg
 	return m.spinner.Tick
 }
 
 func (m *Model) ShowErrorMsg(msg string, error error) tea.Cmd {
+	m.autoHide.Store(false)
 	m.state = err
 	s := ": "
 	if msg == "" {
@@ -96,6 +101,7 @@ func (m *Model) ShowErrorMsg(msg string, error error) tea.Cmd {
 }
 
 func (m *Model) ShowError(error error) tea.Cmd {
+	m.autoHide.Store(false)
 	m.state = err
 	msg := error.Error()
 	split := strings.Split(msg, ":")
@@ -110,20 +116,26 @@ func (m *Model) ShowError(error error) tea.Cmd {
 }
 
 func (m *Model) ShowSuccessMsg(msg string) tea.Cmd {
+	m.autoHide.Store(false)
 	m.state = success
 	m.msg = "🎉 " + msg
 	return nil
 }
 
 func (m *Model) Idle() {
+	m.autoHide.Store(false)
 	m.state = idle
 	m.msg = ""
 }
 
 func (m *Model) AutoHideCmd(tag string) tea.Cmd {
+	m.autoHide.Store(true)
 	return func() tea.Msg {
 		time.Sleep(5 * time.Second)
-		return HideNotificationMsg{Tag: tag}
+		if m.autoHide.Load() {
+			return HideNotificationMsg{Tag: tag}
+		}
+		return nil
 	}
 }
 
