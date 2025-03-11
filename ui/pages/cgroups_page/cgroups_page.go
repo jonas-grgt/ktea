@@ -9,6 +9,7 @@ import (
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
+	ktable "ktea/ui/components/table"
 	"ktea/ui/pages/nav"
 	"sort"
 	"strconv"
@@ -34,31 +35,39 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	views = append(views, cmdBarView)
 
 	m.table.SetHeight(ktx.AvailableHeight - 2)
-	m.table.SetWidth(ktx.WindowWidth - 2)
+	m.table.SetWidth(ktx.WindowWidth - 3)
 	m.table.SetColumns([]table.Column{
-		{"Consumer Group", int(float64(ktx.WindowWidth-5) * 0.7)},
-		{"Members", int(float64(ktx.WindowWidth-5) * 0.3)},
+		{"Consumer Group", int(float64(ktx.WindowWidth-6) * 0.7)},
+		{"Members", int(float64(ktx.WindowWidth-6) * 0.3)},
 	})
 	m.table.SetRows(m.rows)
 
 	var tableView string
 	if m.tableFocussed {
-		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Focus)
+		// Apply focus style
+		styledTable := renderer.RenderWithStyle(m.table.View(), styles.Table.Focus)
+
+		embeddedText := map[styles.BorderPosition]string{
+			styles.TopMiddleBorder: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(styles.ColorPink)).
+				Bold(true).
+				Render(fmt.Sprintf("Total Consumer Groups: %d", len(m.rows))),
+		}
+		tableView = styles.Borderize(styledTable, true, embeddedText)
 	} else {
-		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
+		// Regular border approach for unfocused state
+		styledTable := renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
+
+		embeddedText := map[styles.BorderPosition]string{
+			styles.TopMiddleBorder: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(styles.ColorPink)).
+				Bold(true).
+				Render(fmt.Sprintf("Total Consumer Groups: %d", len(m.rows))),
+		}
+		tableView = styles.Borderize(styledTable, false, embeddedText)
 	}
 
-	embeddedText := map[styles.BorderPosition]string{
-		styles.TopMiddleBorder: lipgloss.NewStyle().
-			Foreground(lipgloss.Color(styles.ColorPink)).
-			Bold(true).
-			Render(fmt.Sprintf("Total Consumer Groups: %d", len(m.rows))),
-	}
-
-	borderedView := styles.Borderize(tableView, m.tableFocussed, embeddedText)
-	views = append(views, borderedView)
-
-	return ui.JoinVertical(lipgloss.Top, views...)
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, tableView)
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -156,10 +165,11 @@ func (m *Model) Title() string {
 func New(lister kadmin.CGroupLister, deleter kadmin.CGroupDeleter) (*Model, tea.Cmd) {
 	m := &Model{}
 	m.lister = lister
-	m.table = table.New(
-		table.WithFocused(true),
-		table.WithStyles(styles.Table.Styles),
-	)
+
+	// Use ktable.NewDefaultTable() instead of direct initialization
+	t := ktable.NewDefaultTable()
+	m.table = t
+
 	deleteMsgFunc := func(topic string) string {
 		message := topic + lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#7571F9")).

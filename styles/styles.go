@@ -115,23 +115,22 @@ func Borderize(content string, active bool, embeddedText map[BorderPosition]stri
 
 		// Calculate remaining space for borders
 		remaining := maxWidth - lipgloss.Width(leftText) - lipgloss.Width(middleText) - lipgloss.Width(rightText)
+		if remaining < 0 {
+			remaining = 0
+		}
+
 		leftBorderLen := (remaining / 2)
 		rightBorderLen := remaining - leftBorderLen
 
 		// Build the border line
-		s := leftText +
+		borderLine := leftText +
 			style.Render(strings.Repeat(border, leftBorderLen)) +
 			middleText +
 			style.Render(strings.Repeat(border, rightBorderLen)) +
 			rightText
 
-		// Make it fit and add corners
-		s = lipgloss.NewStyle().
-			Inline(true).
-			MaxWidth(maxWidth).
-			Render(s)
-
-		return style.Render(leftCorner) + s + style.Render(rightCorner)
+		// Add corners
+		return style.Render(leftCorner) + borderLine + style.Render(rightCorner)
 	}
 
 	// Create the bordered content
@@ -145,15 +144,20 @@ func Borderize(content string, active bool, embeddedText map[BorderPosition]stri
 	// Create side borders for content
 	borderedLines := make([]string, len(lines))
 	for i, line := range lines {
-		// Pad the line to match maxWidth
-		paddedLine := line
-		if lineWidth := lipgloss.Width(line); lineWidth < maxWidth {
+		lineWidth := lipgloss.Width(line)
+		var paddedLine string
+		if lineWidth < maxWidth {
 			paddedLine = line + strings.Repeat(" ", maxWidth-lineWidth)
+		} else if lineWidth > maxWidth {
+			paddedLine = lipgloss.NewStyle().MaxWidth(maxWidth).Render(line)
+		} else {
+			paddedLine = line
 		}
 		borderedLines[i] = style.Render("│") + paddedLine + style.Render("│")
 	}
 	borderedContent := strings.Join(borderedLines, "\n")
 
+	// Create bottom border
 	bottomBorder := buildBorderLine(
 		embeddedText[BottomLeftBorder],
 		embeddedText[BottomMiddleBorder],
@@ -161,11 +165,8 @@ func Borderize(content string, active bool, embeddedText map[BorderPosition]stri
 		"╰", "─", "╯",
 	)
 
-	return strings.Join([]string{
-		topBorder,
-		borderedContent,
-		bottomBorder,
-	}, "\n")
+	// Final content with borders
+	return topBorder + "\n" + borderedContent + "\n" + bottomBorder
 }
 
 func CenterText(width int, height int) lipgloss.Style {

@@ -1,9 +1,6 @@
 package subjects_page
 
 import (
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
@@ -16,6 +13,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type state int
@@ -70,13 +71,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		m.table.GotoTop()
 	}
 
-	var tableView string
-	if m.tableFocussed {
-		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Focus)
-	} else {
-		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
-	}
-
+	tableView := styles.Borderize(m.table.View(), m.tableFocussed, nil)
 	return ui.JoinVertical(lipgloss.Top, cmdBarView, tableView)
 }
 

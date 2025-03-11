@@ -50,21 +50,13 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetRows(m.rows)
 
-	var ts lipgloss.Style
-	if m.tableFocussed {
-		ts = styles.Table.Focus
-	} else {
-		ts = styles.Table.Blur
-	}
-	tableView := renderer.RenderWithStyle(m.table.View(), ts)
-
 	embeddedText := map[styles.BorderPosition]string{
 		styles.TopMiddleBorder: lipgloss.NewStyle().
 			Foreground(lipgloss.Color(styles.ColorPink)).
 			Bold(true).
 			Render(fmt.Sprintf("Total Clusters: %d", len(m.rows))),
 	}
-	borderedView := styles.Borderize(tableView, m.tableFocussed, embeddedText)
+	borderedView := styles.Borderize(m.table.View(), m.tableFocussed, embeddedText)
 
 	return ui.JoinVertical(lipgloss.Top, cmdBarView, borderedView)
 }

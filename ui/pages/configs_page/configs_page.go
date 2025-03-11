@@ -2,9 +2,6 @@ package configs_page
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -12,6 +9,10 @@ import (
 	"ktea/ui/components/statusbar"
 	"sort"
 	"strings"
+
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {
@@ -39,11 +40,9 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	m.table.SetHeight(ktx.AvailableHeight - 2)
 	m.table.SetRows(m.rows)
 	m.table.Focus()
-	if m.cmdBar.IsFocused() {
-		views = append(views, styles.Table.Blur.Render(m.table.View()))
-	} else {
-		views = append(views, styles.Table.Focus.Render(m.table.View()))
-	}
+
+	borderedView := styles.Borderize(m.table.View(), m.cmdBar.IsFocused(), nil)
+	views = append(views, borderedView)
 
 	return ui.JoinVertical(lipgloss.Top, views...)
 }

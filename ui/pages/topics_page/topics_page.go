@@ -10,6 +10,7 @@ import (
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
+	ktable "ktea/ui/components/table"
 	"ktea/ui/pages/nav"
 	"slices"
 	"sort"
@@ -40,33 +41,41 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	views = append(views, cmdBarView)
 
 	m.table.SetHeight(ktx.AvailableHeight - 2)
-	m.table.SetWidth(ktx.WindowWidth - 2)
+	m.table.SetWidth(ktx.WindowWidth - 3)
 	m.table.SetColumns([]table.Column{
-		{"Name", int(float64(ktx.WindowWidth-9) * 0.7)},
-		{"Partitions", int(float64(ktx.WindowWidth-9) * 0.1)},
-		{"Replicas", int(float64(ktx.WindowWidth-9) * 0.1)},
-		{"~ Record Count", int(float64(ktx.WindowWidth-9) * 0.1)},
+		{"Name", int(float64(ktx.WindowWidth-10) * 0.7)},
+		{"Partitions", int(float64(ktx.WindowWidth-10) * 0.1)},
+		{"Replicas", int(float64(ktx.WindowWidth-10) * 0.1)},
+		{"~ Record Count", int(float64(ktx.WindowWidth-10) * 0.1)},
 	})
 	m.table.SetRows(m.rows)
 
 	var tableView string
 	if m.tableFocussed {
-		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Focus)
+		// Apply focus style
+		styledTable := renderer.RenderWithStyle(m.table.View(), styles.Table.Focus)
+
+		embeddedText := map[styles.BorderPosition]string{
+			styles.TopMiddleBorder: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(styles.ColorPink)).
+				Bold(true).
+				Render(fmt.Sprintf("Total Topics: %d", len(m.rows))),
+		}
+		tableView = styles.Borderize(styledTable, true, embeddedText)
 	} else {
-		tableView = renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
+		// Regular border approach for unfocused state
+		styledTable := renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
+
+		embeddedText := map[styles.BorderPosition]string{
+			styles.TopMiddleBorder: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(styles.ColorPink)).
+				Bold(true).
+				Render(fmt.Sprintf("Total Topics: %d", len(m.rows))),
+		}
+		tableView = styles.Borderize(styledTable, false, embeddedText)
 	}
 
-	embeddedText := map[styles.BorderPosition]string{
-		styles.TopMiddleBorder: lipgloss.NewStyle().
-			Foreground(lipgloss.Color(styles.ColorPink)).
-			Bold(true).
-			Render(fmt.Sprintf("Total Topics: %d", len(m.rows))),
-	}
-
-	borderedView := styles.Borderize(tableView, m.tableFocussed, embeddedText)
-	views = append(views, borderedView)
-
-	return ui.JoinVertical(lipgloss.Top, views...)
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, tableView)
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -213,10 +222,11 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 		{"Configs", "C-o"},
 		{"Refresh", "F5"},
 	}
-	m.table = table.New(
-		table.WithFocused(true),
-		table.WithStyles(styles.Table.Styles),
-	)
+
+	// Use ktable.NewDefaultTable() instead of direct initialization
+	t := ktable.NewDefaultTable()
+	m.table = t
+
 	m.table.SetColumns([]table.Column{
 		{"Name", 1},
 		{"Partitions", 1},
