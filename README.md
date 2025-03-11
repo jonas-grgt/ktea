@@ -22,6 +22,16 @@ Binaries available at the release page.
 ### Windows
 Coming soon
 
+## Usage
+
+### Switching Tabs
+
+To switch between tabs the meta key is required, which in most terminals needs to be enabled and will map to `Alt`.
+
+- iterm: https://iterm2.com/faq.html
+- kitty: https://sw.kovidgoyal.net/kitty/conf/#opt-kitty.macos_option_as_alt
+- Mac Terminal: https://superuser.com/questions/496090/how-to-use-alt-commands-in-a-terminal-on-os-x
+
 ## Features
 - *Multi-Cluster Support*: Seamlessly connect to multiple Kafka clusters and switch between them with ease.
 - *Topic Management*: List, create, delete, and modify topics, including partition and offset details.

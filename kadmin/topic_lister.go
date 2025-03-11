@@ -67,31 +67,43 @@ func (ka *SaramaKafkaAdmin) doListTopics(errChan chan error, topicsChan chan []L
 	}
 
 	partByTopic := make(map[string]ListedTopic)
-	var wg sync.WaitGroup
+	var (
+		wg sync.WaitGroup
+		mu sync.Mutex
+	)
+
 	for name, topic := range listResult {
 		wg.Add(1)
+
 		go func(name string, topic sarama.TopicDetail) {
+			defer wg.Done()
+
 			partitions := make([]int, topic.NumPartitions)
 			for i := range topic.NumPartitions {
 				partitions[i] = int(i)
 			}
+
 			offsets, err := ka.fetchOffsets(partitions, name)
 			if err != nil {
 				errChan <- err
 				wg.Done()
 				return
 			}
+
 			var recordCount int64
 			for _, offset := range offsets {
 				recordCount += offset.firstAvailable - offset.oldest
 			}
+
+			mu.Lock()
 			partByTopic[name] = ListedTopic{
 				Name:           name,
 				PartitionCount: int(topic.NumPartitions),
 				Replicas:       int(topic.ReplicationFactor),
 				RecordCount:    offsets[0].firstAvailable - offsets[0].oldest,
 			}
-			wg.Done()
+			mu.Unlock()
+
 		}(name, topic)
 	}
 	wg.Wait()

@@ -12,10 +12,13 @@ import (
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
 	"ktea/ui/pages/nav"
+	"reflect"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
@@ -79,7 +82,11 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
+
+	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
+
 	cmds := make([]tea.Cmd, 2)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.topics == nil {
@@ -117,6 +124,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case kadmin.TopicListingStartedMsg:
 		cmds = append(cmds, msg.AwaitCompletion)
 	case kadmin.TopicListedMsg:
+		log.Debug("Topics listed")
 		m.topics = msg.Topics
 	case kadmin.TopicDeletedMsg:
 		m.topics = slices.DeleteFunc(

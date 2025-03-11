@@ -230,4 +230,29 @@ func TestRecordDetailsPage(t *testing.T) {
 
 		assert.Contains(t, render, "Copy failed: unable to access clipboard")
 	})
+
+	t.Run("on deserialization error", func(t *testing.T) {
+		m := New(&kadmin.ConsumerRecord{
+			Key:       "",
+			Value:     "",
+			Err:       fmt.Errorf("deserialization error"),
+			Partition: 0,
+			Offset:    0,
+			Headers:   []kadmin.Header{},
+		},
+			"",
+			clipper.NewMock(),
+		)
+
+		// init ui
+		render := m.View(ui.NewTestKontext(), ui.TestRenderer)
+
+		assert.Contains(t, render, "deserialization error")
+		assert.Contains(t, render, "Unable to render payload")
+
+		t.Run("do not update viewport", func(t *testing.T) {
+			// do not crash but ignore the update
+			m.Update(keys.Key(tea.KeyF2))
+		})
+	})
 }

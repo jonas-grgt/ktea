@@ -36,3 +36,6 @@ dist/
 
 # mac
 .DS_Store
+
+# go race output
+race-ouput.log
