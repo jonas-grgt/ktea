@@ -155,6 +155,45 @@ func TestSchemaDetailsPage(t *testing.T) {
 		assert.Regexp(t, "1\\W+2\\W+«3»", render)
 	})
 
+	t.Run("Renders version IDs", func(t *testing.T) {
+		page, _ := New(&MockSchemaLister{}, sradmin.Subject{})
+
+		page.Update(sradmin.SchemasListed{
+			Schemas: []sradmin.Schema{
+				{
+					Id:      "111",
+					Schema:  "{\"type\":\"string\"}",
+					Version: 1,
+					Err:     nil,
+				},
+				{
+					Id:      "222",
+					Schema:  "{\"type\":\"string\"}",
+					Version: 2,
+					Err:     nil,
+				},
+				{
+					Id:      "333",
+					Schema:  "{\"type\":\"string\"}",
+					Version: 3,
+					Err:     nil,
+				},
+			},
+		})
+
+		render := ansi.Strip(page.View(ui.NewTestKontext(), ui.TestRenderer))
+
+		assert.Regexp(t, "ID\\W+: 333", render)
+
+		page.Update(keys.Key(tea.KeyLeft))
+		page.Update(keys.Key(tea.KeyLeft))
+		page.Update(keys.Key(tea.KeyEnter))
+
+		render = ansi.Strip(page.View(ui.NewTestKontext(), ui.TestRenderer))
+
+		assert.Regexp(t, "ID\\W+: 111", render)
+	})
+
 	t.Run("schema view is scrollable", func(t *testing.T) {
 		page, _ := New(&MockSchemaLister{}, sradmin.Subject{})
 
@@ -186,8 +225,8 @@ func TestSchemaDetailsPage(t *testing.T) {
 		render = ansi.Strip(page.View(&kontext.ProgramKtx{
 			Config:          nil,
 			WindowWidth:     100,
-			WindowHeight:    25,
-			AvailableHeight: 8,
+			WindowHeight:    30,
+			AvailableHeight: 9,
 		}, ui.TestRenderer))
 
 		assert.NotRegexp(t, "│ {\\W+│\n│\\W+\"type\": \"record\",", render)
