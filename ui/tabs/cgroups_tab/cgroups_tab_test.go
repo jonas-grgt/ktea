@@ -7,7 +7,7 @@ import (
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
-	"ktea/ui"
+	"ktea/tests"
 	"strings"
 	"testing"
 )
@@ -66,7 +66,7 @@ func TestGroupsTab(t *testing.T) {
 					},
 				},
 			},
-		}, ui.TestRenderer))
+		}, tests.TestRenderer))
 
 		assert.Contains(t, render, "Group1")
 		assert.Contains(t, render, "Group2")
@@ -104,7 +104,7 @@ func TestGroupsTab(t *testing.T) {
 						},
 					},
 				},
-			}, ui.TestRenderer))
+			}, tests.TestRenderer))
 
 			g1Count := strings.Count(render, "Group1")
 			g2Count := strings.Count(render, "Group2")

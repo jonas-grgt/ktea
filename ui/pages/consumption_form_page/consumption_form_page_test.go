@@ -7,8 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/kontext"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"ktea/ui/pages/nav"
 	"testing"
 )
@@ -20,11 +19,11 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			Replicas:       1,
 			PartitionCount: 10,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(ui.NewTestKontext(), ui.TestRenderer)
+		m.View(tests.NewKontext(), tests.TestRenderer)
 
-		cmd := m.Update(keys.Key(tea.KeyEsc))
+		cmd := m.Update(tests.Key(tea.KeyEsc))
 
 		assert.IsType(t, nav.LoadTopicsPageMsg{}, cmd())
 	})
@@ -34,12 +33,12 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			Replicas:       1,
 			PartitionCount: 10,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 
 		// make sure form has been initialized
-		m.View(ui.TestKontext, ui.TestRenderer)
+		m.View(tests.TestKontext, tests.TestRenderer)
 
-		render := m.View(ui.NewTestKontext(), ui.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "> • 0")
 		for i := 1; i < 10; i++ {
@@ -61,9 +60,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			PartitionCount: 100,
 		}, ktx)
 		// make sure form has been initialized
-		m.View(ktx, ui.TestRenderer)
+		m.View(ktx, tests.TestRenderer)
 
-		render := m.View(ktx, ui.TestRenderer)
+		render := m.View(ktx, tests.TestRenderer)
 
 		assert.Contains(t, render, `> • 0`)
 		assert.Contains(t, render, `• 1`)
@@ -90,12 +89,12 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			PartitionCount: 10,
 			Replicas:       3,
 			RecordCount:    100,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 
 		// make sure form has been initialized
-		m.View(ui.NewTestKontext(), ui.TestRenderer)
+		m.View(tests.NewKontext(), tests.TestRenderer)
 
-		render := m.View(ui.TestKontext, ui.TestRenderer)
+		render := m.View(tests.TestKontext, tests.TestRenderer)
 
 		assert.Contains(t, render, "> Most Recent")
 		assert.NotContains(t, render, "> Beginning")
@@ -122,12 +121,12 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				PartitionCount: 10,
 				Replicas:       3,
 				RecordCount:    100,
-			}, ui.NewTestKontext())
+			}, tests.NewKontext())
 
 			// make sure form has been initialized
-			m.View(ui.NewTestKontext(), ui.TestRenderer)
+			m.View(tests.NewKontext(), tests.TestRenderer)
 
-			render := m.View(ui.TestKontext, ui.TestRenderer)
+			render := m.View(tests.TestKontext, tests.TestRenderer)
 
 			for i := 0; i < 10; i++ {
 				assert.NotContains(t, render, fmt.Sprintf("✓ %d", i))
@@ -141,39 +140,39 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(ui.NewTestKontext(), ui.TestRenderer)
+		m.View(tests.NewKontext(), tests.TestRenderer)
 
 		// select start from most recent
-		cmd := m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd := m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		m.Update(cmd())
 		// select partition 3 and 5
-		m.Update(keys.Key(tea.KeyDown))
-		m.Update(keys.Key(tea.KeyDown))
-		m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeySpace))
-		m.Update(keys.Key(tea.KeyDown))
-		m.Update(keys.Key(tea.KeyDown))
-		m.Update(keys.Key(tea.KeySpace))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeySpace))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeySpace))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// select limit 500
-		m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// next group
 		m.Update(cmd())
 		// no key filter
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// no value filter
-		msgs := keys.Submit(m)
+		msgs := tests.Submit(m)
 
 		assert.Equal(t, nav.LoadConsumptionPageMsg{
 			ReadDetails: kadmin.ReadDetails{
@@ -200,32 +199,32 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(ui.NewTestKontext(), ui.TestRenderer)
+		m.View(tests.NewKontext(), tests.TestRenderer)
 
 		// select start from most recent
-		cmd := m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd := m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		m.Update(cmd())
 		// select no partitions
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// select limit 500
-		m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// next group
 		m.Update(cmd())
 		// no key filter
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// no value filter
-		msgs := keys.Submit(m)
+		msgs := tests.Submit(m)
 
 		assert.Equal(t, nav.LoadConsumptionPageMsg{
 			ReadDetails: kadmin.ReadDetails{
@@ -252,69 +251,69 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(ui.NewTestKontext(), ui.TestRenderer)
+		m.View(tests.NewKontext(), tests.TestRenderer)
 
 		// select start from most recent
-		cmd := m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd := m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		m.Update(cmd())
 		// select no partitions
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// select limit 500
-		m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// next group
 		m.Update(cmd())
 		// starts-with key filter
-		m.Update(keys.Key(tea.KeyDown))
-		m.Update(keys.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
 
 		render := m.View(&kontext.ProgramKtx{
 			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		assert.Contains(t, render, "Key Filter Term")
 
 		t.Run("selecting no key filter type hides key value field again", func(t *testing.T) {
-			m.Update(keys.Key(tea.KeyUp))
-			m.Update(keys.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
 
 			render := m.View(&kontext.ProgramKtx{
 				Config:          nil,
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 
 			assert.NotContains(t, render, "Key Filter Value")
 		})
 
 		t.Run("selecting no key filter after filling in key filter term does not search for entered value", func(t *testing.T) {
 			// select starts-with
-			m.Update(keys.Key(tea.KeyDown))
-			m.Update(keys.Key(tea.KeyDown))
+			m.Update(tests.Key(tea.KeyDown))
+			m.Update(tests.Key(tea.KeyDown))
 
-			keys.UpdateKeys(m, "search-term")
+			tests.UpdateKeys(m, "search-term")
 
 			// selects none
-			m.Update(keys.Key(tea.KeyUp))
-			m.Update(keys.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
 
-			cmd = m.Update(keys.Key(tea.KeyEnter))
+			cmd = m.Update(tests.Key(tea.KeyEnter))
 			// next field
 			cmd = m.Update(cmd())
 			// no value filter
-			msgs := keys.Submit(m)
+			msgs := tests.Submit(m)
 
 			assert.Equal(t, nav.LoadConsumptionPageMsg{
 				ReadDetails: kadmin.ReadDetails{
@@ -342,39 +341,39 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(ui.NewTestKontext(), ui.TestRenderer)
+		m.View(tests.NewKontext(), tests.TestRenderer)
 
 		// select start from most recent
-		cmd := m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd := m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		m.Update(cmd())
 		// select no partitions
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// select limit 500
-		m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// next group
 		m.Update(cmd())
 		// starts-with key filter
-		m.Update(keys.Key(tea.KeyDown))
-		m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// filter on key value search-term
-		keys.UpdateKeys(m, "search-term")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(m, "search-term")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// no value filter
-		msgs := keys.Submit(m)
+		msgs := tests.Submit(m)
 
 		assert.EqualValues(t, nav.LoadConsumptionPageMsg{
 			ReadDetails: kadmin.ReadDetails{
@@ -402,45 +401,45 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		}, ui.NewTestKontext())
+		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(ui.NewTestKontext(), ui.TestRenderer)
+		m.View(tests.NewKontext(), tests.TestRenderer)
 
 		// select start from most recent
-		cmd := m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd := m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		m.Update(cmd())
 		// select no partitions
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// select limit 500
-		m.Update(keys.Key(tea.KeyDown))
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// next group
 		m.Update(cmd())
 		// no key filter
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// starts-with value filter
-		m.Update(keys.Key(tea.KeyDown))
-		m.Update(keys.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
 
 		render := m.View(&kontext.ProgramKtx{
 			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		assert.Contains(t, render, "Value Filter Term")
 
 		// make sure the value filter term field is focussed
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = m.Update(cmd())
 		// next group
@@ -451,39 +450,39 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		assert.Contains(t, field.View(), "Value Filter Term")
 
 		t.Run("selecting no value filter type hides key filter value field again", func(t *testing.T) {
-			cmd = m.Update(keys.Key(tea.KeyShiftTab))
+			cmd = m.Update(tests.Key(tea.KeyShiftTab))
 			// prev field
 			cmd = m.Update(cmd())
 
-			m.Update(keys.Key(tea.KeyUp))
-			m.Update(keys.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
 
 			render := m.View(&kontext.ProgramKtx{
 				Config:          nil,
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 
 			assert.NotContains(t, render, "Value Filter Term")
 		})
 
 		t.Run("selecting no value filter after filling in a value filter term does not search for entered value", func(t *testing.T) {
 			// select starts-with
-			m.Update(keys.Key(tea.KeyDown))
-			m.Update(keys.Key(tea.KeyDown))
+			m.Update(tests.Key(tea.KeyDown))
+			m.Update(tests.Key(tea.KeyDown))
 
-			keys.UpdateKeys(m, "search-term")
+			tests.UpdateKeys(m, "search-term")
 
 			// selects none
-			m.Update(keys.Key(tea.KeyUp))
-			m.Update(keys.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
+			m.Update(tests.Key(tea.KeyUp))
 
-			cmd = m.Update(keys.Key(tea.KeyEnter))
+			cmd = m.Update(tests.Key(tea.KeyEnter))
 			// next field
 			cmd = m.Update(cmd())
 			// no value filter
-			msgs := keys.Submit(m)
+			msgs := tests.Submit(m)
 
 			assert.Equal(t, nav.LoadConsumptionPageMsg{
 				ReadDetails: kadmin.ReadDetails{

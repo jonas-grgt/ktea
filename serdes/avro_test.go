@@ -44,7 +44,7 @@ func TestAvroDeserializer(t *testing.T) {
 			return sradmin.SchemaByIdReceived{
 				Schema: sradmin.Schema{
 					Id:      "",
-					Schema:  schema,
+					Value:   schema,
 					Version: 0,
 					Err:     nil,
 				},
@@ -77,7 +77,8 @@ func TestAvroDeserializer(t *testing.T) {
 			t.Error(err)
 		}
 
-		assert.Equal(t, `{"Age":21,"Name":"John"}`, res)
+		assert.Equal(t, `{"Age":21,"Name":"John"}`, res.Value)
+		assert.Equal(t, schema, res.Schema)
 	})
 
 	t.Run("deserialize failed", func(t *testing.T) {
@@ -88,7 +89,7 @@ func TestAvroDeserializer(t *testing.T) {
 				return sradmin.SchemaByIdReceived{
 					Schema: sradmin.Schema{
 						Id:      "",
-						Schema:  "{invalid}",
+						Value:   "{invalid}",
 						Version: 0,
 						Err:     nil,
 					},

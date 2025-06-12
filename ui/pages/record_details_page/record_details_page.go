@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -43,6 +44,7 @@ type Model struct {
 	err            error
 	metaInfo       string
 	clipWriter     clipper.Writer
+	config         *config.Config
 }
 
 type PayloadCopiedMsg struct {
@@ -97,6 +99,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.focus = !m.focus
 		case "c":
 			cmds = m.handleCopy(cmds)
+		case "ctrl+s":
+			m.focus = !m.focus
 		default:
 			cmds = m.updatedFocussedArea(msg, cmds)
 		}
@@ -247,11 +251,20 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 		whatToCopy = "Content"
 	}
 	if m.err == nil {
-		return []statusbar.Shortcut{
+		shortcuts := []statusbar.Shortcut{
 			{"Toggle Headers/Content", "C-h/Arrows"},
 			{"Go Back", "esc"},
 			{"Copy " + whatToCopy, "c"},
 		}
+
+		if m.config.ActiveCluster().HasSchemaRegistry() {
+			shortcuts = append(shortcuts, statusbar.Shortcut{
+				Name:       "View Schema",
+				Keybinding: "C-s",
+			})
+		}
+
+		return shortcuts
 	} else {
 		return []statusbar.Shortcut{
 			{"Go Back", "esc"},
@@ -267,6 +280,7 @@ func New(
 	record *kadmin.ConsumerRecord,
 	topicName string,
 	clipWriter clipper.Writer,
+	ktx *kontext.ProgramKtx,
 ) *Model {
 	headersTable := ktable.NewDefaultTable()
 
@@ -285,7 +299,7 @@ func New(
 		err     error
 	)
 	if record.Err == nil {
-		payload = ui.PrettyPrintJson(record.Value)
+		payload = ui.PrettyPrintJson(record.Payload.Value)
 	} else {
 		err = record.Err
 		notifierCmdBar.Notifier.ShowError(record.Err)
@@ -322,5 +336,6 @@ func New(
 		metaInfo:       metaInfo,
 		clipWriter:     clipWriter,
 		notifierCmdbar: notifierCmdBar,
+		config:         ktx.Config,
 	}
 }

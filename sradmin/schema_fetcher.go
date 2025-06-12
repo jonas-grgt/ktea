@@ -55,7 +55,7 @@ func (s *DefaultSrAdmin) doGetSchemaById(id int, schemaChan chan Schema, errChan
 	}
 	schemaChan <- Schema{
 		Id:      strconv.Itoa(schema.ID()),
-		Schema:  schema.Schema(),
+		Value:   schema.Schema(),
 		Version: schema.Version(),
 		Err:     nil,
 	}

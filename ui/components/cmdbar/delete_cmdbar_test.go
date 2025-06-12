@@ -3,7 +3,7 @@ package cmdbar
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
-	"ktea/tests/keys"
+	"ktea/tests"
 	"testing"
 )
 
@@ -24,8 +24,8 @@ func TestDeleteCmdBar(t *testing.T) {
 			}
 		})
 
-		cmdBar.Update(keys.Key(tea.KeyF2))
-		active, msg, cmd := cmdBar.Update(keys.Key(tea.KeyEnter))
+		cmdBar.Update(tests.Key(tea.KeyF2))
+		active, msg, cmd := cmdBar.Update(tests.Key(tea.KeyEnter))
 
 		assert.True(t, active)
 		assert.Nil(t, msg)
@@ -40,9 +40,9 @@ func TestDeleteCmdBar(t *testing.T) {
 		}
 		cmdBar := NewDeleteCmdBar[string](nil, deleteFunc, nil)
 
-		cmdBar.Update(keys.Key(tea.KeyF2))
-		cmdBar.Update(keys.Key('d'))
-		active, msg, cmd := cmdBar.Update(keys.Key(tea.KeyEnter))
+		cmdBar.Update(tests.Key(tea.KeyF2))
+		cmdBar.Update(tests.Key('d'))
+		active, msg, cmd := cmdBar.Update(tests.Key(tea.KeyEnter))
 
 		assert.True(t, active)
 		assert.Nil(t, msg)
@@ -57,10 +57,10 @@ func TestDeleteCmdBar(t *testing.T) {
 		}
 		cmdBar := NewDeleteCmdBar[string](nil, deleteFunc, nil)
 
-		cmdBar.Update(keys.Key(tea.KeyF2))
-		cmdBar.Update(keys.Key('d'))
+		cmdBar.Update(tests.Key(tea.KeyF2))
+		cmdBar.Update(tests.Key('d'))
 		cmdBar.Delete("deleteMe")
-		_, _, cmd := cmdBar.Update(keys.Key(tea.KeyEnter))
+		_, _, cmd := cmdBar.Update(tests.Key(tea.KeyEnter))
 
 		assert.Equal(t, AssertDeletedMsg{"deleteMe"}, cmd())
 	})

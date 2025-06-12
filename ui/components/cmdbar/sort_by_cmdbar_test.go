@@ -3,8 +3,7 @@ package cmdbar
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"testing"
 )
 
@@ -37,7 +36,7 @@ func TestSortByCmdBar(t *testing.T) {
 	t.Run("Renders all options", func(t *testing.T) {
 		bar := newTestBar(func(label SortLabel) {})
 
-		render := bar.View(ui.NewTestKontext(), ui.TestRenderer)
+		render := bar.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -49,11 +48,11 @@ func TestSortByCmdBar(t *testing.T) {
 		bar := newTestBar(func(label SortLabel) {
 		})
 
-		bar.Update(keys.Key(tea.KeyRight))
-		bar.Update(keys.Key(tea.KeyRight))
-		bar.Update(keys.Key(tea.KeyLeft))
-		bar.Update(keys.Key('h'))
-		bar.Update(keys.Key('l'))
+		bar.Update(tests.Key(tea.KeyRight))
+		bar.Update(tests.Key(tea.KeyRight))
+		bar.Update(tests.Key(tea.KeyLeft))
+		bar.Update(tests.Key('h'))
+		bar.Update(tests.Key('l'))
 
 		assert.Equal(t, SortLabel{
 			Label:     "Size",
@@ -66,9 +65,9 @@ func TestSortByCmdBar(t *testing.T) {
 		bar := newTestBar(func(label SortLabel) {
 			selectedLabel = label
 		})
-		bar.Update(keys.Key(tea.KeyRight))
+		bar.Update(tests.Key(tea.KeyRight))
 
-		bar.Update(keys.Key(tea.KeyEnter))
+		bar.Update(tests.Key(tea.KeyEnter))
 
 		assert.Equal(t, SortLabel{
 			Label:     "Size",
@@ -82,10 +81,10 @@ func TestSortByCmdBar(t *testing.T) {
 			selectedLabel = label
 		})
 
-		bar.Update(keys.Key(tea.KeyRight))
+		bar.Update(tests.Key(tea.KeyRight))
 
-		bar.Update(keys.Key(tea.KeyEnter))
-		bar.Update(keys.Key(tea.KeyEnter))
+		bar.Update(tests.Key(tea.KeyEnter))
+		bar.Update(tests.Key(tea.KeyEnter))
 
 		assert.Equal(t, SortLabel{
 			Label:     "Size",

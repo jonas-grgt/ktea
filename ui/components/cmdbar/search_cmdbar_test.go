@@ -2,8 +2,7 @@ package cmdbar
 
 import (
 	"github.com/stretchr/testify/assert"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"testing"
 )
 
@@ -11,14 +10,14 @@ func TestSearchCmdBar(t *testing.T) {
 	t.Run("Is hidden by default", func(t *testing.T) {
 		model := NewSearchCmdBar(">")
 
-		render := model.View(ui.NewTestKontext(), ui.TestRenderer)
+		render := model.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Empty(t, render)
 
 		t.Run("/ activates search", func(t *testing.T) {
-			model.Update(keys.Key('/'))
+			model.Update(tests.Key('/'))
 
-			render = model.View(ui.NewTestKontext(), ui.TestRenderer)
+			render = model.View(tests.NewKontext(), tests.TestRenderer)
 
 			assert.Contains(t, render, ">")
 		})
@@ -27,22 +26,22 @@ func TestSearchCmdBar(t *testing.T) {
 	t.Run("Resets search value upon toggle", func(t *testing.T) {
 		model := NewSearchCmdBar(">")
 
-		model.Update(keys.Key('/'))
+		model.Update(tests.Key('/'))
 
-		model.Update(keys.Key('s'))
-		model.Update(keys.Key('e'))
-		model.Update(keys.Key('a'))
-		model.Update(keys.Key('r'))
-		model.Update(keys.Key('c'))
-		model.Update(keys.Key('h'))
+		model.Update(tests.Key('s'))
+		model.Update(tests.Key('e'))
+		model.Update(tests.Key('a'))
+		model.Update(tests.Key('r'))
+		model.Update(tests.Key('c'))
+		model.Update(tests.Key('h'))
 
-		render := model.View(ui.NewTestKontext(), ui.TestRenderer)
+		render := model.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "> search")
 
-		model.Update(keys.Key('/'))
+		model.Update(tests.Key('/'))
 
-		render = model.View(ui.NewTestKontext(), ui.TestRenderer)
+		render = model.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.NotContains(t, render, "> search")
 	})

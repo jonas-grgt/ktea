@@ -7,8 +7,6 @@ import (
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/tests"
-	"ktea/tests/keys"
-	"ktea/ui"
 	"ktea/ui/pages/nav"
 	"testing"
 )
@@ -54,7 +52,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			Schemas: []sradmin.Schema{
 				{
 					Id:      "123",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 1,
 					Err:     nil,
 				},
@@ -72,7 +70,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 		t.Run("visible when fetching schemas", func(t *testing.T) {
 			page.Update(sradmin.SchemaListingStarted{})
 
-			render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 			assert.Contains(t, render, "Loading schema")
 		})
@@ -82,14 +80,14 @@ func TestSchemaDetailsPage(t *testing.T) {
 				Schemas: []sradmin.Schema{
 					{
 						Id:      "123",
-						Schema:  "{\"type\":\"string\"}",
+						Value:   "{\"type\":\"string\"}",
 						Version: 1,
 						Err:     nil,
 					},
 				},
 			})
 
-			render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 			assert.NotContains(t, render, "Loading schema")
 		})
@@ -98,7 +96,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 	t.Run("esc goes back to subjects list", func(t *testing.T) {
 		page, _ := New(&MockSchemaLister{}, sradmin.Subject{})
 
-		cmds := page.Update(keys.Key(tea.KeyEsc))
+		cmds := page.Update(tests.Key(tea.KeyEsc))
 
 		msgs := tests.ExecuteBatchCmd(cmds)
 
@@ -112,14 +110,14 @@ func TestSchemaDetailsPage(t *testing.T) {
 			Schemas: []sradmin.Schema{
 				{
 					Id:      "123",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 1,
 					Err:     nil,
 				},
 			},
 		})
 
-		render := ansi.Strip(page.View(ui.NewTestKontext(), ui.TestRenderer))
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
 
 		assert.Regexp(t, "│\\W+\"type\": \"string\"\\W+│\n│ }", render)
 	})
@@ -131,26 +129,26 @@ func TestSchemaDetailsPage(t *testing.T) {
 			Schemas: []sradmin.Schema{
 				{
 					Id:      "111",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 1,
 					Err:     nil,
 				},
 				{
 					Id:      "222",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 2,
 					Err:     nil,
 				},
 				{
 					Id:      "333",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 3,
 					Err:     nil,
 				},
 			},
 		})
 
-		render := ansi.Strip(page.View(ui.NewTestKontext(), ui.TestRenderer))
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
 
 		assert.Regexp(t, "1\\W+2\\W+«3»", render)
 	})
@@ -162,34 +160,34 @@ func TestSchemaDetailsPage(t *testing.T) {
 			Schemas: []sradmin.Schema{
 				{
 					Id:      "111",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 1,
 					Err:     nil,
 				},
 				{
 					Id:      "222",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 2,
 					Err:     nil,
 				},
 				{
 					Id:      "333",
-					Schema:  "{\"type\":\"string\"}",
+					Value:   "{\"type\":\"string\"}",
 					Version: 3,
 					Err:     nil,
 				},
 			},
 		})
 
-		render := ansi.Strip(page.View(ui.NewTestKontext(), ui.TestRenderer))
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
 
 		assert.Regexp(t, "ID\\W+: 333", render)
 
-		page.Update(keys.Key(tea.KeyLeft))
-		page.Update(keys.Key(tea.KeyLeft))
-		page.Update(keys.Key(tea.KeyEnter))
+		page.Update(tests.Key(tea.KeyLeft))
+		page.Update(tests.Key(tea.KeyLeft))
+		page.Update(tests.Key(tea.KeyEnter))
 
-		render = ansi.Strip(page.View(ui.NewTestKontext(), ui.TestRenderer))
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
 
 		assert.Regexp(t, "ID\\W+: 111", render)
 	})
@@ -201,7 +199,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			Schemas: []sradmin.Schema{
 				{
 					Id:      "123",
-					Schema:  "{\n  \"type\": \"record\",\n  \"name\": \"UserProfile\",\n  \"namespace\": \"com.example.avro\",\n  \"fields\": [\n    {\n      \"name\": \"userId\",\n      \"type\": \"string\",\n      \"doc\": \"Unique identifier for the user\"\n    },\n    {\n      \"name\": \"firstName\",\n      \"type\": [\"null\", \"string\"],\n      \"default\": null,\n      \"doc\": \"The user's first name, optional\"\n    },\n    {\n      \"name\": \"lastName\",\n      \"type\": [\"null\", \"string\"],\n      \"default\": null,\n      \"doc\": \"The user's last name, optional\"\n    },\n    {\n      \"name\": \"email\",\n      \"type\": \"string\",\n      \"doc\": \"Email address of the user\"\n    },\n    {\n      \"name\": \"age\",\n      \"type\": [\"null\", \"int\"],\n      \"default\": null,\n      \"doc\": \"Age of the user, optional\"\n    },\n    {\n      \"name\": \"isActive\",\n      \"type\": \"boolean\",\n      \"doc\": \"Indicates if the user is active\"\n    },\n    {\n      \"name\": \"signupDate\",\n      \"type\": {\n        \"type\": \"long\",\n        \"logicalType\": \"timestamp-millis\"\n      },\n      \"doc\": \"Timestamp of when the user signed up\"\n    }\n  ],\n  \"doc\": \"Schema for storing user profile data\"\n}\n",
+					Value:   "{\n  \"type\": \"record\",\n  \"name\": \"UserProfile\",\n  \"namespace\": \"com.example.avro\",\n  \"fields\": [\n    {\n      \"name\": \"userId\",\n      \"type\": \"string\",\n      \"doc\": \"Unique identifier for the user\"\n    },\n    {\n      \"name\": \"firstName\",\n      \"type\": [\"null\", \"string\"],\n      \"default\": null,\n      \"doc\": \"The user's first name, optional\"\n    },\n    {\n      \"name\": \"lastName\",\n      \"type\": [\"null\", \"string\"],\n      \"default\": null,\n      \"doc\": \"The user's last name, optional\"\n    },\n    {\n      \"name\": \"email\",\n      \"type\": \"string\",\n      \"doc\": \"Email address of the user\"\n    },\n    {\n      \"name\": \"age\",\n      \"type\": [\"null\", \"int\"],\n      \"default\": null,\n      \"doc\": \"Age of the user, optional\"\n    },\n    {\n      \"name\": \"isActive\",\n      \"type\": \"boolean\",\n      \"doc\": \"Indicates if the user is active\"\n    },\n    {\n      \"name\": \"signupDate\",\n      \"type\": {\n        \"type\": \"long\",\n        \"logicalType\": \"timestamp-millis\"\n      },\n      \"doc\": \"Timestamp of when the user signed up\"\n    }\n  ],\n  \"doc\": \"Schema for storing user profile data\"\n}\n",
 					Version: 1,
 					Err:     nil,
 				},
@@ -213,21 +211,21 @@ func TestSchemaDetailsPage(t *testing.T) {
 			WindowWidth:     100,
 			WindowHeight:    25,
 			AvailableHeight: 8,
-		}, ui.TestRenderer))
+		}, tests.TestRenderer))
 
 		assert.Regexp(t, "│ {\\W+│\n│\\W+\"type\": \"record\",", render)
 		assert.NotContains(t, render, "userId")
 
-		page.Update(keys.Key(tea.KeyDown))
-		page.Update(keys.Key(tea.KeyDown))
-		page.Update(keys.Key(tea.KeyDown))
+		page.Update(tests.Key(tea.KeyDown))
+		page.Update(tests.Key(tea.KeyDown))
+		page.Update(tests.Key(tea.KeyDown))
 
 		render = ansi.Strip(page.View(&kontext.ProgramKtx{
 			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    30,
 			AvailableHeight: 9,
-		}, ui.TestRenderer))
+		}, tests.TestRenderer))
 
 		assert.NotRegexp(t, "│ {\\W+│\n│\\W+\"type\": \"record\",", render)
 		assert.Contains(t, render, "userId")

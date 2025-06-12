@@ -1,9 +1,8 @@
-package keys
+package tests
 
 import (
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
-	"ktea/tests"
 	"ktea/ui"
 	"ktea/ui/pages/nav"
 )
@@ -58,7 +57,7 @@ func Submit(page nav.Page) []tea.Msg {
 	cmd = page.Update(cmd())
 	// next group and submit
 	cmd = page.Update(cmd())
-	return tests.ExecuteBatchCmd(cmd)
+	return ExecuteBatchCmd(cmd)
 }
 
 func NextGroup(page nav.Page, cmd tea.Cmd) {

@@ -4,8 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"strings"
 	"testing"
 )
@@ -45,7 +44,7 @@ func TestCgroupsPage(t *testing.T) {
 			},
 		})
 
-		render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▲ Consumer Group")
 
@@ -78,9 +77,9 @@ func TestCgroupsPage(t *testing.T) {
 			},
 		})
 
-		page.Update(keys.Key(tea.KeyF3))
-		page.Update(keys.Key(tea.KeyEnter))
-		render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyF3))
+		page.Update(tests.Key(tea.KeyEnter))
+		render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▼ Consumer Group")
 
@@ -146,10 +145,10 @@ func TestCgroupsPage(t *testing.T) {
 			},
 		})
 
-		page.Update(keys.Key(tea.KeyF3))
-		page.Update(keys.Key(tea.KeyRight))
-		page.Update(keys.Key(tea.KeyEnter))
-		render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyF3))
+		page.Update(tests.Key(tea.KeyRight))
+		page.Update(tests.Key(tea.KeyEnter))
+		render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▼ Members")
 
@@ -161,8 +160,8 @@ func TestCgroupsPage(t *testing.T) {
 		assert.Less(t, g3Idx, g2Idx)
 		assert.Less(t, g2Idx, g1Idx)
 
-		page.Update(keys.Key(tea.KeyEnter))
-		render = page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyEnter))
+		render = page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▲ Members")
 

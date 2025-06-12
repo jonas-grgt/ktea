@@ -6,8 +6,7 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"ktea/ui/pages/clusters_page"
 	"testing"
 
@@ -40,7 +39,7 @@ func TestClustersTab(t *testing.T) {
 		}, mockConnChecker)
 
 		// when
-		render := clustersTab.View(&ktx, ui.TestRenderer)
+		render := clustersTab.View(&ktx, tests.TestRenderer)
 
 		// then
 		assert.Contains(t, render, "┃ Name")
@@ -67,7 +66,7 @@ func TestClustersTab(t *testing.T) {
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 
 			// when
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 
 			// then
 			assert.Contains(t, render, "prd")
@@ -108,7 +107,7 @@ func TestClustersTab(t *testing.T) {
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 
 			// when
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 
 			// then
 			assert.Regexp(t, "X\\W+tst", render)
@@ -153,11 +152,11 @@ func TestClustersTab(t *testing.T) {
 			}
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 			// and table has been initialized
-			clustersTab.View(programKtx, ui.TestRenderer)
+			clustersTab.View(programKtx, tests.TestRenderer)
 
 			// when
-			clustersTab.Update(keys.Key(tea.KeyDown))
-			cmds := clustersTab.Update(keys.Key(tea.KeyEnter))
+			clustersTab.Update(tests.Key(tea.KeyDown))
+			cmds := clustersTab.Update(tests.Key(tea.KeyEnter))
 			msgs := executeBatchCmd(cmds)
 			assert.NotNil(t, msgs)
 
@@ -171,7 +170,7 @@ func TestClustersTab(t *testing.T) {
 					},
 				})
 
-				rendered := clustersTab.View(programKtx, ui.TestRenderer)
+				rendered := clustersTab.View(programKtx, tests.TestRenderer)
 
 				assert.Contains(t, rendered, "Checking connectivity to tst")
 			})
@@ -181,7 +180,7 @@ func TestClustersTab(t *testing.T) {
 					Err: fmt.Errorf("kafka: client has run out of available brokers to talk to: EOF"),
 				})
 
-				rendered := clustersTab.View(programKtx, ui.TestRenderer)
+				rendered := clustersTab.View(programKtx, tests.TestRenderer)
 
 				assert.Contains(t, rendered, "Connection check failed: kafka: client has run out of available brokers to talk to: EOF")
 			})
@@ -189,7 +188,7 @@ func TestClustersTab(t *testing.T) {
 			t.Run("and shows success msg upon connection ", func(t *testing.T) {
 				clustersTab.Update(kadmin.ConnCheckSucceededMsg{})
 
-				rendered := clustersTab.View(programKtx, ui.TestRenderer)
+				rendered := clustersTab.View(programKtx, tests.TestRenderer)
 
 				assert.Contains(t, rendered, "Connection check succeeded, switching cluster")
 			})
@@ -202,7 +201,7 @@ func TestClustersTab(t *testing.T) {
 					},
 				})
 
-				rendered := clustersTab.View(programKtx, ui.TestRenderer)
+				rendered := clustersTab.View(programKtx, tests.TestRenderer)
 
 				assert.Regexp(t, "X\\W+tst", rendered)
 				assert.Regexp(t, "│\\W+prd", rendered)
@@ -248,13 +247,13 @@ func TestClustersTab(t *testing.T) {
 			// given
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 			// and table has been initialized
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 
 			// when
-			clustersTab.Update(keys.Key('/'))
+			clustersTab.Update(tests.Key('/'))
 
 			// then
-			render = clustersTab.View(programKtx, ui.TestRenderer)
+			render = clustersTab.View(programKtx, tests.TestRenderer)
 			assert.Contains(t, render, "┃ >")
 		})
 
@@ -262,13 +261,13 @@ func TestClustersTab(t *testing.T) {
 			// given
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 			// and table has been initialized
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 
 			// when
-			clustersTab.Update(keys.Key(tea.KeyF2))
+			clustersTab.Update(tests.Key(tea.KeyF2))
 
 			// then
-			render = clustersTab.View(programKtx, ui.TestRenderer)
+			render = clustersTab.View(programKtx, tests.TestRenderer)
 			assert.Contains(t, render, "🗑️  prd will be deleted permanently")
 		})
 
@@ -276,17 +275,17 @@ func TestClustersTab(t *testing.T) {
 			// given
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 			// and table has been initialized
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 			// and delete confirmation has been raised
-			clustersTab.Update(keys.Key(tea.KeyF2))
-			render = clustersTab.View(programKtx, ui.TestRenderer)
+			clustersTab.Update(tests.Key(tea.KeyF2))
+			render = clustersTab.View(programKtx, tests.TestRenderer)
 			assert.Contains(t, render, "🗑️  prd will be deleted permanently")
 
 			// when
-			clustersTab.Update(keys.Key(tea.KeyEsc))
+			clustersTab.Update(tests.Key(tea.KeyEsc))
 
 			// then
-			render = clustersTab.View(programKtx, ui.TestRenderer)
+			render = clustersTab.View(programKtx, tests.TestRenderer)
 			assert.NotContains(t, render, "🗑️  prd will be deleted permanently")
 		})
 
@@ -294,20 +293,20 @@ func TestClustersTab(t *testing.T) {
 			// given
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 			// and table has been initialized
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 
 			// when
-			clustersTab.Update(keys.Key(tea.KeyDown))
-			clustersTab.Update(keys.Key(tea.KeyF2))
-			clustersTab.Update(keys.Key('d'))
-			cmds := clustersTab.Update(keys.Key(tea.KeyEnter))
+			clustersTab.Update(tests.Key(tea.KeyDown))
+			clustersTab.Update(tests.Key(tea.KeyF2))
+			clustersTab.Update(tests.Key('d'))
+			cmds := clustersTab.Update(tests.Key(tea.KeyEnter))
 			msgs := executeBatchCmd(cmds)
 			for _, msg := range msgs {
 				clustersTab.Update(msg)
 			}
 
 			// then
-			render = clustersTab.View(programKtx, ui.TestRenderer)
+			render = clustersTab.View(programKtx, tests.TestRenderer)
 			assert.NotContains(t, render, "tst")
 		})
 
@@ -341,19 +340,19 @@ func TestClustersTab(t *testing.T) {
 			// and
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 			// and table has been initialized
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 
 			// when
-			clustersTab.Update(keys.Key(tea.KeyF2))
-			clustersTab.Update(keys.Key('d'))
-			cmds := clustersTab.Update(keys.Key(tea.KeyEnter))
+			clustersTab.Update(tests.Key(tea.KeyF2))
+			clustersTab.Update(tests.Key('d'))
+			cmds := clustersTab.Update(tests.Key(tea.KeyEnter))
 			msgs := executeBatchCmd(cmds)
 			for _, msg := range msgs {
 				clustersTab.Update(msg)
 			}
 
 			// then
-			render = clustersTab.View(programKtx, ui.TestRenderer)
+			render = clustersTab.View(programKtx, tests.TestRenderer)
 			assert.Contains(t, render, "Unable to delete: active cluster")
 		})
 	})
@@ -392,13 +391,13 @@ func TestClustersTab(t *testing.T) {
 			// given
 			var clustersTab, _ = New(programKtx, mockConnChecker)
 			// and table has been initialized
-			clustersTab.View(programKtx, ui.TestRenderer)
+			clustersTab.View(programKtx, tests.TestRenderer)
 
 			// when
-			clustersTab.Update(keys.Key(tea.KeyCtrlE))
+			clustersTab.Update(tests.Key(tea.KeyCtrlE))
 
 			// then
-			render := clustersTab.View(programKtx, ui.TestRenderer)
+			render := clustersTab.View(programKtx, tests.TestRenderer)
 			assert.Contains(t, render, "> prd")
 			assert.Contains(t, render, "> localhost:9092")
 			assert.Contains(t, render, "> Enable SSL")

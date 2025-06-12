@@ -7,8 +7,7 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"testing"
 )
 
@@ -41,7 +40,7 @@ func TestCreateClusterPage(t *testing.T) {
 		createEnvPage := NewForm(mockConnChecker, mockClusterRegisterer{}, &ktx)
 
 		// then
-		render := createEnvPage.View(&ktx, ui.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.TestRenderer)
 		assert.Contains(t, render, "No clusters configured. Please create your first cluster!")
 	})
 
@@ -60,7 +59,7 @@ func TestCreateClusterPage(t *testing.T) {
 					},
 				},
 			},
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 		assert.NotContains(t, render, "No clusters configured. Please create your first cluster!")
 	})
 
@@ -69,10 +68,10 @@ func TestCreateClusterPage(t *testing.T) {
 		createEnvPage := NewForm(mockConnChecker, mockClusterRegisterer{}, &ktx)
 
 		// when
-		createEnvPage.Update(keys.Key(tea.KeyEnter))
+		createEnvPage.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := createEnvPage.View(&ktx, ui.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.TestRenderer)
 		assert.Contains(t, render, "name cannot be empty")
 	})
 
@@ -102,11 +101,11 @@ func TestCreateClusterPage(t *testing.T) {
 		})
 
 		// when
-		keys.UpdateKeys(createEnvPage, "prd")
-		createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "prd")
+		createEnvPage.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := createEnvPage.View(&ktx, ui.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.TestRenderer)
 		assert.Contains(t, render, "cluster prd already exists, name most be unique")
 	})
 
@@ -141,31 +140,31 @@ func TestCreateClusterPage(t *testing.T) {
 			})
 
 			// when
-			cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+			cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 			createEnvPage.Update(cmd())
 			// and: select Color
-			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 			createEnvPage.Update(cmd())
 			// and: Host is entered
 			for i := 0; i < len("localhost:9092"); i++ {
-				createEnvPage.Update(keys.Key(tea.KeyBackspace))
+				createEnvPage.Update(tests.Key(tea.KeyBackspace))
 			}
-			keys.UpdateKeys(createEnvPage, "localhost:9091")
-			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(createEnvPage, "localhost:9091")
+			cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 			// next field
 			createEnvPage.Update(cmd())
 			// and: auth method none is selected
-			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 			// next field
 			cmd = createEnvPage.Update(cmd())
 			// and: select SSL disabled
-			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 			// next field
 			cmd = createEnvPage.Update(cmd())
 			// next group
 			createEnvPage.Update(cmd())
 			// and: select disabled schema registry and in doing so submitting the form
-			msgs := keys.Submit(createEnvPage)
+			msgs := tests.Submit(createEnvPage)
 
 			// then
 			assert.Len(t, msgs, 1)
@@ -211,15 +210,15 @@ func TestCreateClusterPage(t *testing.T) {
 
 			// when
 			// delete existing prd name
-			createEnvPage.Update(keys.Key(tea.KeyBackspace))
-			createEnvPage.Update(keys.Key(tea.KeyBackspace))
-			createEnvPage.Update(keys.Key(tea.KeyBackspace))
+			createEnvPage.Update(tests.Key(tea.KeyBackspace))
+			createEnvPage.Update(tests.Key(tea.KeyBackspace))
+			createEnvPage.Update(tests.Key(tea.KeyBackspace))
 			// enter already existing tst name
-			keys.UpdateKeys(createEnvPage, "tst")
-			createEnvPage.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(createEnvPage, "tst")
+			createEnvPage.Update(tests.Key(tea.KeyEnter))
 
 			// then
-			render := createEnvPage.View(&ktx, ui.TestRenderer)
+			render := createEnvPage.View(&ktx, tests.TestRenderer)
 			assert.Contains(t, render, "cluster tst already exists, name most be unique")
 		})
 	})
@@ -240,18 +239,18 @@ func TestCreateClusterPage(t *testing.T) {
 			},
 		})
 		// and: enter name
-		keys.UpdateKeys(createEnvPage, "TST")
-		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: select Color
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 
 		// when
-		createEnvPage.Update(keys.Key(tea.KeyEnter))
+		createEnvPage.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := createEnvPage.View(&ktx, ui.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.TestRenderer)
 		assert.Contains(t, render, "Host cannot be empty")
 	})
 
@@ -271,31 +270,31 @@ func TestCreateClusterPage(t *testing.T) {
 			},
 		})
 		// and: enter name
-		keys.UpdateKeys(createEnvPage, "TST")
-		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// select Primary
-		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: select Color
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// and: Host is entered
-		keys.UpdateKeys(createEnvPage, "localhost:9092")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "localhost:9092")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: auth method none is selected
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// and: select SSL disabled
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// next group
 		createEnvPage.Update(cmd())
 		// and: select disabled schema registry and in doing so submitting the form
-		msgs := keys.Submit(createEnvPage)
+		msgs := tests.Submit(createEnvPage)
 
 		// then
 		assert.Len(t, msgs, 1)
@@ -327,29 +326,29 @@ func TestCreateClusterPage(t *testing.T) {
 		}
 		createEnvPage := NewForm(mockConnChecker, mockClusterRegisterer{}, &programKtx)
 		// and: enter name
-		keys.UpdateKeys(createEnvPage, "TST")
-		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// select Primary
-		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: select Color
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// and: Host is entered
-		keys.UpdateKeys(createEnvPage, "localhost:9092")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "localhost:9092")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		createEnvPage.Update(cmd())
 		// and: SSL is disabled
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// and: auth method SASL is selected
-		createEnvPage.Update(keys.Key(tea.KeyDown))
+		createEnvPage.Update(tests.Key(tea.KeyDown))
 
 		// then
-		render := createEnvPage.View(&programKtx, ui.TestRenderer)
+		render := createEnvPage.View(&programKtx, tests.TestRenderer)
 		assert.Contains(t, render, "SASL_PLAINTEXT")
 		assert.Contains(t, render, "Username")
 		assert.Contains(t, render, "Password")
@@ -372,31 +371,31 @@ func TestCreateClusterPage(t *testing.T) {
 		}
 		createEnvPage := NewForm(mockConnChecker, mockClusterRegisterer{}, &programKtx)
 		// and: enter name
-		keys.UpdateKeys(createEnvPage, "TST")
-		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// select Primary
-		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: select Color
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// and: Host is entered
-		keys.UpdateKeys(createEnvPage, "localhost:9092")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "localhost:9092")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: auth method none is selected
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// go back to auth method
-		cmd = createEnvPage.Update(keys.Key(tea.KeyShiftTab))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyShiftTab))
 		cmd = createEnvPage.Update(cmd())
-		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
 
 		// then
-		render := createEnvPage.View(&programKtx, ui.TestRenderer)
+		render := createEnvPage.View(&programKtx, tests.TestRenderer)
 		assert.NotContains(t, render, "Username")
 		assert.NotContains(t, render, "Password")
 	})
@@ -418,47 +417,47 @@ func TestCreateClusterPage(t *testing.T) {
 		}
 		createEnvPage := NewForm(mockConnChecker, mockClusterRegisterer{}, &programKtx)
 		// and: enter name
-		keys.UpdateKeys(createEnvPage, "TST")
-		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// select Primary
-		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: select Color
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// and: Host is entered
-		keys.UpdateKeys(createEnvPage, "localhost:9092")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "localhost:9092")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: SSL is enabled
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// and: auth method SASL is selected
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		createEnvPage.Update(cmd())
 		// and: security protocol SASL_PLAINTEXT
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		createEnvPage.Update(cmd())
 		// and: enter SASL username
-		keys.UpdateKeys(createEnvPage, "username")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "username")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: enter SASL password
-		keys.UpdateKeys(createEnvPage, "password")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "password")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// next group
 		createEnvPage.Update(cmd())
 		// submit
-		msgs := keys.Submit(createEnvPage)
+		msgs := tests.Submit(createEnvPage)
 
 		// then
 		assert.Len(t, msgs, 1)
@@ -496,45 +495,45 @@ func TestCreateClusterPage(t *testing.T) {
 		}
 		createEnvPage := NewForm(mockConnChecker, mockClusterRegisterer{}, &programKtx)
 		// and: enter name
-		keys.UpdateKeys(createEnvPage, "TST")
-		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// select Primary
-		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: select Color
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// and: Host is entered
-		keys.UpdateKeys(createEnvPage, "localhost:9092")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "localhost:9092")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: auth method none is selected
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// and: select SSL enabled
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		createEnvPage.Update(cmd())
 		// and: select SASL_SSL security protocol
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: enter SASL username
-		keys.UpdateKeys(createEnvPage, "username")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "username")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: enter SASL password
-		keys.UpdateKeys(createEnvPage, "password")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "password")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// next group
 		createEnvPage.Update(cmd())
 		// submit
-		msgs := keys.Submit(createEnvPage)
+		msgs := tests.Submit(createEnvPage)
 
 		// then
 		assert.Len(t, msgs, 1)
@@ -572,72 +571,72 @@ func TestCreateClusterPage(t *testing.T) {
 		}
 		createEnvPage := NewForm(mockConnChecker, mockClusterRegisterer{}, &programKtx)
 		// and: enter name
-		keys.UpdateKeys(createEnvPage, "TST")
-		cmd := createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "TST")
+		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// select Primary
-		cmd = createEnvPage.Update(keys.Key(tea.KeyUp))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: select Color
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// and: Host is entered
-		keys.UpdateKeys(createEnvPage, "localhost:9092")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "localhost:9092")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: SSL is enabled
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// and: auth method SASL is selected
-		cmd = createEnvPage.Update(keys.Key(tea.KeyDown))
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyDown))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// and: SASL_PLAINTEXT protocol is selected
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// and: enter SASL username
-		keys.UpdateKeys(createEnvPage, "username")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "username")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		createEnvPage.Update(cmd())
 		// and: enter SASL password
-		keys.UpdateKeys(createEnvPage, "password")
-		cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(createEnvPage, "password")
+		cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 		// next field
 		cmd = createEnvPage.Update(cmd())
 		// next group
 		createEnvPage.Update(cmd())
 		// select schema-registry enabled
-		createEnvPage.Update(keys.Key(tea.KeyDown))
+		createEnvPage.Update(tests.Key(tea.KeyDown))
 
-		render := createEnvPage.View(&ktx, ui.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.TestRenderer)
 		assert.Contains(t, render, "Schema Registry URL")
 		assert.Contains(t, render, "Schema Registry Username")
 		assert.Contains(t, render, "Schema Registry Password")
 
 		t.Run("Filling in the credentials and submitting creates the cluster", func(t *testing.T) {
-			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 			// next field
 			createEnvPage.Update(cmd())
 
 			// url
-			keys.UpdateKeys(createEnvPage, "sr-url")
-			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(createEnvPage, "sr-url")
+			cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 			// next field
 			createEnvPage.Update(cmd())
 
 			// username
-			keys.UpdateKeys(createEnvPage, "sr-user")
-			cmd = createEnvPage.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(createEnvPage, "sr-user")
+			cmd = createEnvPage.Update(tests.Key(tea.KeyEnter))
 			// next field
 			createEnvPage.Update(cmd())
 
 			// pwd
-			keys.UpdateKeys(createEnvPage, "sr-pwd")
-			msgs := keys.Submit(createEnvPage)
+			tests.UpdateKeys(createEnvPage, "sr-pwd")
+			msgs := tests.Submit(createEnvPage)
 
 			// then
 			assert.Len(t, msgs, 1)
@@ -697,7 +696,7 @@ func TestCreateClusterPage(t *testing.T) {
 		createEnvPage.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := createEnvPage.View(programKtx, ui.TestRenderer)
+		render := createEnvPage.View(programKtx, tests.TestRenderer)
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 
@@ -709,7 +708,7 @@ func TestCreateClusterPage(t *testing.T) {
 		createEnvPage.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := createEnvPage.View(&ktx, ui.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.TestRenderer)
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 

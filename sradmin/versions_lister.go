@@ -8,7 +8,7 @@ import (
 
 type Schema struct {
 	Id      string
-	Schema  string
+	Value   string
 	Version int
 	Err     error
 }
@@ -53,7 +53,7 @@ func (s *DefaultSrAdmin) ListVersions(subject string, versions []int) tea.Msg {
 			if err == nil {
 				schemaChan <- Schema{
 					Id:      strconv.Itoa(schema.ID()),
-					Schema:  schema.Schema(),
+					Value:   schema.Schema(),
 					Version: version,
 				}
 			} else {

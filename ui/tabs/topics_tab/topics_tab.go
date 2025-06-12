@@ -71,7 +71,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 
 	case nav.LoadRecordDetailPageMsg:
-		m.active = record_details_page.New(msg.Record, msg.TopicName, clipper.New())
+		m.active = record_details_page.New(msg.Record, msg.TopicName, clipper.New(), m.ktx)
 		m.recordDetailsPage = m.active
 
 	case nav.LoadTopicConfigPageMsg:

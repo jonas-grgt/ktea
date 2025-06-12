@@ -6,8 +6,6 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
-	"ktea/tests/keys"
-	"ktea/ui"
 	"strings"
 	"testing"
 )
@@ -32,13 +30,13 @@ func TestTopicsPage(t *testing.T) {
 	t.Run("Ignore KeyMsg when topics aren't loaded yet", func(t *testing.T) {
 		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
 
-		cmd := page.Update(keys.Key(tea.KeyCtrlN))
+		cmd := page.Update(tests.Key(tea.KeyCtrlN))
 		assert.NotNil(t, cmd)
 
-		cmd = page.Update(keys.Key(tea.KeyCtrlI))
+		cmd = page.Update(tests.Key(tea.KeyCtrlI))
 		assert.Nil(t, cmd)
 
-		cmd = page.Update(keys.Key(tea.KeyCtrlP))
+		cmd = page.Update(tests.Key(tea.KeyCtrlP))
 		assert.Nil(t, cmd)
 	})
 
@@ -55,7 +53,7 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		cmd := page.Update(keys.Key(tea.KeyF5))
+		cmd := page.Update(tests.Key(tea.KeyF5))
 
 		assert.Contains(t, tests.ExecuteBatchCmd(cmd), ListTopicsCalledMsg{})
 	})
@@ -83,7 +81,7 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▲ Name")
 	})
@@ -111,11 +109,11 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		page.Update(keys.Key(tea.KeyF3))
-		page.Update(keys.Key(tea.KeyEnter))
-		render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyF3))
+		page.Update(tests.Key(tea.KeyEnter))
+		render := page.View(tests.NewKontext(), tests.TestRenderer)
 
-		render = page.View(ui.NewTestKontext(), ui.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▼ Name")
 
@@ -151,10 +149,10 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		page.Update(keys.Key(tea.KeyF3))
-		page.Update(keys.Key(tea.KeyRight))
-		page.Update(keys.Key(tea.KeyEnter))
-		render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyF3))
+		page.Update(tests.Key(tea.KeyRight))
+		page.Update(tests.Key(tea.KeyEnter))
+		render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.NotContains(t, render, "▲ Name")
 		assert.Contains(t, render, "▼ Part")
@@ -167,8 +165,8 @@ func TestTopicsPage(t *testing.T) {
 		assert.Less(t, t3Idx, t1Idx)
 		assert.Less(t, t2Idx, t1Idx)
 
-		page.Update(keys.Key(tea.KeyEnter))
-		render = page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyEnter))
+		render = page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▲ Part")
 
@@ -204,11 +202,11 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		page.Update(keys.Key(tea.KeyF3))
-		page.Update(keys.Key(tea.KeyRight))
-		page.Update(keys.Key(tea.KeyRight))
-		page.Update(keys.Key(tea.KeyEnter))
-		render := page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyF3))
+		page.Update(tests.Key(tea.KeyRight))
+		page.Update(tests.Key(tea.KeyRight))
+		page.Update(tests.Key(tea.KeyEnter))
+		render := page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.NotContains(t, render, "▲ Name")
 		assert.Contains(t, render, "▼ Repl")
@@ -221,8 +219,8 @@ func TestTopicsPage(t *testing.T) {
 		assert.Less(t, t3Idx, t1Idx)
 		assert.Less(t, t2Idx, t1Idx)
 
-		page.Update(keys.Key(tea.KeyEnter))
-		render = page.View(ui.NewTestKontext(), ui.TestRenderer)
+		page.Update(tests.Key(tea.KeyEnter))
+		render = page.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "▲ Repl")
 
@@ -261,17 +259,17 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		page.Update(keys.Key(tea.KeyF3))
-		page.Update(keys.Key(tea.KeyRight))
-		page.Update(keys.Key(tea.KeyRight))
-		page.Update(keys.Key(tea.KeyRight))
-		page.Update(keys.Key(tea.KeyEnter))
+		page.Update(tests.Key(tea.KeyF3))
+		page.Update(tests.Key(tea.KeyRight))
+		page.Update(tests.Key(tea.KeyRight))
+		page.Update(tests.Key(tea.KeyRight))
+		page.Update(tests.Key(tea.KeyEnter))
 		render := page.View(&kontext.ProgramKtx{
 			Config:          nil,
 			WindowWidth:     200,
 			WindowHeight:    200,
 			AvailableHeight: 200,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		assert.NotContains(t, render, "▲ Name")
 		assert.Contains(t, render, "▼ ~ Record Count")
@@ -284,13 +282,13 @@ func TestTopicsPage(t *testing.T) {
 		assert.Less(t, t1Idx, t3Idx)
 		assert.Less(t, t3Idx, t2Idx)
 
-		page.Update(keys.Key(tea.KeyEnter))
+		page.Update(tests.Key(tea.KeyEnter))
 		render = page.View(&kontext.ProgramKtx{
 			Config:          nil,
 			WindowWidth:     200,
 			WindowHeight:    200,
 			AvailableHeight: 200,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		assert.Contains(t, render, "▲ ~ Record Count")
 

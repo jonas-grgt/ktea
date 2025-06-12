@@ -3,7 +3,7 @@ package consumption_page
 import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
-	"ktea/ui"
+	"ktea/tests"
 	"ktea/ui/components/statusbar"
 	"testing"
 )
@@ -14,7 +14,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(kadmin.EmptyTopicMsg{})
 
-		render := m.View(ui.NewTestKontext(), ui.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.TestRenderer)
 
 		assert.Contains(t, render, "Empty topic")
 

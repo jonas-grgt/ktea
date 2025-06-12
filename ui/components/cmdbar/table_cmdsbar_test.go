@@ -3,8 +3,7 @@ package cmdbar
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"testing"
 )
 
@@ -47,52 +46,52 @@ func TestTableCmdsBar(t *testing.T) {
 
 		selection := "SelectedTopic"
 
-		cmdBar.Update(keys.Key(tea.KeyF2), &selection)
-		render := cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF2), &selection)
+		render := cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "The rabbit will be deleted")
 
-		cmdBar.Update(keys.Key(tea.KeyF3), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF3), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "Name ▼")
 
-		cmdBar.Update(keys.Key(tea.KeyF2), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF2), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "The rabbit will be deleted")
 
-		cmdBar.Update(keys.Key('/'), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key('/'), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "┃ >")
 
-		cmdBar.Update(keys.Key(tea.KeyF3), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF3), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "Name ▼")
 
-		cmdBar.Update(keys.Key('/'), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key('/'), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "┃ >")
 
-		cmdBar.Update(keys.Key('/'), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key('/'), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.NotContains(t, render, "┃ >")
 
-		cmdBar.Update(keys.Key(tea.KeyF2), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF2), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "The rabbit will be deleted")
 
-		cmdBar.Update(keys.Key('/'), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key('/'), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "┃ >")
 
-		cmdBar.Update(keys.Key(tea.KeyF3), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF3), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "Name ▼")
 
-		cmdBar.Update(keys.Key(tea.KeyF2), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF2), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.Contains(t, render, "The rabbit will be deleted")
 
-		cmdBar.Update(keys.Key(tea.KeyF2), &selection)
-		render = cmdBar.View(ui.TestKontext, ui.TestRenderer)
+		cmdBar.Update(tests.Key(tea.KeyF2), &selection)
+		render = cmdBar.View(tests.TestKontext, tests.TestRenderer)
 		assert.NotContains(t, render, "The rabbit will be deleted")
 		assert.NotContains(t, render, "┃ >")
 		assert.NotContains(t, render, "Name ▼")

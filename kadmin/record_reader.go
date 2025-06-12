@@ -122,7 +122,7 @@ type Header struct {
 
 type ConsumerRecord struct {
 	Key       string
-	Value     string
+	Payload   serdes.DesData
 	Err       error
 	Partition int64
 	Offset    int64
@@ -215,19 +215,19 @@ func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea
 							})
 						}
 
-						var value string
+						var desData serdes.DesData
 						key := string(msg.Key)
-						value, err = ka.deserialize(msg)
+						desData, err = ka.deserialize(msg)
 
 						if rd.Filter != nil && err == nil {
-							if !ka.matchesFilter(key, value, rd.Filter) {
+							if !ka.matchesFilter(key, desData.Value, rd.Filter) {
 								continue
 							}
 						}
 
 						consumerRecord := ConsumerRecord{
 							Key:       key,
-							Value:     value,
+							Payload:   desData,
 							Err:       err,
 							Partition: int64(msg.Partition),
 							Offset:    msg.Offset,
@@ -294,7 +294,7 @@ func (ka *SaramaKafkaAdmin) matchesFilter(key, value string, filterDetails *Filt
 
 func (ka *SaramaKafkaAdmin) deserialize(
 	msg *sarama.ConsumerMessage,
-) (string, error) {
+) (serdes.DesData, error) {
 	deserializer := serdes.NewAvroDeserializer(ka.sra)
 	return deserializer.Deserialize(msg.Value)
 }

@@ -58,7 +58,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 					Bold(true).
 					Render(m.activeSchema.Id)))
 
-			m.vp.SetContent(ui.PrettyPrintJson(m.activeSchema.Schema))
+			m.vp.SetContent(ui.PrettyPrintJson(m.activeSchema.Value))
 			views = append(views, renderer.RenderWithStyle(m.vp.View(), styles.TextViewPort))
 		}
 	}

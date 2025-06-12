@@ -5,8 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/kontext"
-	"ktea/tests/keys"
-	"ktea/ui"
+	"ktea/tests"
 	"ktea/ui/components/notifier"
 	"ktea/ui/pages/nav"
 	"testing"
@@ -56,7 +55,7 @@ func TestPublish(t *testing.T) {
 			Replicas:       1,
 		})
 
-		cmd := m.Update(keys.Key(tea.KeyEsc))
+		cmd := m.Update(tests.Key(tea.KeyEsc))
 
 		assert.IsType(t, nav.LoadTopicsPageMsg{}, cmd())
 	})
@@ -77,30 +76,30 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		// Key
-		keys.UpdateKeys(m, "key")
-		cmd := m.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(m, "key")
+		cmd := m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// Partition
-		keys.UpdateKeys(m, "2")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(m, "2")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// headers
-		keys.UpdateKeys(m, "id=123")
-		cmd = m.Update(keys.KeyWithAlt(tea.KeyEnter))
-		keys.UpdateKeys(m, "user=456")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "id=123")
+		cmd = m.Update(tests.KeyWithAlt(tea.KeyEnter))
+		tests.UpdateKeys(m, "user=456")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
-		keys.UpdateKeys(m, "payload")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "payload")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
-		keys.Submit(m)
+		tests.Submit(m)
 
 		assert.Equal(t, "key", producerRecord.Key)
 		assert.Equal(t, "topic1", producerRecord.Topic)
@@ -130,34 +129,34 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		// Key
-		keys.UpdateKeys(m, "key")
-		cmd := m.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(m, "key")
+		cmd := m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// Partition
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// headers
-		keys.UpdateKeys(m, "id=123")
-		cmd = m.Update(keys.KeyWithAlt(tea.KeyEnter))
-		keys.UpdateKeys(m, "user=456")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "id=123")
+		cmd = m.Update(tests.KeyWithAlt(tea.KeyEnter))
+		tests.UpdateKeys(m, "user=456")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
 		// payload
-		keys.UpdateKeys(m, "payload")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "payload")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
-		keys.Submit(m)
+		tests.Submit(m)
 
 		m.Update(kadmin.PublicationSucceeded{})
 
-		render := m.View(ui.TestKontext, ui.TestRenderer)
+		render := m.View(tests.TestKontext, tests.TestRenderer)
 
 		assert.Regexp(t, "Key\\W+Payload\\W+\n.*1.*\n\\W+>\\W+\n", render)
 		assert.Regexp(t, "Partition\\W+\n.*\n\\W+>\\W+\n", render)
@@ -180,27 +179,27 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		// Key
-		keys.UpdateKeys(m, "key")
-		cmd := m.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(m, "key")
+		cmd := m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// Partition
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// headers
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
 		// payload
-		keys.UpdateKeys(m, "payload")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "payload")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
-		keys.Submit(m)
+		tests.Submit(m)
 
 		assert.Equal(t, "key", producerRecord.Key)
 		assert.Equal(t, "topic1", producerRecord.Topic)
@@ -223,7 +222,7 @@ func TestPublish(t *testing.T) {
 		msgs := executeBatchCmd(cmds)
 
 		t.Run("displays success notification", func(t *testing.T) {
-			render := m.View(ui.TestKontext, ui.TestRenderer)
+			render := m.View(tests.TestKontext, tests.TestRenderer)
 			assert.Contains(t, render, "🎉 Record published!")
 			assert.Contains(t, msgs, notifier.HideNotificationMsg{})
 		})
@@ -232,7 +231,7 @@ func TestPublish(t *testing.T) {
 			cmds := m.Update(notifier.HideNotificationMsg{})
 			executeBatchCmd(cmds)
 
-			render := m.View(ui.TestKontext, ui.TestRenderer)
+			render := m.View(tests.TestKontext, tests.TestRenderer)
 			assert.NotContains(t, render, "🎉 Record published!")
 		})
 	})
@@ -251,32 +250,32 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, ui.TestRenderer)
+		}, tests.TestRenderer)
 
 		// Key
-		keys.UpdateKeys(m, "key")
-		cmd := m.Update(keys.Key(tea.KeyEnter))
+		tests.UpdateKeys(m, "key")
+		cmd := m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// Partition
-		cmd = m.Update(keys.Key(tea.KeyEnter))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
 
 		// headers
-		keys.UpdateKeys(m, "id=123")
-		cmd = m.Update(keys.KeyWithAlt(tea.KeyEnter))
-		keys.UpdateKeys(m, "user=456")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "id=123")
+		cmd = m.Update(tests.KeyWithAlt(tea.KeyEnter))
+		tests.UpdateKeys(m, "user=456")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
 		// payload
-		keys.UpdateKeys(m, "payload")
-		cmd = m.Update(keys.Key(tea.KeyEnter))
-		keys.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "payload")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
 
-		m.Update(keys.Key(tea.KeyCtrlR))
+		m.Update(tests.Key(tea.KeyCtrlR))
 
-		render := m.View(ui.TestKontext, ui.TestRenderer)
+		render := m.View(tests.TestKontext, tests.TestRenderer)
 
 		assert.Regexp(t, "Key\\W+Payload\\W+\n.*1.*\n\\W+>\\W+\n", render)
 		assert.Regexp(t, "Partition\\W+\n.*\n\\W+>\\W+\n", render)
@@ -295,19 +294,19 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 			// Key
-			keys.UpdateKeys(m, "key")
-			cmd := m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "key")
+			cmd := m.Update(tests.Key(tea.KeyEnter))
 			m.Update(cmd())
 			// Partition
-			keys.UpdateKeys(m, "a1")
-			m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "a1")
+			m.Update(tests.Key(tea.KeyEnter))
 
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 			assert.Contains(t, render, "'a1' is not a valid numeric partition value")
 		})
 
@@ -321,19 +320,19 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 			// Key
-			keys.UpdateKeys(m, "key")
-			cmd := m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "key")
+			cmd := m.Update(tests.Key(tea.KeyEnter))
 			m.Update(cmd())
 			// Partition
-			keys.UpdateKeys(m, "-1")
-			m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "-1")
+			m.Update(tests.Key(tea.KeyEnter))
 
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 			assert.Contains(t, render, "value must be at least zero")
 		})
 
@@ -347,19 +346,19 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 			// Key
-			keys.UpdateKeys(m, "key")
-			cmd := m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "key")
+			cmd := m.Update(tests.Key(tea.KeyEnter))
 			m.Update(cmd())
 			// Partition
-			keys.UpdateKeys(m, "0")
-			m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "0")
+			m.Update(tests.Key(tea.KeyEnter))
 
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 
 			assert.Regexp(t, "┃ Partition.\\W+\n.*\n\\W+┃ > 0", render)
 			assert.NotContains(t, render, "value must be at least zero")
@@ -375,19 +374,19 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 			// Key
-			keys.UpdateKeys(m, "key")
-			cmd := m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "key")
+			cmd := m.Update(tests.Key(tea.KeyEnter))
 			m.Update(cmd())
 			// Partition
-			keys.UpdateKeys(m, "10")
-			m.Update(keys.Key(tea.KeyEnter))
+			tests.UpdateKeys(m, "10")
+			m.Update(tests.Key(tea.KeyEnter))
 
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, ui.TestRenderer)
+			}, tests.TestRenderer)
 			assert.Contains(t, render, "partition index 10 is invalid, valid range is 0-4")
 		})
 	})

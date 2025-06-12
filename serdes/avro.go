@@ -15,11 +15,16 @@ type GoAvroAvroDeserializer struct {
 	sra      sradmin.SrAdmin
 }
 
+type DesData struct {
+	Value  string
+	Schema string
+}
+
 var ErrNoSchemaRegistry = errors.New("no schema registry configured")
 
-func (d *GoAvroAvroDeserializer) Deserialize(data []byte) (string, error) {
+func (d *GoAvroAvroDeserializer) Deserialize(data []byte) (DesData, error) {
 	if data == nil || len(data) == 0 {
-		return "", nil
+		return DesData{}, nil
 	}
 
 	schemaId, isAvro := isAvroWithSchemaID(data)
@@ -27,30 +32,30 @@ func (d *GoAvroAvroDeserializer) Deserialize(data []byte) (string, error) {
 	if isAvro {
 
 		if d.sra == nil {
-			return "", fmt.Errorf("avro deserialization failed: %w", ErrNoSchemaRegistry)
+			return DesData{}, fmt.Errorf("avro deserialization failed: %w", ErrNoSchemaRegistry)
 		}
 
 		if schema, err := d.getSchema(schemaId); err != nil {
-			return "", err
+			return DesData{}, err
 		} else {
 			var codec *goavro.Codec
-			if codec, err = goavro.NewCodec(schema.Schema); err != nil {
-				return "", err
+			if codec, err = goavro.NewCodec(schema.Value); err != nil {
+				return DesData{}, err
 			}
 
 			deserData, _, err := codec.NativeFromBinary(data[5:])
 			if err != nil {
-				return "", err
+				return DesData{}, err
 			}
 
 			jsonData, err := json.Marshal(deserData)
 			if err != nil {
-				return "", err
+				return DesData{}, err
 			}
-			return string(jsonData), nil
+			return DesData{string(jsonData), schema.Value}, nil
 		}
 	} else {
-		return string(data), nil
+		return DesData{Value: string(data)}, nil
 	}
 
 }

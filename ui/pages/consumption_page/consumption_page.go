@@ -2,6 +2,7 @@ package consumption_page
 
 import (
 	"context"
+	"fmt"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -45,14 +46,23 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 			Render("👀 Empty topic"))
 	} else if len(m.rows) > 0 {
 		m.table.SetColumns([]table.Column{
-			{Title: "Key", Width: int(float64(ktx.WindowWidth-7) * 0.5)},
-			{Title: "Timestamp", Width: int(float64(ktx.WindowWidth-7) * 0.30)},
-			{Title: "Partition", Width: int(float64(ktx.WindowWidth-7) * 0.10)},
-			{Title: "Offset", Width: int(float64(ktx.WindowWidth-7) * 0.10)},
+			{Title: "Key", Width: int(float64(ktx.WindowWidth-9) * 0.5)},
+			{Title: "Timestamp", Width: int(float64(ktx.WindowWidth-9) * 0.30)},
+			{Title: "Partition", Width: int(float64(ktx.WindowWidth-9) * 0.10)},
+			{Title: "Offset", Width: int(float64(ktx.WindowWidth-9) * 0.10)},
 		})
 		m.table.SetHeight(ktx.AvailableHeight - 2)
 		m.table.SetRows(m.rows)
-		borderedView := styles.Borderize(m.table.View(), true, nil)
+
+		embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
+			styles.TopMiddleBorder: func(active bool) string {
+				return lipgloss.NewStyle().
+					Foreground(lipgloss.Color(styles.ColorPink)).
+					Bold(true).
+					Render(fmt.Sprintf("Records: %d", len(m.rows)))
+			},
+		}
+		borderedView := styles.Borderize(m.table.View(), true, embeddedText)
 		views = append(views, borderedView)
 	}
 
