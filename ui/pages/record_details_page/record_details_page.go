@@ -13,6 +13,7 @@ import (
 	"ktea/styles"
 	"ktea/ui"
 	"ktea/ui/clipper"
+	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
@@ -25,26 +26,32 @@ import (
 )
 
 type focus bool
+type state bool
 
 const (
-	payloadFocus focus = true
-	headersFocus focus = false
+	mainViewFocus    focus = true
+	headersViewFocus focus = false
+	recordView       state = true
+	schemaView       state = false
 )
 
 type Model struct {
 	notifierCmdbar *cmdbar.NotifierCmdBar
 	record         *kadmin.ConsumerRecord
-	payloadVp      *viewport.Model
+	recordVp       *viewport.Model
 	headerValueVp  *viewport.Model
 	topicName      string
 	headerKeyTable *table.Model
 	headerRows     []table.Row
 	focus          focus
+	state          state
 	payload        string
 	err            error
 	metaInfo       string
 	clipWriter     clipper.Writer
 	config         *config.Config
+	schemaVp       *viewport.Model
+	border         *border.Model
 }
 
 type PayloadCopiedMsg struct {
@@ -58,30 +65,26 @@ type CopyErrorMsg struct {
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
-	contentStyle, headersTableStyle := m.determineStyles()
 
 	notifierCmdbarView := m.notifierCmdbar.View(ktx, renderer)
 
-	payloadWidth := int(float64(ktx.WindowWidth) * 0.70)
+	width := int(float64(ktx.WindowWidth) * 0.70)
 	height := ktx.AvailableHeight - 2
 
-	m.createPayloadViewPort(payloadWidth, height)
-	contentView := renderer.RenderWithStyle(m.payloadVp.View(), contentStyle)
-
-	headerSideBar := m.createSidebar(ktx, payloadWidth, height, headersTableStyle)
+	mainView := m.mainView(width, height)
+	sidebarView := m.sidebarView(ktx, width, height)
 
 	return ui.JoinVertical(
 		lipgloss.Top,
 		notifierCmdbarView,
-		lipgloss.JoinHorizontal(
+		lipgloss.NewStyle().Render(lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			contentView,
-			headerSideBar,
-		))
+			m.border.View(mainView),
+			sidebarView)))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
-	if m.payloadVp == nil && m.err == nil {
+	if m.recordVp == nil && m.err == nil {
 		return nil
 	}
 
@@ -96,11 +99,17 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		case "esc":
 			return ui.PublishMsg(nav.LoadCachedConsumptionPageMsg{})
 		case "ctrl+h", "left", "right":
-			m.focus = !m.focus
+			if len(m.record.Headers) >= 1 {
+				m.focus = !m.focus
+				m.border.Focused = m.focus == mainViewFocus
+			}
 		case "c":
 			cmds = m.handleCopy(cmds)
-		case "ctrl+s":
-			m.focus = !m.focus
+		case "tab":
+			if m.record.Payload.Schema != "" && m.focus == mainViewFocus {
+				m.state = !m.state
+				m.border.NextTab()
+			}
 		default:
 			cmds = m.updatedFocussedArea(msg, cmds)
 		}
@@ -109,7 +118,35 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m *Model) createSidebar(ktx *kontext.ProgramKtx, payloadWidth int, height int, headersTableStyle lipgloss.Style) string {
+func (m *Model) mainView(width int, height int) string {
+	var mainView string
+	if m.state == recordView {
+		mainView = m.recordView(width, height)
+	} else {
+		mainView = m.schemaView(width, height)
+	}
+
+	return mainView
+}
+
+func (m *Model) schemaView(width int, height int) string {
+	if m.schemaVp == nil {
+		schemaVp := viewport.New(width, height)
+		m.schemaVp = &schemaVp
+		if m.err == nil {
+			m.schemaVp.SetContent(lipgloss.NewStyle().
+				Padding(0, 1).
+				Render(ui.PrettyPrintJson(m.record.Payload.Schema)))
+		}
+	} else {
+		m.schemaVp.Height = height
+		m.schemaVp.Width = width
+	}
+	return m.schemaVp.View()
+}
+
+func (m *Model) sidebarView(ktx *kontext.ProgramKtx, payloadWidth int, height int) string {
+	headersTableStyle := m.headerStyle()
 	sideBarWidth := ktx.WindowWidth - (payloadWidth + 7)
 
 	var headerSideBar string
@@ -159,14 +196,16 @@ func (m *Model) selectedHeaderValue() string {
 	return ""
 }
 
-func (m *Model) createPayloadViewPort(payloadWidth int, height int) {
-	if m.payloadVp == nil {
-		payloadVp := viewport.New(payloadWidth, height)
-		m.payloadVp = &payloadVp
+func (m *Model) recordView(payloadWidth int, height int) string {
+	if m.recordVp == nil {
+		recordVp := viewport.New(payloadWidth, height)
+		m.recordVp = &recordVp
 		if m.err == nil {
-			m.payloadVp.SetContent(m.payload)
+			m.recordVp.SetContent(lipgloss.NewStyle().
+				Padding(0, 1).
+				Render(m.payload))
 		} else {
-			m.payloadVp.SetContent(lipgloss.NewStyle().
+			m.recordVp.SetContent(lipgloss.NewStyle().
 				AlignHorizontal(lipgloss.Center).
 				AlignVertical(lipgloss.Center).
 				Width(payloadWidth).
@@ -178,38 +217,32 @@ func (m *Model) createPayloadViewPort(payloadWidth int, height int) {
 					Render("Unable to render payload")))
 		}
 	} else {
-		m.payloadVp.Height = height
-		m.payloadVp.Width = payloadWidth
+		m.recordVp.Height = height
+		m.recordVp.Width = payloadWidth
 	}
+	return m.recordVp.View()
 }
 
-func (m *Model) determineStyles() (lipgloss.Style, lipgloss.Style) {
-	var contentStyle lipgloss.Style
+func (m *Model) headerStyle() lipgloss.Style {
 	var headersTableStyle lipgloss.Style
-	if m.focus == payloadFocus {
-		contentStyle = lipgloss.NewStyle().
-			Inherit(styles.TextViewPort).
-			BorderForeground(lipgloss.Color(styles.ColorFocusBorder))
+	if m.focus == mainViewFocus {
 		headersTableStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
 			Padding(0).
 			Margin(0).
 			BorderForeground(lipgloss.Color(styles.ColorBlurBorder))
 	} else {
-		contentStyle = lipgloss.NewStyle().
-			Inherit(styles.TextViewPort).
-			BorderForeground(lipgloss.Color(styles.ColorBlurBorder))
 		headersTableStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
 			Padding(0).
 			Margin(0).
 			BorderForeground(lipgloss.Color(styles.ColorFocusBorder))
 	}
-	return contentStyle, headersTableStyle
+	return headersTableStyle
 }
 
 func (m *Model) handleCopy(cmds []tea.Cmd) []tea.Cmd {
-	if m.focus == payloadFocus {
+	if m.focus == mainViewFocus {
 		err := m.clipWriter.Write(ansi.Strip(m.payload))
 		if err != nil {
 			cmds = append(cmds, ui.PublishMsg(CopyErrorMsg{Err: err}))
@@ -233,10 +266,16 @@ func (m *Model) updatedFocussedArea(msg tea.Msg, cmds []tea.Cmd) []tea.Cmd {
 		return cmds
 	}
 
-	if m.focus == payloadFocus {
-		vp, cmd := m.payloadVp.Update(msg)
-		cmds = append(cmds, cmd)
-		m.payloadVp = &vp
+	if m.focus == mainViewFocus {
+		if m.state == recordView {
+			vp, cmd := m.recordVp.Update(msg)
+			cmds = append(cmds, cmd)
+			m.recordVp = &vp
+		} else {
+			vp, cmd := m.schemaVp.Update(msg)
+			cmds = append(cmds, cmd)
+			m.schemaVp = &vp
+		}
 	} else {
 		t, cmd := m.headerKeyTable.Update(msg)
 		cmds = append(cmds, cmd)
@@ -247,7 +286,7 @@ func (m *Model) updatedFocussedArea(msg tea.Msg, cmds []tea.Cmd) []tea.Cmd {
 
 func (m *Model) Shortcuts() []statusbar.Shortcut {
 	whatToCopy := "Header Value"
-	if m.focus == payloadFocus {
+	if m.focus == mainViewFocus {
 		whatToCopy = "Content"
 	}
 	if m.err == nil {
@@ -325,11 +364,19 @@ func New(
 		return true, m.AutoHideCmd("record-details-page")
 	})
 
+	var tabs = []string{}
+	if record.Payload.Schema != "" {
+		tabs = []string{"Record", "Schema"}
+	}
+	b := border.New(
+		border.WithTabs(tabs...),
+		border.WithTitle("AVRO Record"))
+
 	return &Model{
 		record:         record,
 		topicName:      topicName,
 		headerKeyTable: &headersTable,
-		focus:          payloadFocus,
+		focus:          mainViewFocus,
 		headerRows:     headerRows,
 		payload:        payload,
 		err:            err,
@@ -337,5 +384,7 @@ func New(
 		clipWriter:     clipWriter,
 		notifierCmdbar: notifierCmdBar,
 		config:         ktx.Config,
+		state:          recordView,
+		border:         b,
 	}
 }

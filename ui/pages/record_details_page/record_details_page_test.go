@@ -35,23 +35,23 @@ func TestRecordDetailsPage(t *testing.T) {
 		// init ui
 		m.View(tests.TestKontext, tests.TestRenderer)
 
-		assert.Equal(t, payloadFocus, m.focus)
+		assert.Equal(t, mainViewFocus, m.focus)
 
 		m.Update(tests.Key(tea.KeyCtrlH))
 
-		assert.Equal(t, headersFocus, m.focus)
+		assert.Equal(t, headersViewFocus, m.focus)
 
 		m.Update(tests.Key(tea.KeyCtrlH))
 
-		assert.Equal(t, payloadFocus, m.focus)
+		assert.Equal(t, mainViewFocus, m.focus)
 
 		m.Update(tests.Key(tea.KeyRight))
 
-		assert.Equal(t, headersFocus, m.focus)
+		assert.Equal(t, headersViewFocus, m.focus)
 
 		m.Update(tests.Key(tea.KeyLeft))
 
-		assert.Equal(t, payloadFocus, m.focus)
+		assert.Equal(t, mainViewFocus, m.focus)
 	})
 
 	t.Run("view schema", func(t *testing.T) {
@@ -159,8 +159,18 @@ func TestRecordDetailsPage(t *testing.T) {
 				ConfigIO: nil,
 			}))
 			m := New(&kadmin.ConsumerRecord{
-				Key:       "",
-				Payload:   serdes.DesData{Value: ""},
+				Key: "",
+				Payload: serdes.DesData{Value: `{"Name": "john", "Age": 12"}`, Schema: `
+{
+   "type" : "record",
+   "namespace" : "ktea.test",
+   "name" : "Person",
+   "fields" : [
+      { "name" : "Name" , "type" : "string" },
+      { "name" : "Age" , "type" : "int" }
+   ]
+}
+`},
 				Partition: 0,
 				Offset:    0,
 				Headers: []kadmin.Header{
@@ -175,9 +185,12 @@ func TestRecordDetailsPage(t *testing.T) {
 				&ktx,
 			)
 
-			m.Update(tests.Key(tea.KeyCtrlS))
+			m.View(tests.NewKontext(), tests.TestRenderer)
+			m.Update(tests.Key(tea.KeyTab))
 
-			//assert.IsType(msg)
+			render := ansi.Strip(m.View(tests.NewKontext(), tests.TestRenderer))
+
+			assert.Contains(t, render, `"namespace": "ktea.test"`)
 		})
 	})
 

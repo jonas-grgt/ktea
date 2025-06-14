@@ -45,7 +45,7 @@ func TestPublish(t *testing.T) {
 			Limit:           1,
 		}).(ReadingStartedMsg)
 		assert.EventuallyWithT(t, func(c *assert.CollectT) {
-			assert.Equal(c, "{\"id\":\"123\"}", (<-rsm.ConsumerRecord).Payload)
+			assert.Equal(c, "{\"id\":\"123\"}", (<-rsm.ConsumerRecord).Payload.Value)
 		}, 2*time.Second, 10*time.Millisecond)
 
 		// clean up
@@ -105,7 +105,7 @@ func TestPublish(t *testing.T) {
 		}
 
 	assertRecords:
-		assert.Equal(t, "{\"id\":\"123\"}", receivedRecords[0].Payload)
+		assert.Equal(t, "{\"id\":\"123\"}", receivedRecords[0].Payload.Value)
 		assert.Contains(t, receivedRecords[0].Headers, Header{
 			"id", NewHeaderValue("123"),
 		})
@@ -158,7 +158,7 @@ func TestPublish(t *testing.T) {
 		}).(ReadingStartedMsg)
 		assert.EventuallyWithT(t, func(c *assert.CollectT) {
 			record := <-rsm.ConsumerRecord
-			assert.Equal(c, "{\"id\":\"123\"}", record.Payload)
+			assert.Equal(c, "{\"id\":\"123\"}", record.Payload.Value)
 			assert.Equal(c, int64(2), record.Partition)
 		}, 5*time.Second, 10*time.Millisecond)
 

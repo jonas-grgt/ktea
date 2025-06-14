@@ -68,8 +68,8 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	styledTable := renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
 
 	embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-		styles.TopMiddleBorder:    styles.BorderKeyValueTitle("Total Topics", fmt.Sprintf(" %d/%d", len(m.rows), len(m.topics))),
-		styles.BottomMiddleBorder: styles.BorderKeyValueTitle("Total Topics", fmt.Sprintf(" %d/%d", len(m.rows), len(m.topics))),
+		styles.TopMiddleBorder:    styles.BorderKeyValueTitle("Total Topics", fmt.Sprintf("%d/%d", len(m.rows), len(m.topics))),
+		styles.BottomMiddleBorder: styles.BorderKeyValueTitle("Total Topics", fmt.Sprintf("%d/%d", len(m.rows), len(m.topics))),
 	}
 
 	tableView := styles.Borderize(styledTable, m.tableFocussed, embeddedText)

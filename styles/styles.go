@@ -98,13 +98,21 @@ func BorderKeyValueTitle(
 			colorLabel = ColorGrey
 			colorCount = ColorLightPink
 		}
+
+		var renderedValueLabel string
+		if valueLabel == "" {
+			renderedValueLabel = ""
+		} else {
+			renderedValueLabel = ":" + lipgloss.NewStyle().
+				Foreground(colorCount).
+				Bold(true).
+				Render(fmt.Sprintf(" %s", valueLabel))
+		}
+
 		return lipgloss.NewStyle().
 			Foreground(colorLabel).
 			Bold(true).
-			Render(fmt.Sprintf("[ %s:", keyLabel)) + lipgloss.NewStyle().
-			Foreground(colorCount).
-			Bold(true).
-			Render(fmt.Sprintf(" %s", valueLabel)) +
+			Render(fmt.Sprintf("[ %s", keyLabel)) + renderedValueLabel +
 			lipgloss.NewStyle().
 				Foreground(colorLabel).
 				Bold(true).
@@ -112,6 +120,7 @@ func BorderKeyValueTitle(
 	}
 }
 
+// Deprecated: use border.Model
 // Borderize creates a border around content with optional embedded text in different positions
 func Borderize(content string, active bool, embeddedText map[BorderPosition]EmbeddedTextFunc) string {
 	if embeddedText == nil {
