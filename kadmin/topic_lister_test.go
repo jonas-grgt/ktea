@@ -36,8 +36,8 @@ func TestListTopics(t *testing.T) {
 				t.Error(t, "Failed to list topics", err)
 				return
 			}
-			assert.Contains(t, topics, ListedTopic{topic1, 2, 1, -1})
-			assert.Contains(t, topics, ListedTopic{topic2, 1, 1, -1})
+			assert.Contains(t, topics, ListedTopic{topic1, 2, 1})
+			assert.Contains(t, topics, ListedTopic{topic2, 1, 1})
 		}, 2*time.Second, 10*time.Millisecond)
 
 		// clean up

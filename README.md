@@ -24,7 +24,7 @@ Binaries available at the release page.
 
 ### Windows
 
-Coming soon
+Binaries available at the release page.
 
 ## Usage
 
@@ -56,7 +56,7 @@ To switch between tabs the meta key is required, which in most terminals needs t
 
 - *Multi-Cluster Support*: Seamlessly connect to multiple Kafka clusters and switch between them with ease.
 - *Topic Management*: List, create, delete, and modify topics, including partition and offset details.
-- *Record Consumption*: Consume records in text, JSON, and Avro formats, with powerful search capabilities.
+- *Record Consumption*: Consume records in text, JSON, and **Avro** formats, with powerful search capabilities.
 - *Consumer Group Insights*: Monitor consumer groups, view their members, and track offsets.
 - *Schema Registry Integration*: Browse, view, and register schemas effortlessly.
 

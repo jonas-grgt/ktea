@@ -47,10 +47,10 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	cmdBarView := m.cmdBar.View(ktx, renderer)
 	views = append(views, cmdBarView)
 
-	m.table.SetWidth(ktx.WindowWidth - 3)
+	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetColumns([]table.Column{
-		{m.columnTitle("Consumer Group"), int(float64(ktx.WindowWidth-6) * 0.7)},
-		{m.columnTitle("Members"), int(float64(ktx.WindowWidth-6) * 0.3)},
+		{m.columnTitle("Consumer Group"), int(float64(ktx.WindowWidth-5) * 0.7)},
+		{m.columnTitle("Members"), int(float64(ktx.WindowWidth-5) * 0.3)},
 	})
 	m.table.SetRows(m.rows)
 	m.table.SetHeight(ktx.AvailableHeight - 2)

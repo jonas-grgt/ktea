@@ -4,7 +4,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
-	"ktea/kontext"
 	"ktea/tests"
 	"strings"
 	"testing"
@@ -233,71 +232,4 @@ func TestTopicsPage(t *testing.T) {
 		assert.Greater(t, t2Idx, t1Idx)
 	})
 
-	t.Run("Toggle sort by Record Count", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
-
-		_ = page.Update(kadmin.TopicListedMsg{
-			Topics: []kadmin.ListedTopic{
-				{
-					Name:           "topic1",
-					PartitionCount: 1,
-					Replicas:       1,
-					RecordCount:    333333333,
-				},
-				{
-					Name:           "topic2",
-					PartitionCount: 2,
-					Replicas:       2,
-					RecordCount:    111111,
-				},
-				{
-					Name:           "topic3",
-					PartitionCount: 3,
-					Replicas:       3,
-					RecordCount:    222222222,
-				},
-			},
-		})
-
-		page.Update(tests.Key(tea.KeyF3))
-		page.Update(tests.Key(tea.KeyRight))
-		page.Update(tests.Key(tea.KeyRight))
-		page.Update(tests.Key(tea.KeyRight))
-		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(&kontext.ProgramKtx{
-			Config:          nil,
-			WindowWidth:     200,
-			WindowHeight:    200,
-			AvailableHeight: 200,
-		}, tests.TestRenderer)
-
-		assert.NotContains(t, render, "▲ Name")
-		assert.Contains(t, render, "▼ ~ Record Count")
-
-		t1Idx := strings.Index(render, "topic1")
-		t2Idx := strings.Index(render, "topic2")
-		t3Idx := strings.Index(render, "topic3")
-
-		assert.Less(t, t1Idx, t2Idx)
-		assert.Less(t, t1Idx, t3Idx)
-		assert.Less(t, t3Idx, t2Idx)
-
-		page.Update(tests.Key(tea.KeyEnter))
-		render = page.View(&kontext.ProgramKtx{
-			Config:          nil,
-			WindowWidth:     200,
-			WindowHeight:    200,
-			AvailableHeight: 200,
-		}, tests.TestRenderer)
-
-		assert.Contains(t, render, "▲ ~ Record Count")
-
-		t1Idx = strings.Index(render, "topic1")
-		t2Idx = strings.Index(render, "topic2")
-		t3Idx = strings.Index(render, "topic3")
-
-		assert.Less(t, t2Idx, t3Idx)
-		assert.Less(t, t2Idx, t1Idx)
-		assert.Less(t, t3Idx, t1Idx)
-	})
 }

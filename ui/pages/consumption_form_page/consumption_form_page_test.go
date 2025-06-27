@@ -88,7 +88,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       3,
-			RecordCount:    100,
 		}, tests.NewKontext())
 
 		// make sure form has been initialized
@@ -120,7 +119,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 10,
 				Replicas:       3,
-				RecordCount:    100,
 			}, tests.NewKontext())
 
 			// make sure form has been initialized
@@ -189,7 +187,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 10,
 				Replicas:       1,
-				RecordCount:    0,
 			},
 		}, msgs[0])
 	})
@@ -241,7 +238,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 10,
 				Replicas:       1,
-				RecordCount:    0,
 			},
 		}, msgs[0])
 	})
@@ -330,7 +326,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 					Name:           "topic1",
 					PartitionCount: 10,
 					Replicas:       1,
-					RecordCount:    0,
 				},
 			}, msgs[0])
 		})
@@ -391,7 +386,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 10,
 				Replicas:       1,
-				RecordCount:    0,
 			},
 		}, msgs[0])
 	})
@@ -499,7 +493,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 					Name:           "topic1",
 					PartitionCount: 10,
 					Replicas:       1,
-					RecordCount:    0,
 				},
 			},
 				msgs[0])

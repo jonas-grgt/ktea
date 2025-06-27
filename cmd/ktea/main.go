@@ -90,7 +90,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// in the case when the tabCtrl hence the page isn't focussed anymore
 	case kadmin.TopicListedMsg,
 		kadmin.TopicListingStartedMsg,
-		kadmin.TopicRecordCountCalculatedMsg,
 		kadmin.AllTopicRecordCountCalculatedMsg:
 		if m.topicsTabCtrl != nil {
 			return m, m.topicsTabCtrl.Update(msg)

@@ -52,7 +52,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 
 	case kadmin.TopicListedMsg,
-		kadmin.TopicRecordCountCalculatedMsg,
 		kadmin.AllTopicRecordCountCalculatedMsg:
 		// Make sure TopicListedMsg is explicitly captured and
 		// properly propagated in the case when cgroupsPage

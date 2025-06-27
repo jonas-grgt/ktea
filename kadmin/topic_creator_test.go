@@ -38,7 +38,7 @@ func TestCreateTopic(t *testing.T) {
 			return
 		}
 
-		assert.Contains(t, topics, ListedTopic{topic, 2, 1, -1})
+		assert.Contains(t, topics, ListedTopic{topic, 2, 1})
 
 		// and
 		var configs map[string]string

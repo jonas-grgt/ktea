@@ -8,7 +8,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/dustin/go-humanize"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -56,12 +55,11 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	views = append(views, cmdBarView)
 
 	m.table.SetHeight(ktx.AvailableHeight - 2)
-	m.table.SetWidth(ktx.WindowWidth - 3)
+	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetColumns([]table.Column{
-		{m.columnTitle("Name"), int(float64(ktx.WindowWidth-10) * 0.6)},
-		{m.columnTitle("Partitions"), int(float64(ktx.WindowWidth-10) * 0.125)},
-		{m.columnTitle("Replicas"), int(float64(ktx.WindowWidth-10) * 0.125)},
-		{m.columnTitle("~ Record Count"), int(float64(ktx.WindowWidth-10) * 0.15)},
+		{m.columnTitle("Name"), int(float64(ktx.WindowWidth-7) * 0.6)},
+		{m.columnTitle("Partitions"), int(float64(ktx.WindowWidth-7) * 0.3)},
+		{m.columnTitle("Replicas"), int(float64(ktx.WindowWidth-7) * 0.1)},
 	})
 	m.table.SetRows(m.rows)
 
@@ -132,14 +130,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		if c != nil {
 			cmds = append(cmds, c)
 		}
-	case kadmin.TopicRecordCountCalculatedMsg:
-		for i := range m.topics {
-			if m.topics[i].Name == msg.Topic {
-				m.topics[i].RecordCount = msg.RecordCount
-			}
-		}
-		log.Debug("Updated record count", "topic", msg.Topic, "recordCount", msg.RecordCount)
-		return msg.AwaitRecordCountCompletion
 	case kadmin.AllTopicRecordCountCalculatedMsg:
 		m.state = stateLoaded
 		m.recordCountSpinner = spinner.New()
@@ -148,7 +138,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case kadmin.TopicDeletionStartedMsg:
 		cmds = append(cmds, msg.AwaitCompletion)
 	case kadmin.TopicListingStartedMsg:
-		cmds = append(cmds, msg.AwaitTopicListCompletion, msg.AwaitRecordCountCompletion)
+		cmds = append(cmds, msg.AwaitTopicListCompletion)
 	case kadmin.TopicListedMsg:
 		m.state = stateRecordCountLoading
 		m.topics = msg.Topics
@@ -192,12 +182,6 @@ func (m *Model) columnTitle(title string) string {
 func (m *Model) createRows() []table.Row {
 	var rows []table.Row
 	for _, topic := range m.topics {
-		var recordCount string
-		if topic.RecordCount == kadmin.UnknownRecordCount {
-			recordCount = m.recordCountSpinner.View()
-		} else {
-			recordCount = humanize.Comma(topic.RecordCount)
-		}
 		if m.cmdBar.GetSearchTerm() != "" {
 			if strings.Contains(strings.ToLower(topic.Name), strings.ToLower(m.cmdBar.GetSearchTerm())) {
 				rows = append(
@@ -206,7 +190,6 @@ func (m *Model) createRows() []table.Row {
 						topic.Name,
 						strconv.Itoa(topic.PartitionCount),
 						strconv.Itoa(topic.Replicas),
-						recordCount,
 					},
 				)
 			}
@@ -217,7 +200,6 @@ func (m *Model) createRows() []table.Row {
 					topic.Name,
 					strconv.Itoa(topic.PartitionCount),
 					strconv.Itoa(topic.Replicas),
-					recordCount,
 				},
 			)
 		}
@@ -428,10 +410,6 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 			},
 			{
 				Label:     "Replicas",
-				Direction: cmdbar.Desc,
-			},
-			{
-				Label:     "~ Record Count",
 				Direction: cmdbar.Desc,
 			},
 		},
