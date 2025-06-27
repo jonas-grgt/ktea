@@ -50,6 +50,7 @@ type RecordReader interface {
 
 type ReadingStartedMsg struct {
 	ConsumerRecord chan ConsumerRecord
+	EmptyTopic     chan bool
 	Err            chan error
 	CancelFunc     context.CancelFunc
 }
@@ -140,22 +141,29 @@ func (o *offsets) newest() int64 {
 	return o.firstAvailable - 1
 }
 
-type EmptyTopicMsg struct {
-}
-
 func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea.Msg {
 	ctx, cancelFunc := context.WithCancel(ctx)
 	startedMsg := ReadingStartedMsg{
 		ConsumerRecord: make(chan ConsumerRecord, len(rd.PartitionToRead)),
 		Err:            make(chan error),
+		EmptyTopic:     make(chan bool),
 		CancelFunc:     cancelFunc,
 	}
 
+	go ka.doReadRecords(ctx, rd, startedMsg, cancelFunc)
+	return startedMsg
+}
+
+func (ka *SaramaKafkaAdmin) doReadRecords(
+	ctx context.Context,
+	rd ReadDetails,
+	startedMsg ReadingStartedMsg,
+	cancelFunc context.CancelFunc,
+) {
 	client, err := sarama.NewConsumerFromClient(ka.client)
 	if err != nil {
 		close(startedMsg.ConsumerRecord)
 		close(startedMsg.Err)
-		return startedMsg
 	}
 
 	var (
@@ -171,16 +179,15 @@ func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea
 		close(startedMsg.ConsumerRecord)
 		close(startedMsg.Err)
 		cancelFunc()
-		return startedMsg
 	}
 
 	wg.Add(len(rd.PartitionToRead))
 
-	var atLeastOnePartitionReadable bool
+	emptyTopic := true
 	for _, partition := range rd.PartitionToRead {
 		// if there is no data in the partition, we don't need to read it unless live consumption is requested
 		if offsets[partition].firstAvailable != offsets[partition].oldest || rd.StartPoint == Live {
-			atLeastOnePartitionReadable = true
+			emptyTopic = false
 			go func(partition int) {
 				defer wg.Done()
 
@@ -261,19 +268,18 @@ func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea
 		}
 	}
 
+	if emptyTopic {
+		cancelFunc()
+		startedMsg.EmptyTopic <- true
+	}
+
 	go func() {
 		wg.Wait()
 		closeOnce.Do(func() {
 			close(startedMsg.ConsumerRecord)
+			close(startedMsg.Err)
 		})
 	}()
-
-	if atLeastOnePartitionReadable {
-		return startedMsg
-	} else {
-		cancelFunc()
-		return EmptyTopicMsg{}
-	}
 }
 
 func (ka *SaramaKafkaAdmin) matchesFilter(key, value string, filterDetails *Filter) bool {

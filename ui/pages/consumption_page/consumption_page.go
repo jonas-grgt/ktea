@@ -20,6 +20,7 @@ type Model struct {
 	table              *table.Model
 	cmdBar             *ConsumptionCmdBar
 	consumerRecordChan chan kadmin.ConsumerRecord
+	emptyTopicChan     chan bool
 	cancelConsumption  context.CancelFunc
 	errChan            chan error
 	reader             kadmin.RecordReader
@@ -36,6 +37,9 @@ type ConsumerRecordReceived struct {
 }
 
 type ConsumptionEndedMsg struct{}
+
+type EmptyTopicMsg struct {
+}
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	var views []string
@@ -101,11 +105,13 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.table = &t
 			cmds = append(cmds, cmd)
 		}
-	case kadmin.EmptyTopicMsg:
+	case EmptyTopicMsg:
 		m.noRecordsAvailable = true
+		m.consuming = false
 	case kadmin.ReadingStartedMsg:
 		m.consuming = true
 		m.consumerRecordChan = msg.ConsumerRecord
+		m.emptyTopicChan = msg.EmptyTopic
 		m.errChan = msg.Err
 		cmds = append(cmds, m.waitForActivity())
 	case ConsumptionEndedMsg:
@@ -138,16 +144,16 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 
 func (m *Model) waitForActivity() tea.Cmd {
 	return func() tea.Msg {
-		for {
-			select {
-			case record, ok := <-m.consumerRecordChan:
-				if !ok {
-					return ConsumptionEndedMsg{}
-				}
-				return ConsumerRecordReceived{Record: record}
-			case err := <-m.errChan:
-				return err
+		select {
+		case record, ok := <-m.consumerRecordChan:
+			if !ok {
+				return ConsumptionEndedMsg{}
 			}
+			return ConsumerRecordReceived{Record: record}
+		case <-m.emptyTopicChan:
+			return EmptyTopicMsg{}
+		case err := <-m.errChan:
+			return err
 		}
 	}
 }

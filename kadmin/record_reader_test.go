@@ -10,6 +10,43 @@ import (
 )
 
 func TestReadRecords(t *testing.T) {
+	t.Run("Empty topic", func(t *testing.T) {
+		topic := topicName()
+		// given
+		msg := ka.CreateTopic(TopicCreationDetails{
+			Name:              topic,
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		}).(TopicCreationStartedMsg)
+
+		switch msg.AwaitCompletion().(type) {
+		case TopicCreatedMsg:
+		case TopicCreationErrMsg:
+			t.Fatal("Unable to create topic", msg.Err)
+		}
+		// when
+		rsm := ka.ReadRecords(context.Background(), ReadDetails{
+			TopicName:       topic,
+			PartitionToRead: []int{0},
+			StartPoint:      Beginning,
+			Limit:           50,
+			Filter:          nil,
+		}).(ReadingStartedMsg)
+
+		// then
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		select {
+		case <-rsm.EmptyTopic:
+		case <-ctx.Done():
+			t.Fatal("timed out waiting for EmptyTopic signal")
+		}
+
+		// clean up
+		ka.DeleteTopic(topic)
+	})
+
 	t.Run("Read from beginning with specific limit", func(t *testing.T) {
 		t.Run("with one partition", func(t *testing.T) {
 			topic := topicName()

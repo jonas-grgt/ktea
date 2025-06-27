@@ -63,9 +63,14 @@ func NewConsumptionCmdbar() *ConsumptionCmdBar {
 		m.Idle()
 		return false, nil
 	}
+	emptyTopicMsgHandler := func(_ EmptyTopicMsg, m *notifier.Model) (bool, tea.Cmd) {
+		m.Idle()
+		return false, nil
+	}
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("consumption-bar")
 	cmdbar.WithMsgHandler(notifierCmdBar, readingStartedNotifier)
 	cmdbar.WithMsgHandler(notifierCmdBar, consumptionEndedNotifier)
+	cmdbar.WithMsgHandler(notifierCmdBar, emptyTopicMsgHandler)
 	cmdbar.WithMsgHandler(notifierCmdBar, c)
 	return &ConsumptionCmdBar{
 		notifierWidget: notifierCmdBar,
