@@ -24,11 +24,18 @@ import (
 
 var version string
 
+const (
+	topicsTabLbl    tab.Label = "topics"
+	cgroupsTabLbl             = "cgroups"
+	schemaRegTabLbl           = "schemaReg"
+	clustersTabLbl            = "clusters"
+)
+
 type Model struct {
 	tabs                  tab.Model
+	activeTab             tab.Tab
 	tabCtrl               tabs.TabController
 	ktx                   *kontext.ProgramKtx
-	activeTab             int
 	topicsTabCtrl         *topics_tab.Model
 	cgroupsTabCtrl        *cgroups_tab.Model
 	kaInstantiator        kadmin.Instantiator
@@ -117,17 +124,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case config.ClusterRegisteredMsg:
 		// if the active cluster has been updated it needs to be reloaded
 		if msg.Cluster.Active {
-			// TODO check err
 			cmd := m.boostrapUI(msg.Cluster)
 			cmds = append(cmds, cmd)
 
 			// keep clusters tab focussed after recreating tabs
-			if msg.Cluster.HasSchemaRegistry() {
-				m.tabs.GoToTab(tabs.ClustersTab)
-			} else {
-				m.tabs.GoToTab(tabs.ClustersTab)
-			}
-
+			m.tabs.GoToTab(clustersTabLbl)
 		}
 
 	case RetryClusterConnectionMsg:
@@ -140,14 +141,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := m.boostrapUI(msg.Config.ActiveCluster())
 			cmds = append(cmds, cmd)
 
-			m.tabs.GoToTab(tabs.TopicsTab)
+			m.tabs.GoToTab(topicsTabLbl)
 
 			return m, tea.Batch(cmds...)
 		} else {
 			clustersTab, cmd := clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker)
 			m.tabCtrl = clustersTab
-			m.tabs = tab.New("Clusters")
-			tabs.ClustersTab = 0
+			m.tabs = tab.New(
+				tab.Tab{Title: "Clusters", Label: clustersTabLbl},
+			)
 			return m, cmd
 		}
 
@@ -180,18 +182,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.tabs.ActiveTab() != m.activeTab {
 			m.activeTab = m.tabs.ActiveTab()
-			switch m.activeTab {
-			case 0:
+			switch m.activeTab.Label {
+			case topicsTabLbl:
 				m.tabCtrl = m.topicsTabCtrl
-			case 1:
+			case cgroupsTabLbl:
 				m.tabCtrl = m.cgroupsTabCtrl
-			case 2:
+			case schemaRegTabLbl:
 				if m.ktx.Config.ActiveCluster().HasSchemaRegistry() {
 					m.tabCtrl = m.schemaRegistryTabCtrl
 					break
 				}
 				fallthrough
-			case 3:
+			case clustersTabLbl:
 				if m.clustersTabCtrl == nil {
 					var cmd tea.Cmd
 					m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker)
@@ -221,11 +223,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) recreateTabs(cluster *config.Cluster) {
 	if cluster.HasSchemaRegistry() {
-		m.tabs = tab.New("Topics", "Consumer Groups", "Schema Registry", "Clusters")
-		tabs.ClustersTab = 3
+		m.tabs = tab.New(
+			tab.Tab{Title: "Topics", Label: topicsTabLbl},
+			tab.Tab{Title: "Consumer Groups", Label: cgroupsTabLbl},
+			tab.Tab{Title: "Schema Registry", Label: schemaRegTabLbl},
+			tab.Tab{Title: "Clusters", Label: clustersTabLbl},
+		)
 	} else {
-		m.tabs = tab.New("Topics", "Consumer Groups", "Clusters")
-		tabs.ClustersTab = 2
+		m.tabs = tab.New(
+			tab.Tab{Title: "Topics", Label: topicsTabLbl},
+			tab.Tab{Title: "Consumer Groups", Label: cgroupsTabLbl},
+			tab.Tab{Title: "Clusters", Label: clustersTabLbl},
+		)
 	}
 }
 
@@ -256,7 +265,9 @@ func (m *Model) onWindowSizeUpdated(msg tea.WindowSizeMsg) {
 func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 	var cmd tea.Cmd
 	if err := m.recreateAdminClients(cluster); err != nil {
-		m.tabs = tab.New("Clusters")
+		m.tabs = tab.New(
+			tab.Tab{Title: "Clusters", Label: clustersTabLbl},
+		)
 		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker)
 		m.startupConnErr = true
 		m.tabCtrl = m.clustersTabCtrl

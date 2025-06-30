@@ -7,28 +7,34 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
-	"ktea/ui/tabs"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
+type Label string
+
+type Tab struct {
+	Title string
+	Label
+}
+
 type Model struct {
-	elements []string
+	tabs []Tab
 	// zero indexed
 	activeTab int
 }
 
 func (m *Model) View(ctx *kontext.ProgramKtx, renderer *ui.Renderer) string {
-	if len(m.elements) == 0 {
+	if len(m.tabs) == 0 {
 		return ""
 	}
-	tabsToRender := make([]string, len(m.elements))
-	if len(m.elements) == 1 {
-		tabsToRender = append(tabsToRender, styles.Tab.ActiveTab.Render(m.elements[0]))
+	tabsToRender := make([]string, len(m.tabs))
+	if len(m.tabs) == 1 {
+		tabsToRender = append(tabsToRender, styles.Tab.ActiveTab.Render(m.tabs[0].Title))
 	} else {
-		for i, e := range m.elements {
-			tabName := fmt.Sprintf("%s (Meta-%d)", e, i+1)
+		for i, t := range m.tabs {
+			tabName := fmt.Sprintf("%s (Meta-%d)", t.Title, i+1)
 			if i == m.activeTab {
 				tabsToRender = append(tabsToRender, styles.Tab.ActiveTab.Render(tabName))
 			} else {
@@ -53,7 +59,9 @@ func (m *Model) Update(msg tea.Msg) {
 		if keyPattern.MatchString(msg.String()) {
 			subMatch := keyPattern.FindAllStringSubmatch(msg.String(), -1)[0]
 			tabNr, _ := strconv.Atoi(subMatch[1])
-			m.GoToTab(tabNr - 1)
+			if tabNr <= len(m.tabs) {
+				m.GoToTab(m.tabs[tabNr-1].Label)
+			}
 		}
 	}
 }
@@ -71,14 +79,16 @@ func (m *Model) Prev() {
 }
 
 func (m *Model) numberOfTabs() int {
-	return len(m.elements)
+	return len(m.tabs)
 }
 
 func (m *Model) GoToTab(tab interface{}) {
 	switch tab := tab.(type) {
-	case tabs.TabName:
-		if int(tab) <= m.numberOfTabs()-1 {
-			m.activeTab = int(tab)
+	case Label:
+		for i, t := range m.tabs {
+			if t.Label == tab {
+				m.activeTab = i
+			}
 		}
 	case int:
 		if tab <= m.numberOfTabs()-1 {
@@ -87,12 +97,15 @@ func (m *Model) GoToTab(tab interface{}) {
 	}
 }
 
-func (m *Model) ActiveTab() int {
-	return m.activeTab
+func (m *Model) ActiveTab() Tab {
+	if m.tabs == nil {
+		return Tab{}
+	}
+	return m.tabs[m.activeTab]
 }
 
-func New(tabs ...string) Model {
+func New(tabs ...Tab) Model {
 	return Model{
-		elements: tabs,
+		tabs: tabs,
 	}
 }
