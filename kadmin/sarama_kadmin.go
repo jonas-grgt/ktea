@@ -23,6 +23,7 @@ type SaramaKafkaAdmin struct {
 
 func (s *SaramaKafkaAdmin) GetClusterConfig() (ClusterConfig, error) {
 	MaybeIntroduceLatency()
+	log.Info("Attempting to describe Kafka cluster...")
 	saramaBrokers, _, err := s.admin.DescribeCluster()
 	if err != nil {
 		log.Error("Failed to describe cluster", "error", err)
@@ -34,33 +35,39 @@ func (s *SaramaKafkaAdmin) GetClusterConfig() (ClusterConfig, error) {
 
 	brokers := make([]BrokerConfig, 0)
 	for _, saramaBroker := range saramaBrokers {
-		log.Info("Fetching config for broker", "brokerID", saramaBroker.ID(), "addr", saramaBroker.Addr())
-		resource := sarama.ConfigResource{
-			Type: sarama.BrokerResource,
-			Name: fmt.Sprintf("%d", saramaBroker.ID()),
-		}
-
-		entries, err := s.admin.DescribeConfig(resource)
-		if err != nil {
-			log.Printf("Failed to describe config for broker %d: %v", saramaBroker.ID(), err)
-			continue
-		}
-
-		configMap := make(map[string]string)
-		for _, entry := range entries {
-			configMap[entry.Name] = entry.Value
-		}
-
 		brokers = append(brokers, BrokerConfig{
-			ID:      saramaBroker.ID(),
-			Addr:    saramaBroker.Addr(),
-			Configs: configMap,
+			ID:   saramaBroker.ID(),
+			Addr: saramaBroker.Addr(),
 		})
-
 	}
 
 	return ClusterConfig{
 		Brokers: brokers,
+	}, nil
+}
+
+func (s *SaramaKafkaAdmin) GetBrokerConfig(brokerID int32) (BrokerConfig, error) {
+	MaybeIntroduceLatency()
+	log.Info("Fetching config for broker", "brokerID", brokerID)
+	resource := sarama.ConfigResource{
+		Type: sarama.BrokerResource,
+		Name: fmt.Sprintf("%d", brokerID),
+	}
+
+	entries, err := s.admin.DescribeConfig(resource)
+	if err != nil {
+		log.Printf("Failed to describe config for broker %d: %v", brokerID, err)
+		return BrokerConfig{}, err
+	}
+
+	configMap := make(map[string]string)
+	for _, entry := range entries {
+		configMap[entry.Name] = entry.Value
+	}
+
+	return BrokerConfig{
+		ID:      brokerID,
+		Configs: configMap,
 	}, nil
 }
 

@@ -27,10 +27,15 @@ type Kadmin interface {
 	TopicConfigLister
 	SraSetter
 	ClusterConfigLister
+	BrokerConfigLister
 }
 
 type ClusterConfigLister interface {
 	GetClusterConfig() (ClusterConfig, error)
+}
+
+type BrokerConfigLister interface {
+	GetBrokerConfig(brokerID int32) (BrokerConfig, error)
 }
 
 type BrokerConfig struct {

@@ -57,6 +57,10 @@ func (m MockKadmin) GetClusterConfig() (ClusterConfig, error) {
 	return ClusterConfig{}, nil
 }
 
+func (m MockKadmin) GetBrokerConfig(brokerID int32) (BrokerConfig, error) {
+	return BrokerConfig{}, nil
+}
+
 func NewMockKadminInstantiator() Instantiator {
 	return func(cd ConnectionDetails) (Kadmin, error) {
 		return &MockKadmin{}, nil
