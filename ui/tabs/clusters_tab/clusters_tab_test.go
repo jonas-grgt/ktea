@@ -36,7 +36,9 @@ func TestClustersTab(t *testing.T) {
 			Config:       &config.Config{},
 			WindowWidth:  0,
 			WindowHeight: 0,
-		}, mockConnChecker)
+		}, mockConnChecker,
+			kadmin.NewMockKadmin(),
+		)
 
 		// when
 		render := clustersTab.View(&ktx, tests.TestRenderer)
@@ -63,7 +65,7 @@ func TestClustersTab(t *testing.T) {
 				WindowWidth:  100,
 				WindowHeight: 100,
 			}
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 
 			// when
 			render := clustersTab.View(programKtx, tests.TestRenderer)
@@ -104,7 +106,7 @@ func TestClustersTab(t *testing.T) {
 				WindowHeight:    100,
 				AvailableHeight: 100,
 			}
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 
 			// when
 			render := clustersTab.View(programKtx, tests.TestRenderer)
@@ -150,7 +152,7 @@ func TestClustersTab(t *testing.T) {
 				WindowHeight:    100,
 				AvailableHeight: 100,
 			}
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 			// and table has been initialized
 			clustersTab.View(programKtx, tests.TestRenderer)
 
@@ -245,7 +247,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("/ raises search prompt", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.TestRenderer)
 
@@ -259,7 +261,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("F2 raises delete confirmation", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.TestRenderer)
 
@@ -273,7 +275,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("esc cancels raised delete confirmation", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.TestRenderer)
 			// and delete confirmation has been raised
@@ -291,7 +293,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("enter deletes cluster", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.TestRenderer)
 
@@ -338,7 +340,7 @@ func TestClustersTab(t *testing.T) {
 				AvailableHeight: 100,
 			}
 			// and
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.TestRenderer)
 
@@ -389,7 +391,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("c-e opens edit page", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, mockConnChecker)
+			var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 			// and table has been initialized
 			clustersTab.View(programKtx, tests.TestRenderer)
 
@@ -435,7 +437,7 @@ func TestClustersTab(t *testing.T) {
 			WindowWidth:  100,
 			WindowHeight: 100,
 		}
-		var clustersTab, _ = New(programKtx, mockConnChecker)
+		var clustersTab, _ = New(programKtx, mockConnChecker, kadmin.NewMockKadmin())
 		clustersTab.View(programKtx, tests.TestRenderer)
 
 		// when

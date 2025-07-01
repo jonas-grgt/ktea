@@ -2,12 +2,14 @@ package kadmin
 
 import (
 	"fmt"
+	"ktea/config"
+	"ktea/sradmin"
+	"sort"
+	"time"
+
 	"github.com/IBM/sarama"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
-	"ktea/config"
-	"ktea/sradmin"
-	"time"
 )
 
 type SaramaKafkaAdmin struct {
@@ -17,6 +19,49 @@ type SaramaKafkaAdmin struct {
 	config   *sarama.Config
 	producer sarama.SyncProducer
 	sra      sradmin.SrAdmin
+}
+
+func (s *SaramaKafkaAdmin) GetClusterConfig() (ClusterConfig, error) {
+	MaybeIntroduceLatency()
+	saramaBrokers, _, err := s.admin.DescribeCluster()
+	if err != nil {
+		log.Error("Failed to describe cluster", "error", err)
+		return ClusterConfig{}, err
+	}
+	sort.Slice(saramaBrokers, func(i, j int) bool {
+		return saramaBrokers[i].ID() < saramaBrokers[j].ID()
+	})
+
+	brokers := make([]BrokerConfig, 0)
+	for _, saramaBroker := range saramaBrokers {
+		log.Info("Fetching config for broker", "brokerID", saramaBroker.ID(), "addr", saramaBroker.Addr())
+		resource := sarama.ConfigResource{
+			Type: sarama.BrokerResource,
+			Name: fmt.Sprintf("%d", saramaBroker.ID()),
+		}
+
+		entries, err := s.admin.DescribeConfig(resource)
+		if err != nil {
+			log.Printf("Failed to describe config for broker %d: %v", saramaBroker.ID(), err)
+			continue
+		}
+
+		configMap := make(map[string]string)
+		for _, entry := range entries {
+			configMap[entry.Name] = entry.Value
+		}
+
+		brokers = append(brokers, BrokerConfig{
+			ID:      saramaBroker.ID(),
+			Addr:    saramaBroker.Addr(),
+			Configs: configMap,
+		})
+
+	}
+
+	return ClusterConfig{
+		Brokers: brokers,
+	}, nil
 }
 
 type ConnCheckStartedMsg struct {

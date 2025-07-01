@@ -2,9 +2,6 @@ package main
 
 import (
 	"flag"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -20,6 +17,10 @@ import (
 	"ktea/ui/tabs/topics_tab"
 	"os"
 	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 var version string
@@ -38,12 +39,12 @@ type Model struct {
 	ktx                   *kontext.ProgramKtx
 	topicsTabCtrl         *topics_tab.Model
 	cgroupsTabCtrl        *cgroups_tab.Model
+	schemaRegistryTabCtrl *sr_tab.Model
+	clustersTabCtrl       *clusters_tab.Model
 	kaInstantiator        kadmin.Instantiator
 	ka                    kadmin.Kadmin
 	sra                   sradmin.SrAdmin
 	renderer              *ui.Renderer
-	schemaRegistryTabCtrl *sr_tab.Model
-	clustersTabCtrl       *clusters_tab.Model
 	configIO              config.IO
 	switchingCluster      bool
 	startupConnErr        bool
@@ -116,6 +117,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := m.schemaRegistryTabCtrl.Update(msg)
 			cmds = append(cmds, cmd)
 		}
+	case kadmin.ClusterConfigListedMsg, kadmin.ClusterConfigListingErrorMsg:
+		if m.clustersTabCtrl != nil {
+			return m, m.clustersTabCtrl.Update(msg)
+		}
 	case kadmin.ConnCheckStartedMsg:
 		m.switchingCluster = true
 	case kadmin.ConnCheckErrMsg, kadmin.ConnCheckSucceededMsg:
@@ -145,7 +150,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, tea.Batch(cmds...)
 		} else {
-			clustersTab, cmd := clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker)
+			clustersTab, cmd := clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker, m.ka)
 			m.tabCtrl = clustersTab
 			m.tabs = tab.New(
 				tab.Tab{Title: "Clusters", Label: clustersTabLbl},
@@ -196,7 +201,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case clustersTabLbl:
 				if m.clustersTabCtrl == nil {
 					var cmd tea.Cmd
-					m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker)
+					m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker, m.ka)
 					cmds = append(cmds, cmd)
 				}
 				m.tabCtrl = m.clustersTabCtrl
@@ -268,7 +273,7 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 		m.tabs = tab.New(
 			tab.Tab{Title: "Clusters", Label: clustersTabLbl},
 		)
-		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker)
+		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker, m.ka)
 		m.startupConnErr = true
 		m.tabCtrl = m.clustersTabCtrl
 		return tea.Batch(cmd, func() tea.Msg {
@@ -287,7 +292,7 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 		cmds = append(cmds, cmd)
 		m.topicsTabCtrl, cmd = topics_tab.New(m.ktx, m.ka)
 		cmds = append(cmds, cmd)
-		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker)
+		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.SaramaConnectivityChecker, m.ka)
 		cmds = append(cmds, cmd)
 
 		m.tabCtrl = m.topicsTabCtrl

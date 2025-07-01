@@ -2,10 +2,6 @@ package clusters_page
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -19,6 +15,11 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 type Model struct {
@@ -104,6 +105,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 func (m *Model) Shortcuts() []statusbar.Shortcut {
 	return []statusbar.Shortcut{
 		{"Switch Cluster", "enter"},
+		{"View", "C-v"},
 		{"Edit", "C-e"},
 		{"Delete", "F2"},
 		{"Create", "C-n"},

@@ -1,8 +1,9 @@
 package kadmin
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"ktea/config"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 const (
@@ -25,6 +26,43 @@ type Kadmin interface {
 	ConfigUpdater
 	TopicConfigLister
 	SraSetter
+	ClusterConfigLister
+}
+
+type ClusterConfigLister interface {
+	GetClusterConfig() (ClusterConfig, error)
+}
+
+type BrokerConfig struct {
+	ID      int32
+	Addr    string
+	Configs map[string]string
+}
+
+type ClusterConfig struct {
+	Brokers []BrokerConfig
+}
+
+type ClusterConfigListingStartedMsg struct {
+	Err     chan error
+	Configs chan ClusterConfig
+}
+
+func (m *ClusterConfigListingStartedMsg) AwaitCompletion() tea.Msg {
+	select {
+	case e := <-m.Err:
+		return ClusterConfigListingErrorMsg{e}
+	case c := <-m.Configs:
+		return ClusterConfigListedMsg{c}
+	}
+}
+
+type ClusterConfigListedMsg struct {
+	Config ClusterConfig
+}
+
+type ClusterConfigListingErrorMsg struct {
+	Err error
 }
 
 type ConnectionDetails struct {

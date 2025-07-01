@@ -1,16 +1,25 @@
 package clusters_tab
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages/cluster_config_page"
 	"ktea/ui/pages/clusters_page"
 	"ktea/ui/pages/create_cluster_page"
 	"ktea/ui/pages/nav"
+
+	"github.com/charmbracelet/log"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+const (
+	listState state = iota
+	viewState
 )
 
 type state int
@@ -23,6 +32,7 @@ type Model struct {
 	statusbar   *statusbar.Model
 	ktx         *kontext.ProgramKtx
 	connChecker kadmin.ConnChecker
+	ka          kadmin.Kadmin
 	escGoesBack bool
 }
 
@@ -53,7 +63,11 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if m.escGoesBack {
+			if m.state == viewState {
+				listPage, _ := clusters_page.New(m.ktx, m.connChecker)
+				m.active = listPage
+				m.state = listState
+			} else if m.escGoesBack {
 				m.active, _ = clusters_page.New(m.ktx, m.connChecker)
 			}
 		case "ctrl+n":
@@ -100,6 +114,17 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					formValues,
 				)
 			}
+		case "ctrl+v":
+			log.Info("Ctrl+V pressed, switching to view state")
+			clustersPage, ok := m.active.(*clusters_page.Model)
+			if ok {
+				clusterName := clustersPage.SelectedCluster()
+				cluster := m.ktx.Config.FindClusterByName(*clusterName)
+				var cmd tea.Cmd
+				m.active, cmd = cluster_config_page.New(cluster, m.ka)
+				m.state = viewState
+				return cmd
+			}
 		}
 	}
 
@@ -112,10 +137,12 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 func New(
 	ktx *kontext.ProgramKtx,
 	connChecker kadmin.ConnChecker,
+	ka kadmin.Kadmin,
 ) (*Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m := Model{}
 	m.connChecker = connChecker
+	m.ka = ka
 	m.ktx = ktx
 	m.config = ktx.Config
 	if m.config.HasClusters() {
