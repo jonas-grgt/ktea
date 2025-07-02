@@ -88,15 +88,3 @@ services:
         /etc/confluent/docker/run &
         #
         sleep infinity
-
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    ports:
-      - "8080:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local-dev
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:29092
-      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
-    depends_on:
-      broker:
-        condition: service_healthy
