@@ -3,8 +3,10 @@ services:
   schema-registry:
     image: confluentinc/cp-schema-registry:latest
     hostname: schema-registry
+    platform: linux/amd64
     depends_on:
-      - broker
+      broker:
+        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
@@ -16,36 +18,38 @@ services:
   broker:
     image: confluentinc/confluent-local:latest
     hostname: broker
+    platform: linux/amd64
     environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker:29093'
       KAFKA_LISTENERS: 'PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092'
     ports:
       - "9092:9092"
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "broker:29092" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   kafka-init:
     image: confluentinc/cp-kafka:7.6.0
     container_name: kafka-init
     depends_on:
-      - broker
+      broker:
+        condition: service_healthy
     volumes:
       - ./kafka-init.sh:/kafka-init.sh
-    command: >
-      bash -c "
-        echo 'Waiting for Kafka to be ready...'
-        while ! nc -z broker 29092; do
-          sleep 1
-        done
-        echo 'Kafka is ready!'
-        bash /kafka-init.sh
-      "
+    command: [ "/bin/bash", "-c", "/kafka-init.sh; " ]
 
   kafka-connect:
     image: confluentinc/cp-kafka-connect-base:latest
     container_name: kafka-connect
+    platform: linux/amd64
     depends_on:
-      - broker
-      - schema-registry
+      broker:
+        condition: service_healthy
     ports:
       - 8083:8083
     environment:
@@ -84,3 +88,15 @@ services:
         /etc/confluent/docker/run &
         #
         sleep infinity
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-dev
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:29092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+    depends_on:
+      broker:
+        condition: service_healthy
