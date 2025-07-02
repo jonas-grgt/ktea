@@ -10,6 +10,7 @@ import (
 	"ktea/ui/pages/clusters_page"
 	"ktea/ui/pages/create_cluster_page"
 	"ktea/ui/pages/nav"
+	"reflect"
 
 	"github.com/charmbracelet/log"
 
@@ -51,6 +52,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
+	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
 	if m.active == nil {
 		return nil
 	}

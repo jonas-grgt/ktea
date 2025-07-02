@@ -57,7 +57,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
-	log.Debug(reflect.TypeOf(msg))
+	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
 
 	var cmds []tea.Cmd
 

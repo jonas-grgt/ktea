@@ -34,17 +34,17 @@ const (
 )
 
 type Model struct {
-	state    state
-	spinner  spinner.Model
-	viewport *viewport.Model
-	cluster  *config.Cluster
-	configs  kadmin.ClusterConfig
-	err      error
+	state          state
+	spinner        spinner.Model
+	viewport       *viewport.Model
+	cluster        *config.Cluster
+	clusterConfigs kadmin.ClusterConfig
+	brokerConfig   kadmin.BrokerConfig
+	err            error
 
-	mode           viewMode
-	brokerTable    table.Model
-	selectedBroker *kadmin.BrokerConfig
-	ka             kadmin.Kadmin
+	mode        viewMode
+	brokerTable table.Model
+	ka          kadmin.Kadmin
 }
 
 func New(cluster *config.Cluster, ka kadmin.Kadmin) (*Model, tea.Cmd) {
@@ -64,22 +64,7 @@ func New(cluster *config.Cluster, ka kadmin.Kadmin) (*Model, tea.Cmd) {
 		mode:        brokerListMode,
 		brokerTable: t,
 		ka:          ka,
-	}, func() tea.Msg {
-		log.Info("Fetching cluster configuration", "clusterName", cluster.Name)
-		cfg, err := ka.GetClusterConfig()
-		if err != nil {
-			return kadmin.ClusterConfigListingErrorMsg{Err: err}
-		}
-		return kadmin.ClusterConfigListedMsg{Config: cfg}
-	}
-}
-
-type BrokerConfigListedMsg struct {
-	Config kadmin.BrokerConfig
-}
-
-type BrokerConfigListingErrorMsg struct {
-	Err error
+	}, ka.GetClusterConfig
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -99,13 +84,14 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 				vp := viewport.New(ktx.WindowWidth-2, ktx.AvailableHeight-1)
 				m.viewport = &vp
 
-				content := fmt.Sprintf("Broker ID: %d\nAddress: %s\n\n", m.selectedBroker.ID, m.selectedBroker.Addr)
-				configBytes, err := yaml.Marshal(m.selectedBroker.Configs)
+				content := fmt.Sprintf("Broker ID: %d\n\n", m.brokerConfig.ID)
+				configBytes, err := yaml.Marshal(m.brokerConfig.Configs)
 				if err != nil {
 					content += fmt.Sprintf("  Error marshalling configs: %v\n", err)
 				} else {
 					content += fmt.Sprintf("Configs:\n%s\n", string(configBytes))
 				}
+				log.Debug("Broker Configs", "configs", m.brokerConfig.Configs)
 				m.viewport.SetContent(lipgloss.NewStyle().Padding(1).Render(content))
 			} else {
 				m.viewport.Width = ktx.WindowWidth - 2
@@ -126,26 +112,34 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		m.spinner, cmd = m.spinner.Update(msg)
 		cmds = append(cmds, cmd)
 
-	case kadmin.ClusterConfigListedMsg:
+	case kadmin.ClusterConfigStartedMsg:
+		m.state = loadingState
+		return msg.AwaitCompletion
+
+	case kadmin.ClusterConfigMsg:
 		m.state = loadedState
-		m.configs = msg.Config
-		rows := make([]table.Row, len(m.configs.Brokers))
-		for i, broker := range m.configs.Brokers {
-			rows[i] = table.Row{fmt.Sprintf("%d", broker.ID), broker.Addr}
+		m.clusterConfigs = msg.Config
+		rows := make([]table.Row, len(m.clusterConfigs.Brokers))
+		for i, broker := range m.clusterConfigs.Brokers {
+			rows[i] = table.Row{fmt.Sprintf("%d", broker.ID), broker.Address}
 		}
 		m.brokerTable.SetRows(rows)
 
-	case kadmin.ClusterConfigListingErrorMsg:
+	case kadmin.ClusterConfigErrorMsg:
 		m.state = errorState
 		m.err = msg.Err
 
-	case BrokerConfigListedMsg:
+	case kadmin.BrokerConfigListingStartedMsg:
+		m.state = loadingState
+		return msg.AwaitCompletion
+
+	case kadmin.BrokerConfigListedMsg:
 		m.state = loadedState
-		m.selectedBroker = &msg.Config
+		m.brokerConfig = msg.Config
 		m.mode = brokerDetailMode
 		m.viewport = nil
 
-	case BrokerConfigListingErrorMsg:
+	case kadmin.BrokerConfigErrorMsg:
 		m.state = errorState
 		m.err = msg.Err
 
@@ -160,14 +154,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					fmt.Sscanf(brokerIDStr, "%d", &brokerID)
 
 					// Trigger command to fetch single broker config
-					cmds = append(cmds, func() tea.Msg {
-						log.Info("Fetching broker configuration", "brokerID", brokerID)
-						cfg, err := m.ka.GetBrokerConfig(int32(brokerID))
-						if err != nil {
-							return BrokerConfigListingErrorMsg{Err: err}
-						}
-						return BrokerConfigListedMsg{Config: cfg}
-					})
+					cmds = append(cmds, func() tea.Msg { return m.ka.GetBrokerConfig(int32(brokerID)) })
 				}
 			}
 		case "esc":
@@ -196,8 +183,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 type GoBackMsg struct{}
 
 func (m *Model) Title() string {
-	if m.mode == brokerDetailMode && m.selectedBroker != nil {
-		return fmt.Sprintf("Broker %d Configuration", m.selectedBroker.ID)
+	if m.mode == brokerDetailMode && m.brokerConfig.ID != 0 {
+		return fmt.Sprintf("Broker %d Configuration", m.brokerConfig.ID)
 	}
 	return "Cluster Configuration"
 }

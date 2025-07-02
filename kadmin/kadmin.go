@@ -30,46 +30,6 @@ type Kadmin interface {
 	BrokerConfigLister
 }
 
-type ClusterConfigLister interface {
-	GetClusterConfig() (ClusterConfig, error)
-}
-
-type BrokerConfigLister interface {
-	GetBrokerConfig(brokerID int32) (BrokerConfig, error)
-}
-
-type BrokerConfig struct {
-	ID      int32
-	Addr    string
-	Configs map[string]string
-}
-
-type ClusterConfig struct {
-	Brokers []BrokerConfig
-}
-
-type ClusterConfigListingStartedMsg struct {
-	Err     chan error
-	Configs chan ClusterConfig
-}
-
-func (m *ClusterConfigListingStartedMsg) AwaitCompletion() tea.Msg {
-	select {
-	case e := <-m.Err:
-		return ClusterConfigListingErrorMsg{e}
-	case c := <-m.Configs:
-		return ClusterConfigListedMsg{c}
-	}
-}
-
-type ClusterConfigListedMsg struct {
-	Config ClusterConfig
-}
-
-type ClusterConfigListingErrorMsg struct {
-	Err error
-}
-
 type ConnectionDetails struct {
 	BootstrapServers []string
 	SASLConfig       *SASLConfig

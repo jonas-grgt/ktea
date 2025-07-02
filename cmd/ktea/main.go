@@ -117,7 +117,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := m.schemaRegistryTabCtrl.Update(msg)
 			cmds = append(cmds, cmd)
 		}
-	case kadmin.ClusterConfigListedMsg, kadmin.ClusterConfigListingErrorMsg:
+	case kadmin.ClusterConfigMsg, kadmin.ClusterConfigStartedMsg:
 		if m.clustersTabCtrl != nil {
 			return m, m.clustersTabCtrl.Update(msg)
 		}

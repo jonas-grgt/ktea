@@ -53,12 +53,12 @@ func (m MockKadmin) ListConfigs(topic string) tea.Msg {
 func (m MockKadmin) SetSra(sra sradmin.SrAdmin) {
 }
 
-func (m MockKadmin) GetClusterConfig() (ClusterConfig, error) {
-	return ClusterConfig{}, nil
+func (m MockKadmin) GetClusterConfig() tea.Msg {
+	return nil
 }
 
-func (m MockKadmin) GetBrokerConfig(brokerID int32) (BrokerConfig, error) {
-	return BrokerConfig{}, nil
+func (m MockKadmin) GetBrokerConfig(brokerID int32) tea.Msg {
+	return nil
 }
 
 func NewMockKadminInstantiator() Instantiator {
