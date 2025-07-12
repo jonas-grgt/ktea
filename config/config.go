@@ -44,7 +44,7 @@ func (c *Cluster) HasSchemaRegistry() bool {
 }
 
 func (c *Cluster) HasKafkaConnect() bool {
-	return false
+	return true
 }
 
 type Config struct {

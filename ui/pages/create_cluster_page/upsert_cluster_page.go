@@ -10,6 +10,7 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
@@ -20,15 +21,13 @@ type authSelection int
 
 type srSelection int
 
-type formState int
+type activeForm int
 
-type mode int
+type formState int
 
 type Option func(m *Model)
 
 const (
-	editMode           mode          = 0
-	newMode            mode          = 1
 	noneSelected       authSelection = 0
 	saslSelected       authSelection = 1
 	nothingSelected    authSelection = 2
@@ -37,6 +36,8 @@ const (
 	srNothingSelected  srSelection   = 0
 	srDisabledSelected srSelection   = 1
 	srEnabledSelected  srSelection   = 2
+	clusterActive      activeForm    = 0
+	srActive           activeForm    = 1
 )
 
 type Model struct {
@@ -50,9 +51,9 @@ type Model struct {
 	srSelectionState   srSelection
 	state              formState
 	preEditName        *string
-	mode               mode
 	shortcuts          []statusbar.Shortcut
 	title              string
+	activeForm         activeForm
 }
 
 type FormValues struct {
@@ -82,6 +83,11 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 
 	notifierView := m.notifierCmdBar.View(ktx, renderer)
 	formView := renderer.RenderWithStyle(m.form.View(), styles.Form)
+	b := border.New(
+		border.WithTabs("Cluster ≪ F1 »", "Schema Registry ≪ F2 »", "Kafka Connect ≪ F3 »"))
+	formView = b.View(lipgloss.NewStyle().
+		PaddingBottom(ktx.AvailableHeight - 1).
+		Render(formView))
 	views = append(views, notifierView, formView)
 
 	return ui.JoinVertical(lipgloss.Top, views...)
@@ -98,6 +104,9 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.form = m.createForm()
 			m.authSelectionState = noneSelected
 			m.srSelectionState = srNothingSelected
+		case "f2":
+			m.form = m.createSrForm()
+			m.activeForm = srActive
 		}
 	case kadmin.ConnCheckStartedMsg:
 		cmds = append(cmds, msg.AwaitCompletion)
@@ -122,39 +131,44 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		m.form = f
 	}
 
-	if !m.formValues.HasSASLAuthMethodSelected() &&
-		m.authSelectionState == saslSelected {
-		// if SASL authentication mode was previously selected and switched back to none
-		m.form = m.createForm()
-		m.NextField(4)
-		m.authSelectionState = noneSelected
-	} else if m.formValues.HasSASLAuthMethodSelected() &&
-		(m.authSelectionState == nothingSelected || m.authSelectionState == noneSelected) {
-		// SASL authentication mode selected and previously nothing or none auth mode was selected
-		m.form = m.createForm()
-		m.NextField(4)
-		m.authSelectionState = saslSelected
+	if m.activeForm == clusterActive {
+		if !m.formValues.HasSASLAuthMethodSelected() &&
+			m.authSelectionState == saslSelected {
+			// if SASL authentication mode was previously selected and switched back to none
+			m.form = m.createForm()
+			m.NextField(4)
+			m.authSelectionState = noneSelected
+		} else if m.formValues.HasSASLAuthMethodSelected() &&
+			(m.authSelectionState == nothingSelected || m.authSelectionState == noneSelected) {
+			// SASL authentication mode selected and previously nothing or none auth mode was selected
+			m.form = m.createForm()
+			m.NextField(4)
+			m.authSelectionState = saslSelected
+		}
 	}
 
-	// Schema Registry was previously enabled and switched back to disabled
-	if !m.formValues.SrEnabled && m.srSelectionState == srEnabledSelected {
-		m.form = m.createForm()
-		m.NextField(4)
-		if m.formValues.HasSASLAuthMethodSelected() {
-			m.NextField(3)
+	if m.activeForm == srActive {
+		// Schema Registry was previously enabled and switched back to disabled
+		if !m.formValues.SrEnabled && m.srSelectionState == srEnabledSelected {
+			m.form = m.createForm()
+			m.NextField(4)
+			if m.formValues.HasSASLAuthMethodSelected() {
+				m.NextField(3)
+			}
+			m.form.NextGroup()
+			m.srSelectionState = srDisabledSelected
+		} else if m.formValues.SrEnabled &&
+			((m.srSelectionState == srNothingSelected) || m.srSelectionState == srDisabledSelected) {
+			// Schema Registry enabled selected and previously nothing or enabled selected
+			m.form = m.createSrForm()
+			m.NextField(4)
+			if m.formValues.HasSASLAuthMethodSelected() {
+				m.NextField(3)
+			}
+			m.form.NextGroup()
+			m.srSelectionState = srEnabledSelected
+			return nil
 		}
-		m.form.NextGroup()
-		m.srSelectionState = srDisabledSelected
-	} else if m.formValues.SrEnabled &&
-		((m.srSelectionState == srNothingSelected) || m.srSelectionState == srDisabledSelected) {
-		// Schema Registry enabled selected and previously nothing or enabled selected
-		m.form = m.createForm()
-		m.NextField(4)
-		if m.formValues.HasSASLAuthMethodSelected() {
-			m.NextField(3)
-		}
-		m.form.NextGroup()
-		m.srSelectionState = srEnabledSelected
 	}
 
 	if m.form.State == huh.StateCompleted && m.state != loading {
@@ -285,13 +299,6 @@ func (m *Model) createForm() *huh.Form {
 			huh.NewOption("NONE", config.NoneAuthMethod),
 			huh.NewOption("SASL", config.SASLAuthMethod),
 		)
-	srEnabled := huh.NewSelect[bool]().
-		Value(&m.formValues.SrEnabled).
-		Title("Schema Registry").
-		Options(
-			huh.NewOption("Disabled", false),
-			huh.NewOption("Enabled", true),
-		)
 
 	sslEnabled := huh.NewSelect[bool]().
 		Value(&m.formValues.SSLEnabled).
@@ -321,8 +328,27 @@ func (m *Model) createForm() *huh.Form {
 		clusterFields = append(clusterFields, securityProtocol, username, pwd)
 	}
 
-	var schemaRegistryFields []huh.Field
-	schemaRegistryFields = append(schemaRegistryFields, srEnabled)
+	form := huh.NewForm(
+		huh.NewGroup(clusterFields...).
+			Title("Cluster").
+			WithWidth(m.ktx.WindowWidth - 3),
+	)
+	form.WithLayout(huh.LayoutColumns(1))
+	form.QuitAfterSubmit = false
+	form.Init()
+	return form
+}
+
+func (m *Model) createSrForm() *huh.Form {
+	srEnabled := huh.NewSelect[bool]().
+		Value(&m.formValues.SrEnabled).
+		Title("Schema Registry").
+		Options(
+			huh.NewOption("Disabled", false),
+			huh.NewOption("Enabled", true),
+		)
+	var fields []huh.Field
+	fields = append(fields, srEnabled)
 	if m.formValues.SrEnabled {
 		srUrl := huh.NewInput().
 			Value(&m.formValues.SrUrl).
@@ -334,16 +360,14 @@ func (m *Model) createForm() *huh.Form {
 			Value(&m.formValues.SrPassword).
 			EchoMode(huh.EchoModePassword).
 			Title("Schema Registry Password")
-		schemaRegistryFields = append(schemaRegistryFields, srUrl, srUsername, srPwd)
+		fields = append(fields, srUrl, srUsername, srPwd)
 	}
-
 	form := huh.NewForm(
-		huh.NewGroup(clusterFields...).
+		huh.NewGroup(fields...).
 			Title("Cluster").
-			WithWidth(m.ktx.WindowWidth/2),
-		huh.NewGroup(schemaRegistryFields...),
+			WithWidth(m.ktx.WindowWidth - 3),
 	)
-	form.WithLayout(huh.LayoutColumns(2))
+	form.WithLayout(huh.LayoutColumns(1))
 	form.QuitAfterSubmit = false
 	form.Init()
 	return form
@@ -386,7 +410,6 @@ func NewForm(
 
 	model.ktx = ktx
 	model.form = model.createForm()
-	model.mode = newMode
 	model.clusterRegisterer = registerer
 
 	model.authSelectionState = nothingSelected
@@ -396,7 +419,6 @@ func NewForm(
 		model.srSelectionState = srDisabledSelected
 	}
 	model.state = none
-	model.mode = editMode
 
 	if model.formValues.HasSASLAuthMethodSelected() {
 		model.authSelectionState = saslSelected
@@ -444,7 +466,6 @@ func NewEditForm(
 		model.srSelectionState = srDisabledSelected
 	}
 	model.state = none
-	model.mode = editMode
 
 	if model.formValues.HasSASLAuthMethodSelected() {
 		model.authSelectionState = saslSelected

@@ -174,6 +174,7 @@ func WithTabs(tabs ...string) Option {
 
 				if m.activeTabIdx == i {
 					renderedTabs += lipgloss.NewStyle().
+						Bold(true).
 						Background(lipgloss.Color(styles.ColorPurple)).
 						Padding(0, 1).
 						Render(tab)
