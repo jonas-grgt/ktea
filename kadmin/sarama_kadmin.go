@@ -107,7 +107,7 @@ func NewSaramaKadmin(cd ConnectionDetails) (Kadmin, error) {
 	}, nil
 }
 
-func SaramaConnectivityChecker(cluster *config.Cluster) tea.Msg {
+func CheckKafkaConnectivity(cluster *config.Cluster) tea.Msg {
 	connectedChan := make(chan bool)
 	errChan := make(chan error)
 

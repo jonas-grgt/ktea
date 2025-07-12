@@ -6,6 +6,7 @@ import (
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
+	"ktea/sradmin"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
 	"ktea/ui/pages/clusters_page"
@@ -16,14 +17,15 @@ import (
 type state int
 
 type Model struct {
-	state       state
-	active      nav.Page
-	createPage  nav.Page
-	config      *config.Config
-	statusbar   *statusbar.Model
-	ktx         *kontext.ProgramKtx
-	connChecker kadmin.ConnChecker
-	escGoesBack bool
+	state         state
+	active        nav.Page
+	createPage    nav.Page
+	config        *config.Config
+	statusbar     *statusbar.Model
+	ktx           *kontext.ProgramKtx
+	kConnChecker  kadmin.ConnChecker
+	srConnChecker sradmin.ConnChecker
+	escGoesBack   bool
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -45,21 +47,18 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		return nil
 	}
 	switch msg := msg.(type) {
-	case config.ClusterRegisteredMsg:
-		listPage, _ := clusters_page.New(m.ktx, m.connChecker)
-		m.active = listPage
-		m.statusbar = statusbar.New(m.active)
 
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
 			if m.escGoesBack {
-				m.active, _ = clusters_page.New(m.ktx, m.connChecker)
+				m.active, _ = clusters_page.New(m.ktx, m.kConnChecker)
 			}
 		case "ctrl+n":
 			if _, ok := m.active.(*clusters_page.Model); ok {
-				m.active = create_cluster_page.NewForm(
-					m.connChecker,
+				m.active = create_cluster_page.NewCreateClusterPage(
+					m.kConnChecker,
+					m.srConnChecker,
 					m.ktx.Config,
 					m.ktx,
 					[]statusbar.Shortcut{
@@ -75,29 +74,12 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			if clustersPage, ok := m.active.(*clusters_page.Model); ok {
 				clusterName := clustersPage.SelectedCluster()
 				selectedCluster := m.ktx.Config.FindClusterByName(*clusterName)
-				formValues := &create_cluster_page.FormValues{
-					Name:  selectedCluster.Name,
-					Color: selectedCluster.Color,
-					Host:  selectedCluster.BootstrapServers[0],
-				}
-				if selectedCluster.SASLConfig != nil {
-					formValues.SecurityProtocol = selectedCluster.SASLConfig.SecurityProtocol
-					formValues.Username = selectedCluster.SASLConfig.Username
-					formValues.Password = selectedCluster.SASLConfig.Password
-					formValues.AuthMethod = config.SASLAuthMethod
-					formValues.SSLEnabled = selectedCluster.SSLEnabled
-				}
-				if selectedCluster.SchemaRegistry != nil {
-					formValues.SrEnabled = true
-					formValues.SrUrl = selectedCluster.SchemaRegistry.Url
-					formValues.SrUsername = selectedCluster.SchemaRegistry.Username
-					formValues.SrPassword = selectedCluster.SchemaRegistry.Password
-				}
-				m.active = create_cluster_page.NewEditForm(
-					m.connChecker,
+				m.active = create_cluster_page.NewEditClusterPage(
+					m.kConnChecker,
 					m.ktx.Config,
 					m.ktx,
-					formValues,
+					selectedCluster,
+					create_cluster_page.WithTitle("Edit cluster"),
 				)
 			}
 		}
@@ -111,22 +93,25 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 
 func New(
 	ktx *kontext.ProgramKtx,
-	connChecker kadmin.ConnChecker,
+	kConnChecker kadmin.ConnChecker,
+	srConnChecker sradmin.ConnChecker,
 ) (*Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m := Model{}
-	m.connChecker = connChecker
+	m.kConnChecker = kConnChecker
+	m.srConnChecker = srConnChecker
 	m.ktx = ktx
 	m.config = ktx.Config
 	if m.config.HasClusters() {
-		var listPage, c = clusters_page.New(ktx, m.connChecker)
+		var listPage, c = clusters_page.New(ktx, m.kConnChecker)
 		cmd = c
 		m.escGoesBack = true
 		m.active = listPage
 		m.statusbar = statusbar.New(m.active)
 	} else {
-		m.active = create_cluster_page.NewForm(
-			m.connChecker,
+		m.active = create_cluster_page.NewCreateClusterPage(
+			m.kConnChecker,
+			m.srConnChecker,
 			m.ktx.Config,
 			m.ktx,
 			[]statusbar.Shortcut{

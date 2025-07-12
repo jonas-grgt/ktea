@@ -3,10 +3,19 @@ package kadmin
 import (
 	"context"
 	tea "github.com/charmbracelet/bubbletea"
+	"ktea/config"
 	"ktea/sradmin"
 )
 
 type MockKadmin struct {
+}
+
+type MockConnectionCheckedMsg struct {
+	Cluster *config.Cluster
+}
+
+func MockConnChecker(cluster *config.Cluster) tea.Msg {
+	return MockConnectionCheckedMsg{Cluster: cluster}
 }
 
 func (m MockKadmin) CreateTopic(tcd TopicCreationDetails) tea.Msg {

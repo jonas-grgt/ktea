@@ -3,6 +3,7 @@ package cmdbar
 import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -36,8 +37,8 @@ func (n *NotifierCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) st
 	if view == "" {
 		return view
 	}
-	// subtract padding, because of the rounded border of the cmdbar
-	ktx.AvailableHeight -= BorderedPadding
+	// subtract padding (because of the rounded border of the cmdbar) and actual height
+	ktx.AvailableHeight -= BorderedPadding + lipgloss.Height(view)
 	return styles.CmdBarWithWidth(ktx.WindowWidth - BorderedPadding).Render(view)
 }
 

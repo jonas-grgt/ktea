@@ -385,9 +385,12 @@ func New(
 		return true, m.AutoHideCmd("record-details-page")
 	})
 
-	var tabs = []string{}
+	var tabs []border.Tab
 	if record.Payload.Schema != "" {
-		tabs = []string{"Record", "Schema"}
+		tabs = []border.Tab{
+			{Title: "Record", Label: "record"},
+			{Title: "Schema", Label: "record"},
+		}
 	}
 	b := border.New(
 		border.WithTabs(tabs...),

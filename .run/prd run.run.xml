@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="go build ktea.go" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+  <configuration default="false" name="prd run" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="ktea" />
     <working_directory value="$PROJECT_DIR$" />
-    <go_parameters value="-tags dev" />
+    <go_parameters value="-tags prd" />
     <parameters value="--debug" />
     <kind value="FILE" />
     <package value="ktea" />

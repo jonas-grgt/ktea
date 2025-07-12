@@ -109,8 +109,7 @@ func (m *Model) ShowError(error error) tea.Cmd {
 		m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(split[0]) + ": " +
 			styles.FG(styles.ColorWhite).Render(strings.TrimSuffix(split[1], "\n"))
 	} else {
-		m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(msg) +
-			styles.FG(styles.ColorWhite).Render(strings.TrimSuffix(error.Error(), "\n"))
+		m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(msg)
 	}
 	return nil
 }

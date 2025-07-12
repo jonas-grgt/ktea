@@ -17,11 +17,20 @@ const (
 )
 
 type Model struct {
-	Focused      bool
-	tabs         []string
-	onTabChanged OnTabChangedFunc
-	textByPos    map[Position]TextFunc
-	activeTabIdx int
+	Focused       bool
+	tabs          []Tab
+	onTabChanged  OnTabChangedFunc
+	textByPos     map[Position]TextFunc
+	activeTabIdx  int
+	activeColor   lipgloss.Color
+	inActiveColor lipgloss.Color
+}
+
+type Label string
+
+type Tab struct {
+	Title string
+	Label
 }
 
 type Position int
@@ -145,6 +154,19 @@ func (m *Model) NextTab() {
 	}
 }
 
+func (m *Model) GoTo(label Label) {
+	for i, tab := range m.tabs {
+		if tab.Label == label {
+			m.activeTabIdx = i
+			break
+		}
+	}
+}
+
+func (m *Model) WithInActiveColor(c lipgloss.Color) {
+	m.inActiveColor = c
+}
+
 func WithTitle(title string) Option {
 	return func(m *Model) {
 		m.textByPos[TopMiddleBorder] = func(_ *Model) string {
@@ -161,7 +183,7 @@ func WithTitleFunc(titleFunc func() string) Option {
 	}
 }
 
-func WithTabs(tabs ...string) Option {
+func WithTabs(tabs ...Tab) Option {
 	return func(m *Model) {
 		if len(tabs) == 0 {
 			return
@@ -174,17 +196,31 @@ func WithTabs(tabs ...string) Option {
 
 				if m.activeTabIdx == i {
 					renderedTabs += lipgloss.NewStyle().
-						Background(lipgloss.Color(styles.ColorPurple)).
+						Bold(true).
+						Background(m.activeColor).
 						Padding(0, 1).
-						Render(tab)
+						Render(tab.Title)
 				} else {
 					renderedTabs += lipgloss.NewStyle().
 						Padding(0, 1).
-						Render(tab)
+						Foreground(m.inActiveColor).
+						Render(tab.Title)
 				}
 			}
 			return fmt.Sprintf("|%s|", renderedTabs)
 		}
+	}
+}
+
+func WithActiveColor(c lipgloss.Color) Option {
+	return func(m *Model) {
+		m.activeColor = c
+	}
+}
+
+func WithInactiveColor(c lipgloss.Color) Option {
+	return func(m *Model) {
+		m.inActiveColor = c
 	}
 }
 
@@ -198,6 +234,7 @@ func New(options ...Option) *Model {
 	m := &Model{}
 	m.textByPos = make(map[Position]TextFunc)
 	m.Focused = true
+	m.activeColor = styles.ColorPurple
 
 	for _, option := range options {
 		option(m)

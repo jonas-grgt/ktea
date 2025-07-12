@@ -27,6 +27,15 @@ type SrAdmin interface {
 	SchemaDeleter
 }
 
+type ConnCheckSucceededMsg struct{}
+
+type ConnCheckErrMsg struct {
+	Err error
+}
+
+// ConnChecker is a function that checks a Schema Registry connection and returns a tea.Msg.
+type ConnChecker func(c *config.SchemaRegistryConfig) tea.Msg
+
 func (s *DefaultSrAdmin) GetSubjects() []Subject {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -79,13 +88,6 @@ func (s *DefaultSrAdmin) doCreateSchema(details SubjectCreationDetails, createdC
 	createdChan <- true
 }
 
-func New(registryConfig *config.SchemaRegistryConfig) *DefaultSrAdmin {
-	client := createHttpClient(registryConfig)
-	return &DefaultSrAdmin{
-		client: srclient.NewSchemaRegistryClient(registryConfig.Url, srclient.WithClient(client)),
-	}
-}
-
 func createHttpClient(registry *config.SchemaRegistryConfig) *http.Client {
 	auth := registry.Username + ":" + registry.Password
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
@@ -112,4 +114,11 @@ type roundTripperWithAuth struct {
 func (r roundTripperWithAuth) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Authorization", r.authHeader)
 	return r.baseTransport.RoundTrip(req)
+}
+
+func New(registryConfig *config.SchemaRegistryConfig) *DefaultSrAdmin {
+	client := createHttpClient(registryConfig)
+	return &DefaultSrAdmin{
+		client: srclient.NewSchemaRegistryClient(registryConfig.Url, srclient.WithClient(client)),
+	}
 }
