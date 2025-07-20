@@ -3,10 +3,6 @@ package create_cluster_page
 import (
 	"errors"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -19,6 +15,11 @@ import (
 	"ktea/ui/components/statusbar"
 	"reflect"
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 type authSelection int
@@ -40,6 +41,7 @@ type Model struct {
 	form               *huh.Form // the active form
 	state              formState
 	srForm             *huh.Form
+	kcForm             *huh.Form
 	cForm              *huh.Form
 	kForm              *huh.Form
 	clusterValues      *clusterValues
@@ -57,17 +59,20 @@ type Model struct {
 }
 
 type clusterValues struct {
-	Name             string
-	Color            string
-	Host             string
-	AuthMethod       config.AuthMethod
-	SecurityProtocol config.SecurityProtocol
-	SSLEnabled       bool
-	Username         string
-	Password         string
-	SrUrl            string
-	SrUsername       string
-	SrPassword       string
+	name             string
+	color            string
+	host             string
+	authMethod       config.AuthMethod
+	securityProtocol config.SecurityProtocol
+	sslEnabled       bool
+	username         string
+	password         string
+	srUrl            string
+	srUsername       string
+	srPassword       string
+	kcUrl            string
+	kcUsername       string
+	kcPassword       string
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -91,7 +96,6 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
-
 	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
 
 	var cmds []tea.Cmd
@@ -123,6 +127,10 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					m.notifierCmdBar.Notifier.AutoHideCmd(notifierCmdbarTag),
 				)
 			}
+		case "f3":
+			m.form = m.kcForm
+			m.form.State = huh.StateNormal
+			m.border.GoTo("f3")
 		}
 	case kadmin.ConnCheckStartedMsg:
 		m.state = loading
@@ -225,12 +233,12 @@ func (m *Model) getRegistrationDetails() config.RegistrationDetails {
 	var name string
 	var newName *string
 	if m.preEditName == nil { // When creating a cluster
-		name = m.clusterValues.Name
+		name = m.clusterValues.name
 		newName = nil
 	} else { // When updating a cluster.
 		name = *m.preEditName
-		if m.clusterValues.Name != *m.preEditName {
-			newName = &m.clusterValues.Name
+		if m.clusterValues.name != *m.preEditName {
+			newName = &m.clusterValues.name
 		}
 	}
 
@@ -238,7 +246,7 @@ func (m *Model) getRegistrationDetails() config.RegistrationDetails {
 	var securityProtocol config.SecurityProtocol
 	if m.clusterValues.HasSASLAuthMethodSelected() {
 		authMethod = config.SASLAuthMethod
-		securityProtocol = m.clusterValues.SecurityProtocol
+		securityProtocol = m.clusterValues.securityProtocol
 	} else {
 		authMethod = config.NoneAuthMethod
 	}
@@ -246,30 +254,30 @@ func (m *Model) getRegistrationDetails() config.RegistrationDetails {
 	details := config.RegistrationDetails{
 		Name:             name,
 		NewName:          newName,
-		Color:            m.clusterValues.Color,
-		Host:             m.clusterValues.Host,
+		Color:            m.clusterValues.color,
+		Host:             m.clusterValues.host,
 		AuthMethod:       authMethod,
 		SecurityProtocol: securityProtocol,
-		SSLEnabled:       m.clusterValues.SSLEnabled,
-		Username:         m.clusterValues.Username,
-		Password:         m.clusterValues.Password,
+		SSLEnabled:       m.clusterValues.sslEnabled,
+		Username:         m.clusterValues.username,
+		Password:         m.clusterValues.password,
 	}
 	if m.clusterValues.SrEnabled() {
 		details.SchemaRegistry = &config.SchemaRegistryDetails{
-			Url:      m.clusterValues.SrUrl,
-			Username: m.clusterValues.SrUsername,
-			Password: m.clusterValues.SrPassword,
+			Url:      m.clusterValues.srUrl,
+			Username: m.clusterValues.srUsername,
+			Password: m.clusterValues.srPassword,
 		}
 	}
 	return details
 }
 
 func (f *clusterValues) HasSASLAuthMethodSelected() bool {
-	return f.AuthMethod == config.SASLAuthMethod
+	return f.authMethod == config.SASLAuthMethod
 }
 
 func (f *clusterValues) SrEnabled() bool {
-	return len(f.SrUrl) > 0
+	return len(f.srUrl) > 0
 }
 
 func (m *Model) NextField(count int) {
@@ -280,7 +288,7 @@ func (m *Model) NextField(count int) {
 
 func (m *Model) createCForm() *huh.Form {
 	name := huh.NewInput().
-		Value(&m.clusterValues.Name).
+		Value(&m.clusterValues.name).
 		Title("Name").
 		Validate(func(v string) error {
 			if v == "" {
@@ -300,7 +308,7 @@ func (m *Model) createCForm() *huh.Form {
 			return nil
 		})
 	color := huh.NewSelect[string]().
-		Value(&m.clusterValues.Color).
+		Value(&m.clusterValues.color).
 		Title("Color").
 		Options(
 			huh.NewOption(styles.Env.Colors.Green.Render("green"), styles.ColorGreen),
@@ -311,7 +319,7 @@ func (m *Model) createCForm() *huh.Form {
 			huh.NewOption(styles.Env.Colors.Red.Render("red"), styles.ColorRed),
 		)
 	host := huh.NewInput().
-		Value(&m.clusterValues.Host).
+		Value(&m.clusterValues.host).
 		Title("Host").
 		Validate(func(v string) error {
 			if v == "" {
@@ -320,7 +328,7 @@ func (m *Model) createCForm() *huh.Form {
 			return nil
 		})
 	auth := huh.NewSelect[config.AuthMethod]().
-		Value(&m.clusterValues.AuthMethod).
+		Value(&m.clusterValues.authMethod).
 		Title("Authentication method").
 		Options(
 			huh.NewOption("NONE", config.NoneAuthMethod),
@@ -328,7 +336,7 @@ func (m *Model) createCForm() *huh.Form {
 		)
 
 	sslEnabled := huh.NewSelect[bool]().
-		Value(&m.clusterValues.SSLEnabled).
+		Value(&m.clusterValues.sslEnabled).
 		Title("SSL").
 		Options(
 			huh.NewOption("Disable SSL", false),
@@ -340,16 +348,16 @@ func (m *Model) createCForm() *huh.Form {
 
 	if m.clusterValues.HasSASLAuthMethodSelected() {
 		securityProtocol := huh.NewSelect[config.SecurityProtocol]().
-			Value(&m.clusterValues.SecurityProtocol).
+			Value(&m.clusterValues.securityProtocol).
 			Title("Security Protocol").
 			Options(
 				huh.NewOption("SASL_PLAINTEXT", config.SASLPlaintextSecurityProtocol),
 			)
 		username := huh.NewInput().
-			Value(&m.clusterValues.Username).
+			Value(&m.clusterValues.username).
 			Title("Username")
 		pwd := huh.NewInput().
-			Value(&m.clusterValues.Password).
+			Value(&m.clusterValues.password).
 			EchoMode(huh.EchoModePassword).
 			Title("Password")
 		clusterFields = append(clusterFields, securityProtocol, username, pwd)
@@ -369,13 +377,13 @@ func (m *Model) createCForm() *huh.Form {
 func (m *Model) createSrForm() *huh.Form {
 	var fields []huh.Field
 	srUrl := huh.NewInput().
-		Value(&m.clusterValues.SrUrl).
+		Value(&m.clusterValues.srUrl).
 		Title("Schema Registry URL")
 	srUsername := huh.NewInput().
-		Value(&m.clusterValues.SrUsername).
+		Value(&m.clusterValues.srUsername).
 		Title("Schema Registry Username")
 	srPwd := huh.NewInput().
-		Value(&m.clusterValues.SrPassword).
+		Value(&m.clusterValues.srPassword).
 		EchoMode(huh.EchoModePassword).
 		Title("Schema Registry Password")
 	fields = append(fields, srUrl, srUsername, srPwd)
@@ -383,6 +391,31 @@ func (m *Model) createSrForm() *huh.Form {
 	form := huh.NewForm(
 		huh.NewGroup(fields...).
 			Title("Schema Registry").
+			WithWidth(m.ktx.WindowWidth - 3),
+	)
+	form.QuitAfterSubmit = false
+	form.Init()
+
+	return form
+}
+
+func (m *Model) createKcForm() *huh.Form {
+	var fields []huh.Field
+	srUrl := huh.NewInput().
+		Value(&m.clusterValues.kcUrl).
+		Title("Kafka Connect URL")
+	srUsername := huh.NewInput().
+		Value(&m.clusterValues.kcUsername).
+		Title("Kafka Connect Username")
+	srPwd := huh.NewInput().
+		Value(&m.clusterValues.kcPassword).
+		EchoMode(huh.EchoModePassword).
+		Title("Kafka Connect Password")
+	fields = append(fields, srUrl, srUsername, srPwd)
+
+	form := huh.NewForm(
+		huh.NewGroup(fields...).
+			Title("Kafka Connect").
 			WithWidth(m.ktx.WindowWidth - 3),
 	)
 	form.QuitAfterSubmit = false
@@ -451,6 +484,17 @@ func WithTitle(title string) Option {
 	}
 }
 
+func initBorder() *border.Model {
+	return border.New(
+		border.WithInactiveColor(styles.ColorDarkGrey),
+		border.WithTabs(
+			border.Tab{Title: "Cluster ≪ F1 »", Label: "f1"},
+			border.Tab{Title: "Schema Registry ≪ F2 »", Label: "f2"},
+			border.Tab{Title: "Kafka Connect ≪ f3 »", Label: "f3"},
+		),
+	)
+}
+
 func NewCreateClusterPage(
 	kConnChecker kadmin.ConnChecker,
 	srConnChecker sradmin.ConnChecker,
@@ -459,7 +503,7 @@ func NewCreateClusterPage(
 	shortcuts []statusbar.Shortcut,
 	options ...Option,
 ) *Model {
-	var formValues = &clusterValues{}
+	formValues := &clusterValues{}
 	model := Model{
 		clusterValues: formValues,
 		kConnChecker:  kConnChecker,
@@ -469,16 +513,11 @@ func NewCreateClusterPage(
 
 	model.ktx = ktx
 
-	model.border = border.New(
-		border.WithInactiveColor(styles.ColorDarkGrey),
-		border.WithTabs(
-			border.Tab{Title: "Cluster ≪ F1 »", Label: "f1"},
-			border.Tab{Title: "Schema Registry ≪ F2 »", Label: "f2"},
-		),
-	)
+	model.border = initBorder()
 
 	model.cForm = model.createCForm()
 	model.srForm = model.createSrForm()
+	model.kcForm = model.createKcForm()
 	model.form = model.cForm
 
 	model.clusterRegisterer = registerer
@@ -508,21 +547,21 @@ func NewEditClusterPage(
 	options ...Option,
 ) *Model {
 	formValues := &clusterValues{
-		Name:  cluster.Name,
-		Color: cluster.Color,
-		Host:  cluster.BootstrapServers[0],
+		name:  cluster.Name,
+		color: cluster.Color,
+		host:  cluster.BootstrapServers[0],
 	}
 	if cluster.SASLConfig != nil {
-		formValues.SecurityProtocol = cluster.SASLConfig.SecurityProtocol
-		formValues.Username = cluster.SASLConfig.Username
-		formValues.Password = cluster.SASLConfig.Password
-		formValues.AuthMethod = config.SASLAuthMethod
-		formValues.SSLEnabled = cluster.SSLEnabled
+		formValues.securityProtocol = cluster.SASLConfig.SecurityProtocol
+		formValues.username = cluster.SASLConfig.Username
+		formValues.password = cluster.SASLConfig.Password
+		formValues.authMethod = config.SASLAuthMethod
+		formValues.sslEnabled = cluster.SSLEnabled
 	}
 	if cluster.SchemaRegistry != nil {
-		formValues.SrUrl = cluster.SchemaRegistry.Url
-		formValues.SrUsername = cluster.SchemaRegistry.Username
-		formValues.SrPassword = cluster.SchemaRegistry.Password
+		formValues.srUrl = cluster.SchemaRegistry.Url
+		formValues.srUsername = cluster.SchemaRegistry.Username
+		formValues.srPassword = cluster.SchemaRegistry.Password
 	}
 	model := Model{
 		registeredCluster: cluster,
@@ -544,15 +583,11 @@ func NewEditClusterPage(
 	}
 	model.ktx = ktx
 
-	model.border = border.New(
-		border.WithTabs(
-			border.Tab{Title: "Cluster ≪ F1 »", Label: "f1"},
-			border.Tab{Title: "Schema Registry ≪ F2 »", Label: "f2"},
-		),
-	)
+	model.border = initBorder()
 
 	model.cForm = model.createCForm()
 	model.srForm = model.createSrForm()
+	model.kcForm = model.createKcForm()
 	model.form = model.cForm
 
 	model.clusterRegisterer = registerer

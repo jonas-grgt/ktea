@@ -55,9 +55,15 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 }
 
 func TestTabs(t *testing.T) {
-	t.Run("switching tabs", func(t *testing.T) {
+	t.Run("Switch to schema registry tab", func(t *testing.T) {
 		// given
-		page := NewCreateClusterPage(kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		page := NewCreateClusterPage(
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 		// and: a cluster is registered
 		cluster := config.Cluster{}
 		page.registeredCluster = &cluster
@@ -70,6 +76,29 @@ func TestTabs(t *testing.T) {
 		assert.Contains(t, render, "Schema Registry URL")
 		assert.Contains(t, render, "Schema Registry Username")
 		assert.Contains(t, render, "Schema Registry Password")
+	})
+
+	t.Run("Switch to kafka connect tab", func(t *testing.T) {
+		// given
+		page := NewCreateClusterPage(
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
+		// and: a cluster is registered
+		cluster := config.Cluster{}
+		page.registeredCluster = &cluster
+
+		// when
+		page.Update(tests.Key(tea.KeyF3))
+
+		// then: kafka connect tab is visible
+		render := page.View(&ktx, tests.TestRenderer)
+		assert.Contains(t, render, "Kafka Connect URL")
+		assert.Contains(t, render, "Kafka Connect Username")
+		assert.Contains(t, render, "Kafka Connect Password")
 	})
 
 	t.Run("switching back to clusters tab remembers previously entered state", func(t *testing.T) {
