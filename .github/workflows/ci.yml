@@ -19,13 +19,13 @@ jobs:
         go-version: '1.23.2'
 
     - name: Build
-      run: go build -tags prd -v ./...
+      run: go build -v ./...
 
     - name: Test
-      run: go test -tags prd -v ./...
+      run: go test -v ./...
 
     - name: Run coverage
-      run: go test ./... -coverpkg "$(go list || go list -m | head -1)/..." -tags prd -coverprofile coverage-raw.out
+      run: go test ./... -coverpkg "$(go list || go list -m | head -1)/..." -coverprofile coverage-raw.out
 
     - name: Clean coverage
       run: cat coverage-raw.out | grep -vE 'mock|test|file.go' > coverage.out
