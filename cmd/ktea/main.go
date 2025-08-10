@@ -2,9 +2,6 @@ package main
 
 import (
 	"flag"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kcadmin"
@@ -23,6 +20,10 @@ import (
 	"os"
 	"slices"
 	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 var version string
@@ -152,6 +153,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		c := m.boostrapUI(msg.Cluster)
 		return m, c
 
+	case kadmin.ClusterConfigMsg, kadmin.ClusterConfigStartedMsg:
+		if m.clustersTabCtrl != nil {
+			return m, m.clustersTabCtrl.Update(msg)
+		}
 	case config.LoadedMsg:
 		m.ktx.Config = msg.Config
 		if m.ktx.Config.HasClusters() {

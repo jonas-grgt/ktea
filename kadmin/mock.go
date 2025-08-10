@@ -2,9 +2,10 @@ package kadmin
 
 import (
 	"context"
-	tea "github.com/charmbracelet/bubbletea"
 	"ktea/config"
 	"ktea/sradmin"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type MockKadmin struct {
@@ -59,6 +60,14 @@ func (m MockKadmin) ListConfigs(topic string) tea.Msg {
 }
 
 func (m MockKadmin) SetSra(sra sradmin.SrAdmin) {
+}
+
+func (m MockKadmin) GetClusterConfig() tea.Msg {
+	return nil
+}
+
+func (m MockKadmin) GetBrokerConfig(brokerID int32) tea.Msg {
+	return nil
 }
 
 func NewMockKadminInstantiator() Instantiator {

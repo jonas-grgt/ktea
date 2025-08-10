@@ -1,8 +1,9 @@
 package kadmin
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"ktea/config"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 const (
@@ -25,6 +26,8 @@ type Kadmin interface {
 	ConfigUpdater
 	TopicConfigLister
 	SraSetter
+	ClusterConfigLister
+	BrokerConfigLister
 }
 
 type ConnectionDetails struct {
