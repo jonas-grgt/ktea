@@ -9,6 +9,14 @@ type MockSrAdmin struct {
 	GetSchemaByIdFunc func(id int) tea.Msg
 }
 
+func (m *MockSrAdmin) DeleteSchema(subject string, version int) tea.Msg {
+	panic("implement me")
+}
+
+func (m *MockSrAdmin) SoftDeleteSubject(subject string) tea.Msg {
+	panic("implement me")
+}
+
 type MockConnectionCheckedMsg struct {
 	Config *config.SchemaRegistryConfig
 }
@@ -17,7 +25,7 @@ func MockConnChecker(config *config.SchemaRegistryConfig) tea.Msg {
 	return MockConnectionCheckedMsg{config}
 }
 
-func (m *MockSrAdmin) DeleteSchema(string, int) tea.Msg {
+func (m *MockSrAdmin) SoftDeleteSchema(string, int) tea.Msg {
 	return nil
 }
 
@@ -32,7 +40,7 @@ func (m *MockSrAdmin) GetSchemaById(id int) tea.Msg {
 	return nil
 }
 
-func (m *MockSrAdmin) DeleteSubject(string) tea.Msg {
+func (m *MockSrAdmin) HardDeleteSubject(string) tea.Msg {
 	return nil
 }
 

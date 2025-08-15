@@ -25,11 +25,24 @@ func (msg *SubjectDeletionStartedMsg) AwaitCompletion() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) DeleteSubject(subject string) tea.Msg {
+func (s *DefaultSrAdmin) HardDeleteSubject(subject string) tea.Msg {
 	deletedChan := make(chan bool)
 	errChan := make(chan error)
 
-	go s.doDeleteSubject(subject, deletedChan, errChan)
+	go s.doDeleteSubject(subject, true, deletedChan, errChan)
+
+	return SubjectDeletionStartedMsg{
+		subject,
+		deletedChan,
+		errChan,
+	}
+}
+
+func (s *DefaultSrAdmin) SoftDeleteSubject(subject string) tea.Msg {
+	deletedChan := make(chan bool)
+	errChan := make(chan error)
+
+	go s.doDeleteSubject(subject, false, deletedChan, errChan)
 
 	return SubjectDeletionStartedMsg{
 		subject,
@@ -40,11 +53,12 @@ func (s *DefaultSrAdmin) DeleteSubject(subject string) tea.Msg {
 
 func (s *DefaultSrAdmin) doDeleteSubject(
 	subject string,
+	permanent bool,
 	deletedChan chan bool,
 	errChan chan error,
 ) {
 	maybeIntroduceLatency()
-	err := s.client.DeleteSubject(subject, true)
+	err := s.client.DeleteSubject(subject, permanent)
 	if err != nil {
 		errChan <- err
 		return

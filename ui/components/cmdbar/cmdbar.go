@@ -14,6 +14,8 @@ type CmdBar interface {
 
 	Update(msg tea.Msg) (bool, tea.Msg, tea.Cmd)
 
+	// Shortcuts returns a slice of shortcuts
+	// or nil if there are none, i.e. due to CmdBar not being active
 	Shortcuts() []statusbar.Shortcut
 
 	IsFocussed() bool

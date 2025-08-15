@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/sradmin"
 	"ktea/tests"
+	"ktea/ui/components/statusbar"
 	"ktea/ui/pages/nav"
 	"math/rand"
 	"strings"
@@ -22,10 +23,16 @@ func (m *MockSubjectsLister) ListSubjects() tea.Msg {
 }
 
 type MockSubjectsDeleter struct {
-	deletionResultMsg tea.Msg
+	hardDeletionResultMsg tea.Msg
+	softDeletionResultMsg tea.Msg
 }
 
-type DeletedSubjectMsg struct {
+type HardDeletedSubjectMsg struct {
+	Subject string
+	Version int
+}
+
+type SoftDeletedSubjectMsg struct {
 	Subject string
 	Version int
 }
@@ -37,8 +44,12 @@ func (m MockGlobalCompatibilityLister) ListGlobalCompatibility() tea.Msg {
 	return nil
 }
 
-func (m *MockSubjectsDeleter) DeleteSubject(subject string) tea.Msg {
-	return m.deletionResultMsg
+func (m *MockSubjectsDeleter) HardDeleteSubject(string) tea.Msg {
+	return m.hardDeletionResultMsg
+}
+
+func (m *MockSubjectsDeleter) SoftDeleteSubject(string) tea.Msg {
+	return m.softDeletionResultMsg
 }
 
 func TestSubjectsPage(t *testing.T) {
@@ -190,49 +201,6 @@ func TestSubjectsPage(t *testing.T) {
 				Versions: []int{0, 1, 2},
 			},
 		}, cmd())
-	})
-
-	t.Run("Remove delete subject from table", func(t *testing.T) {
-
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
-
-		var subjects []sradmin.Subject
-		var versions []int
-		for i := 0; i < 10; i++ {
-			versions = append(versions, i)
-			subjects = append(subjects,
-				sradmin.Subject{
-					Name:     fmt.Sprintf("subject%d", i),
-					Versions: versions,
-				})
-		}
-		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
-
-		subjectsPage.Update(sradmin.SubjectDeletedMsg{SubjectName: subjects[4].Name})
-
-		render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
-
-		assert.NotRegexp(t, "subject4\\W+5", render)
-	})
-
-	t.Run("When deletion spinner active do not allow other cmdbars to activate", func(t *testing.T) {
-
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
-		subjectsPage.Update(sradmin.SubjectDeletionStartedMsg{})
-
-		subjectsPage.Update(tests.Key('/'))
-
-		render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
-
-		assert.Contains(t, render, " ⏳ Deleting Subject")
 	})
 
 	t.Run("Order subjects default by Subject Name Asc", func(t *testing.T) {
@@ -471,13 +439,46 @@ func TestSubjectsPage(t *testing.T) {
 		render := subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
 		assert.NotRegexp(t, "┃ 🗑️  subject1 will be deleted permanently\\W+Delete!\\W+Cancel.", render)
 
-		t.Run("F2 triggers subject delete", func(t *testing.T) {
+		t.Run("F4 triggers subject hard delete", func(t *testing.T) {
+			subjectsPage.Update(tests.Key(tea.KeyDown))
+			subjectsPage.Update(tests.Key(tea.KeyF4))
+
+			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+
+			assert.Regexp(t, "┃ 🗑️  subject1 will be deleted permanently \\(hard\\)\\W+Delete!\\W+Cancel.", render)
+
+			t.Run("Enter hard deletes the subject", func(t *testing.T) {
+				deleter.hardDeletionResultMsg = HardDeletedSubjectMsg{"subject1", 1}
+				deleter.softDeletionResultMsg = SoftDeletedSubjectMsg{"subject1", 1}
+
+				subjectsPage.Update(tests.Key('d'))
+				cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
+				msgs := tests.ExecuteBatchCmd(cmds)
+
+				assert.Contains(t, msgs, HardDeletedSubjectMsg{"subject1", 1})
+			})
+
+		})
+
+		t.Run("F2 triggers subject soft delete", func(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyDown))
 			subjectsPage.Update(tests.Key(tea.KeyF2))
 
 			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
 
-			assert.Regexp(t, "┃ 🗑️  subject1 will be deleted permanently\\W+Delete!\\W+Cancel.", render)
+			assert.Regexp(t, "┃ 🗑️  subject1 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
+
+			t.Run("Enter soft deletes the subject", func(t *testing.T) {
+				deleter.hardDeletionResultMsg = HardDeletedSubjectMsg{"subject1", 1}
+				deleter.softDeletionResultMsg = SoftDeletedSubjectMsg{"subject1", 1}
+
+				subjectsPage.Update(tests.Key('d'))
+				cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
+				msgs := tests.ExecuteBatchCmd(cmds)
+
+				assert.Contains(t, msgs, SoftDeletedSubjectMsg{"subject1", 1})
+			})
+
 		})
 
 		t.Run("Delete after searching from selective list", func(t *testing.T) {
@@ -490,26 +491,15 @@ func TestSubjectsPage(t *testing.T) {
 
 			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
 
-			assert.Regexp(t, "┃ 🗑️  subject11 will be deleted permanently\\W+Delete!\\W+Cancel.", render)
+			assert.Regexp(t, "┃ 🗑️  subject11 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
 
 			// reset search
 			subjectsPage.Update(tests.Key('/'))
 			subjectsPage.Update(tests.Key(tea.KeyEsc))
 		})
 
-		t.Run("Enter effectively deletes the subject", func(t *testing.T) {
-			deleter.deletionResultMsg = DeletedSubjectMsg{"subject1", 1}
-
-			subjectsPage.Update(tests.Key(tea.KeyF2))
-			subjectsPage.Update(tests.Key('d'))
-			cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
-			msgs := tests.ExecuteBatchCmd(cmds)
-
-			assert.Contains(t, msgs, DeletedSubjectMsg{"subject1", 1})
-		})
-
 		t.Run("Display error when deletion fails", func(t *testing.T) {
-			deleter.deletionResultMsg = sradmin.SubjectDeletionStartedMsg{}
+			deleter.hardDeletionResultMsg = sradmin.SubjectDeletionStartedMsg{}
 
 			subjectsPage.Update(tests.Key(tea.KeyF2))
 			subjectsPage.Update(tests.Key('d'))
@@ -543,6 +533,9 @@ func TestSubjectsPage(t *testing.T) {
 				&MockGlobalCompatibilityLister{},
 				&MockSubjectsDeleter{},
 			)
+
+			addSubjects(subjectsPage)
+
 			subjectsPage.Update(sradmin.SubjectDeletionStartedMsg{})
 
 			render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
@@ -569,6 +562,32 @@ func TestSubjectsPage(t *testing.T) {
 			assert.Contains(t, render, "No Subjects Found")
 			assert.Nil(t, cmd)
 		})
+
+		t.Run("When deletion spinner active do not allow other cmdbars to activate", func(t *testing.T) {
+			subjectsPage.Update(sradmin.SubjectDeletionStartedMsg{})
+
+			subjectsPage.Update(tests.Key('/'))
+
+			render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+
+			assert.Contains(t, render, " ⏳ Deleting Subject")
+		})
+
+		t.Run("Remove delete subject from table", func(t *testing.T) {
+			subjectsPage, _ := New(
+				&MockSubjectsLister{},
+				&MockGlobalCompatibilityLister{},
+				&MockSubjectsDeleter{},
+			)
+
+			subjects := addSubjects(subjectsPage)
+
+			subjectsPage.Update(sradmin.SubjectDeletedMsg{SubjectName: subjects[4].Name})
+
+			render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+
+			assert.NotRegexp(t, "subject4\\W+5", render)
+		})
 	})
 
 	t.Run("When listing started show spinning indicator", func(t *testing.T) {
@@ -578,12 +597,82 @@ func TestSubjectsPage(t *testing.T) {
 			&MockGlobalCompatibilityLister{},
 			&MockSubjectsDeleter{},
 		)
+
+		addSubjects(subjectsPage)
+
 		subjectsPage.Update(sradmin.SubjectListingStartedMsg{})
 
 		render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
 
 		assert.Contains(t, render, " ⏳ Loading subjects")
 	})
+
+	t.Run("Shortcuts", func(t *testing.T) {
+		subjectsPage, _ := New(
+			&MockSubjectsLister{},
+			&MockGlobalCompatibilityLister{},
+			&MockSubjectsDeleter{},
+		)
+
+		t.Run("when there are no subjects", func(t *testing.T) {
+			subjectsPage.subjects = nil
+			shortcuts := subjectsPage.Shortcuts()
+
+			assert.Equal(t,
+				[]statusbar.Shortcut{
+					{Name: "Register New Schema", Keybinding: "C-n"},
+					{Name: "Refresh", Keybinding: "F5"},
+				}, shortcuts)
+		})
+
+		t.Run("when there are subjects", func(t *testing.T) {
+			addSubjects(subjectsPage)
+			subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+
+			shortcuts := subjectsPage.Shortcuts()
+
+			assert.Equal(t,
+				[]statusbar.Shortcut{
+					{Name: "Register New Schema", Keybinding: "C-n"},
+					{Name: "Refresh", Keybinding: "F5"},
+					{Name: "Search", Keybinding: "/"},
+					{Name: "Delete (soft)", Keybinding: "F2"},
+					{Name: "Delete (hard)", Keybinding: "F4"},
+				}, shortcuts)
+		})
+
+		t.Run("cmdbar shortcuts have priority", func(t *testing.T) {
+
+			subjectsPage.Update(tests.Key(tea.KeyDown))
+			subjectsPage.Update(tests.Key(tea.KeyF2))
+
+			shortcuts := subjectsPage.Shortcuts()
+
+			assert.Equal(t,
+				[]statusbar.Shortcut{
+					{Name: "Confirm", Keybinding: "enter"},
+					{Name: "Select Cancel", Keybinding: "c"},
+					{Name: "Select Delete", Keybinding: "d"},
+					{Name: "Cancel", Keybinding: "esc/F2"},
+				}, shortcuts)
+		})
+
+	})
+}
+
+func addSubjects(subjectsPage *Model) []sradmin.Subject {
+	var subjects []sradmin.Subject
+	var versions []int
+	for i := 0; i < 10; i++ {
+		versions = append(versions, i)
+		subjects = append(subjects,
+			sradmin.Subject{
+				Name:     fmt.Sprintf("subject%d", i),
+				Versions: versions,
+			})
+	}
+	subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
+	return subjects
 }
 
 func shuffle[T any](slice []T) {

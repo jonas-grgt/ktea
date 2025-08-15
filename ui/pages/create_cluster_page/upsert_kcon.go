@@ -324,7 +324,7 @@ func NewUpsertKcModel(
 			return deleter(c)
 		}
 	}
-	m.deleteCmdbar = cmdbar.NewDeleteCmdBar[string](deleteMsgFunc, deleteFunc, nil)
+	m.deleteCmdbar = cmdbar.NewDeleteCmdBar[string](deleteMsgFunc, deleteFunc)
 
 	cmdbar.WithMsgHandler(m.cmdBar, func(msg kcadmin.ConnCheckStartedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		return true, m.SpinWithLoadingMsg("Testing cluster connectivity")

@@ -12,12 +12,15 @@ type SubjectCreationDetails struct {
 	Schema  string
 }
 
+// SchemaCreator registers a schema
 type SchemaCreator interface {
 	CreateSchema(details SubjectCreationDetails) tea.Msg
 }
 
 type SubjectDeleter interface {
-	DeleteSubject(subject string) tea.Msg
+	HardDeleteSubject(subject string) tea.Msg
+
+	SoftDeleteSubject(subject string) tea.Msg
 }
 
 type SchemaDeleter interface {

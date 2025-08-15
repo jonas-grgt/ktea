@@ -75,7 +75,7 @@ func (c *CmdBar) Update(msg tea.Msg, selection string) (tea.Msg, tea.Cmd) {
 	return msg, nil
 }
 
-func NewCmdBar(deleteFunc cmdbar.DeleteFunc[int], schemaDeletedNotifier cmdbar.NotificationHandler[sradmin.SchemaDeletedMsg]) *CmdBar {
+func NewCmdBar(deleteFunc cmdbar.DeleteFn[int], schemaDeletedNotifier cmdbar.NotificationHandler[sradmin.SchemaDeletedMsg]) *CmdBar {
 	schemaListingStartedNotifier := func(msg sradmin.SchemaListingStarted, m *notifier.Model) (bool, tea.Cmd) {
 		cmd := m.SpinWithLoadingMsg("Loading schema")
 		return true, cmd
@@ -112,7 +112,7 @@ func NewCmdBar(deleteFunc cmdbar.DeleteFunc[int], schemaDeletedNotifier cmdbar.N
 	return &CmdBar{
 		notifierWidget: notifierCmdBar,
 		active:         notifierCmdBar,
-		deleteCmdBar:   cmdbar.NewDeleteCmdBar[int](deleteMsgFunc, deleteFunc, nil),
+		deleteCmdBar:   cmdbar.NewDeleteCmdBar[int](deleteMsgFunc, deleteFunc),
 	}
 }
 

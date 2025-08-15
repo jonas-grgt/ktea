@@ -400,7 +400,7 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 	m.sortByCmdBar = sortByCmdBar
 	bar := cmdbar.NewSearchCmdBar("Search topics by name")
 	m.tcb = cmdbar.NewTableCmdsBar[string](
-		cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc, nil),
+		cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc),
 		bar,
 		notifierCmdBar,
 		sortByCmdBar,

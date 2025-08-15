@@ -471,7 +471,7 @@ func New(
 	}
 
 	m.cmdBar = cmdbar.NewTableCmdsBar(
-		cmdbar.NewDeleteCmdBar[string](deleteMsgFunc, deleteFunc, nil),
+		cmdbar.NewDeleteCmdBar[string](deleteMsgFunc, deleteFunc),
 		cmdbar.NewSearchCmdBar("Search connectors by name"),
 		notifierCmdBar,
 		sortByCmdBar)

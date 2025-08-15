@@ -331,7 +331,7 @@ func New(
 	)
 
 	m.tcb = cmdbar.NewTableCmdsBar[string](
-		cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc, nil),
+		cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc),
 		cmdbar.NewSearchCmdBar("Search Consumer Group"),
 		notifierCmdBar,
 		sortByBar,

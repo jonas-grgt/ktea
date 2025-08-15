@@ -8,30 +8,31 @@ import (
 )
 
 type TableCmdsBar[T any] struct {
-	notifierWidget   CmdBar
-	deleteWidget     *DeleteCmdBar[T]
-	searchWidget     *SearchCmdBar
-	sortByCmdBar     *SortByCmdBar
-	active           CmdBar
+	notifierCBar     CmdBar
+	deleteCBar       *DeleteCmdBar[T]
+	searchCBar       *SearchCmdBar
+	sortByCBar       *SortByCmdBar
+	activeCBar       CmdBar
 	searchPrevActive bool
 }
 
 type NotifierConfigurerFunc func(notifier *NotifierCmdBar)
 
 func (m *TableCmdsBar[T]) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
-	if m.active != nil {
-		return m.active.View(ktx, renderer)
+	if m.activeCBar != nil {
+		return m.activeCBar.View(ktx, renderer)
 	}
 	return ""
 }
 
 func (m *TableCmdsBar[T]) Update(msg tea.Msg, selection *T) (tea.Msg, tea.Cmd) {
-	// when the notifier is active and has priority (because of a loading spinner) it should handle all msgs
-	if m.active == m.notifierWidget {
-		if m.notifierWidget.(*NotifierCmdBar).Notifier.HasPriority() {
-			active, pmsg, cmd := m.active.Update(msg)
+	// when the notifier is active
+	if m.activeCBar == m.notifierCBar {
+		// and has priority (because of a loading spinner) it should handle all msgs
+		if m.notifierCBar.(*NotifierCmdBar).Notifier.HasPriority() {
+			active, pmsg, cmd := m.activeCBar.Update(msg)
 			if !active {
-				m.active = nil
+				m.activeCBar = nil
 			}
 			return pmsg, cmd
 		}
@@ -39,13 +40,13 @@ func (m *TableCmdsBar[T]) Update(msg tea.Msg, selection *T) (tea.Msg, tea.Cmd) {
 
 	// notifier was not actively spinning
 	// if it is able to handle the msg it will return nil and the processing can stop
-	active, pmsg, cmd := m.notifierWidget.Update(msg)
+	active, pmsg, cmd := m.notifierCBar.Update(msg)
 	if active && pmsg == nil {
-		m.active = m.notifierWidget
+		m.activeCBar = m.notifierCBar
 		return msg, cmd
 	}
 
-	if _, ok := m.active.(*SearchCmdBar); ok {
+	if _, ok := m.activeCBar.(*SearchCmdBar); ok {
 		m.searchPrevActive = true
 	}
 
@@ -60,21 +61,21 @@ func (m *TableCmdsBar[T]) Update(msg tea.Msg, selection *T) (tea.Msg, tea.Cmd) {
 			}
 			return nil, nil
 		case "f3":
-			if selection != nil && m.sortByCmdBar != nil {
+			if selection != nil && m.sortByCBar != nil {
 				return m.handleF3(msg, pmsg, cmd)
 			}
 			return pmsg, cmd
 		}
 	}
 
-	if m.active != nil {
-		active, pmsg, cmd := m.active.Update(msg)
+	if m.activeCBar != nil {
+		active, pmsg, cmd := m.activeCBar.Update(msg)
 		if !active {
 			if m.searchPrevActive {
 				m.searchPrevActive = false
-				m.active = m.searchWidget
+				m.activeCBar = m.searchCBar
 			} else {
-				m.active = nil
+				m.activeCBar = nil
 			}
 		}
 		return pmsg, cmd
@@ -84,67 +85,75 @@ func (m *TableCmdsBar[T]) Update(msg tea.Msg, selection *T) (tea.Msg, tea.Cmd) {
 }
 
 func (m *TableCmdsBar[T]) handleSlash(msg tea.Msg) (tea.Msg, tea.Cmd) {
-	active, pmsg, cmd := m.searchWidget.Update(msg)
+	active, pmsg, cmd := m.searchCBar.Update(msg)
 	if active {
-		m.active = m.searchWidget
-		m.deleteWidget.active = false
-		if m.sortByCmdBar != nil {
-			m.sortByCmdBar.active = false
+		m.activeCBar = m.searchCBar
+		m.deleteCBar.active = false
+		if m.sortByCBar != nil {
+			m.sortByCBar.active = false
 		}
 	} else {
-		m.active = nil
+		m.activeCBar = nil
 	}
 	return pmsg, cmd
 }
 
 func (m *TableCmdsBar[T]) handleF3(msg tea.Msg, pmsg tea.Msg, cmd tea.Cmd) (tea.Msg, tea.Cmd) {
-	active, pmsg, cmd := m.sortByCmdBar.Update(msg)
+	active, pmsg, cmd := m.sortByCBar.Update(msg)
 	if !active {
-		m.active = nil
+		m.activeCBar = nil
 	} else {
-		m.active = m.sortByCmdBar
-		m.searchWidget.state = hidden
-		m.deleteWidget.active = false
+		m.activeCBar = m.sortByCBar
+		m.searchCBar.state = hidden
+		m.deleteCBar.active = false
 	}
 	return pmsg, cmd
 }
 
 func (m *TableCmdsBar[T]) handleF2(selection *T, msg tea.Msg) (tea.Msg, tea.Cmd) {
-	active, pmsg, cmd := m.deleteWidget.Update(msg)
+	active, pmsg, cmd := m.deleteCBar.Update(msg)
 	if active {
-		m.active = m.deleteWidget
-		m.deleteWidget.Delete(*selection)
-		m.searchWidget.state = hidden
-		if m.sortByCmdBar != nil {
-			m.sortByCmdBar.active = false
+		m.activeCBar = m.deleteCBar
+		m.deleteCBar.Delete(*selection)
+		m.searchCBar.state = hidden
+		if m.sortByCBar != nil {
+			m.sortByCBar.active = false
 		}
 	} else {
-		m.active = nil
+		m.activeCBar = nil
 	}
 	return pmsg, cmd
 }
 
 func (m *TableCmdsBar[T]) HasSearchedAtLeastOneChar() bool {
-	return m.searchWidget.IsSearching() && len(m.GetSearchTerm()) > 0
+	return m.searchCBar.IsSearching() && len(m.GetSearchTerm()) > 0
 }
 
 func (m *TableCmdsBar[T]) IsFocussed() bool {
-	return m.active != nil && m.active.IsFocussed()
+
+	return m.activeCBar != nil && m.activeCBar.IsFocussed()
 }
 
 func (m *TableCmdsBar[T]) GetSearchTerm() string {
-	return m.searchWidget.GetSearchTerm()
+	return m.searchCBar.GetSearchTerm()
 }
 
 func (m *TableCmdsBar[T]) Shortcuts() []statusbar.Shortcut {
-	if m.active == nil {
+	if m.activeCBar == nil {
 		return nil
 	}
-	return m.active.Shortcuts()
+	return m.activeCBar.Shortcuts()
 }
 
 func (m *TableCmdsBar[T]) ResetSearch() {
-	m.searchWidget.Reset()
+	m.searchCBar.Reset()
+}
+
+func (m *TableCmdsBar[T]) Hide() {
+	m.searchCBar.state = hidden
+	m.deleteCBar.Hide()
+	m.sortByCBar.active = false
+	m.activeCBar = nil
 }
 
 func NewTableCmdsBar[T any](

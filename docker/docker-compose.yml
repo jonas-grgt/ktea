@@ -1,3 +1,5 @@
+name: ktea-dev
+
 services:
   schema-registry:
     image: confluentinc/cp-schema-registry:latest

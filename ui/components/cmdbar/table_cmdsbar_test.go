@@ -34,11 +34,11 @@ func TestTableCmdsBar(t *testing.T) {
 			NewDeleteCmdBar[string](
 				func(s string) string { return "The rabbit will be deleted" },
 				func(s string) tea.Cmd { return nil },
-				func(string) (bool, tea.Cmd) {
+				WithValidateFn(func(string) (bool, tea.Cmd) {
 					return false, func() tea.Msg {
 						return TestMsg{}
 					}
-				}),
+				})),
 			NewSearchCmdBar("Search Consumer Group"),
 			NewNotifierCmdBar("notifier"),
 			sortByCmdBar,

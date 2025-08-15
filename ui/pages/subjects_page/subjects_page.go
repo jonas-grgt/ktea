@@ -35,7 +35,7 @@ const (
 type Model struct {
 	table            table.Model
 	rows             []table.Row
-	tcb              *cmdbar.TableCmdsBar[sradmin.Subject]
+	tcb              *TableCmdsBar
 	subjects         []sradmin.Subject
 	renderedSubjects []sradmin.Subject
 	tableFocussed    bool
@@ -174,7 +174,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 	}
 
-	msg, cmd := m.tcb.Update(msg, m.SelectedSubject())
+	_, cmd := m.tcb.Update(msg, m.SelectedSubject())
 	m.tableFocussed = !m.tcb.IsFocussed()
 	cmds = append(cmds, cmd)
 
@@ -270,15 +270,25 @@ func (m *Model) filterSubjectsBySearchTerm() []sradmin.Subject {
 func (m *Model) Shortcuts() []statusbar.Shortcut {
 	shortcuts := m.tcb.Shortcuts()
 	if shortcuts == nil {
-		return []statusbar.Shortcut{
-			{
-				Name:       "Search",
-				Keybinding: "/",
-			},
-			{
-				Name:       "Delete",
-				Keybinding: "F2",
-			},
+		var extraShortcuts []statusbar.Shortcut
+		if len(m.subjects) > 0 {
+			extraShortcuts = []statusbar.Shortcut{
+				{
+					Name:       "Search",
+					Keybinding: "/",
+				},
+				{
+					Name:       "Delete (soft)",
+					Keybinding: "F2",
+				},
+				{
+					Name:       "Delete (hard)",
+					Keybinding: "F4",
+				},
+			}
+		}
+
+		return append([]statusbar.Shortcut{
 			{
 				Name:       "Register New Schema",
 				Keybinding: "C-n",
@@ -291,7 +301,7 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 				Name:       "Refresh",
 				Keybinding: "F5",
 			},
-		}
+		}, extraShortcuts...)
 	} else {
 		return shortcuts
 	}
@@ -324,17 +334,17 @@ func New(
 		state:         initialized,
 	}
 
-	deleteMsgFunc := func(subject sradmin.Subject) string {
+	deleteMsgFn := func(subject sradmin.Subject) string {
 		message := subject.Name + lipgloss.NewStyle().
 			Foreground(lipgloss.Color(styles.ColorIndigo)).
 			Bold(true).
-			Render(" will be deleted permanently")
+			Render(" will be deleted (soft)")
 		return message
 	}
 
-	deleteFunc := func(subject sradmin.Subject) tea.Cmd {
+	deleteFn := func(subject sradmin.Subject) tea.Cmd {
 		return func() tea.Msg {
-			return deleter.DeleteSubject(subject.Name)
+			return deleter.SoftDeleteSubject(subject.Name)
 		}
 	}
 
@@ -411,8 +421,9 @@ func New(
 
 	model.sort = sortByBar.SortedBy()
 
-	model.tcb = cmdbar.NewTableCmdsBar[sradmin.Subject](
-		cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc, nil),
+	model.tcb = NewTableCmdsBar(
+		deleter,
+		cmdbar.NewDeleteCmdBar(deleteMsgFn, deleteFn),
 		cmdbar.NewSearchCmdBar("Search subjects by name"),
 		notifierCmdBar,
 		sortByBar,

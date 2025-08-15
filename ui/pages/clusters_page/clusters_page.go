@@ -181,7 +181,7 @@ func New(
 	}
 
 	searchCmdBar := cmdbar.NewSearchCmdBar("Search clusters by name")
-	deleteCmdBar := cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc, validateFunc)
+	deleteCmdBar := cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc, cmdbar.WithValidateFn(validateFunc))
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("clusters-page")
 
 	clusterDeletedHandler := func(msg config.ClusterDeletedMsg, m *notifier.Model) (bool, tea.Cmd) {

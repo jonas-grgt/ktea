@@ -1,6 +1,7 @@
 package cmdbar
 
 import (
+	"fmt"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
@@ -9,22 +10,38 @@ import (
 	"ktea/styles"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
+	"strings"
 )
 
-type DeleteMsgFunc[T any] func(T) string
+type DeleteMsgFn[T any] func(T) string
 
-type DeleteFunc[T any] func(T) tea.Cmd
+type DeleteFn[T any] func(T) tea.Cmd
 
-type ValidateFunc[T any] func(T) (bool, tea.Cmd)
+type ValidateFn[T any] func(T) (bool, tea.Cmd)
 
 type DeleteCmdBar[T any] struct {
 	active        bool
 	deleteConfirm *huh.Confirm
 	msg           string
 	deleteValue   T
-	deleteMsgFunc DeleteMsgFunc[T]
-	deleteFunc    DeleteFunc[T]
-	validateFunc  ValidateFunc[T]
+	deleteMsgFunc DeleteMsgFn[T]
+	deleteFunc    DeleteFn[T]
+	validateFn    ValidateFn[T]
+	deleteKey     string
+}
+
+type Option[T any] func(bar *DeleteCmdBar[T])
+
+func WithDeleteKey[T any](key string) Option[T] {
+	return func(bar *DeleteCmdBar[T]) {
+		bar.deleteKey = key
+	}
+}
+
+func WithValidateFn[T any](vFn ValidateFn[T]) Option[T] {
+	return func(bar *DeleteCmdBar[T]) {
+		bar.validateFn = vFn
+	}
 }
 
 func (s *DeleteCmdBar[any]) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -44,27 +61,30 @@ func (s *DeleteCmdBar[any]) IsFocussed() bool {
 }
 
 func (s *DeleteCmdBar[any]) Shortcuts() []statusbar.Shortcut {
-	return []statusbar.Shortcut{
-		{"Confirm", "enter"},
-		{"Select Cancel", "c"},
-		{"Select Delete", "d"},
-		{"Cancel", "esc/F2"},
+	if s.active {
+		return []statusbar.Shortcut{
+			{"Confirm", "enter"},
+			{"Select Cancel", "c"},
+			{"Select Delete", "d"},
+			{"Cancel", fmt.Sprintf("esc/%s", strings.ToUpper(s.deleteKey))},
+		}
 	}
+	return nil
 }
 
 func (s *DeleteCmdBar[any]) Update(msg tea.Msg) (bool, tea.Msg, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "f2":
+		case s.deleteKey:
 			s.active = !s.active
 			return s.active, nil, nil
 		case "esc":
 			s.active = false
 			return s.active, nil, nil
 		case "enter":
-			if s.validateFunc != nil {
-				valid, cmd := s.validateFunc(s.deleteValue)
+			if s.validateFn != nil {
+				valid, cmd := s.validateFn(s.deleteValue)
 				if !valid {
 					return s.active, nil, cmd
 				}
@@ -114,14 +134,20 @@ func newDeleteConfirm() *huh.Confirm {
 }
 
 func NewDeleteCmdBar[T any](
-	deleteMsgFunc DeleteMsgFunc[T],
-	deleteFunc DeleteFunc[T],
-	validateFunc ValidateFunc[T],
+	deleteMsgFunc DeleteMsgFn[T],
+	deleteFunc DeleteFn[T],
+	options ...Option[T],
 ) *DeleteCmdBar[T] {
-	return &DeleteCmdBar[T]{
+	bar := DeleteCmdBar[T]{
 		deleteFunc:    deleteFunc,
 		deleteMsgFunc: deleteMsgFunc,
 		deleteConfirm: newDeleteConfirm(),
-		validateFunc:  validateFunc,
+		deleteKey:     "f2",
 	}
+
+	for _, o := range options {
+		o(&bar)
+	}
+
+	return &bar
 }
