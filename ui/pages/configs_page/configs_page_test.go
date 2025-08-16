@@ -42,7 +42,7 @@ func TestConfigsPage(t *testing.T) {
 		render := ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer))
+		}, tests.Renderer))
 		assert.Contains(t, render, "Loading topic1 Topic Configs")
 	})
 
@@ -61,7 +61,7 @@ func TestConfigsPage(t *testing.T) {
 		render := ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer))
+		}, tests.Renderer))
 		assert.Contains(t, render, "Update succeeded")
 	})
 
@@ -78,7 +78,7 @@ func TestConfigsPage(t *testing.T) {
 		render := ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer))
+		}, tests.Renderer))
 		assert.Contains(t, render, "value -1 for configuration cleanup.policy: String must be one of: compact, delete")
 	})
 
@@ -95,7 +95,7 @@ func TestConfigsPage(t *testing.T) {
 		render := ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer))
+		}, tests.Renderer))
 		assert.Contains(t, render, "Loading topic1 Topic Configs")
 	})
 
@@ -135,7 +135,7 @@ func TestConfigsPage_Table(t *testing.T) {
 			WindowHeight:    50,
 			WindowWidth:     100,
 			AvailableHeight: 100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		cleanupIdx := strings.Index(render, "cleanup.policy")
 		deleteRetIdx := strings.Index(render, "delete.retention.ms")
@@ -157,26 +157,26 @@ func TestConfigsPage_Searching(t *testing.T) {
 
 	t.Run("/ triggers search", func(t *testing.T) {
 		section := newSection()
-		render := section.View(ktx, tests.TestRenderer)
+		render := section.View(ktx, tests.Renderer)
 		assert.NotContains(t, render, "┃ >\n")
 
 		section.Update(tests.Key('/'))
-		render = section.View(ktx, tests.TestRenderer)
+		render = section.View(ktx, tests.Renderer)
 
 		assert.Contains(t, render, "┃ >")
 	})
 
 	t.Run("esc cancels search", func(t *testing.T) {
 		section := newSection()
-		render := section.View(ktx, tests.TestRenderer)
+		render := section.View(ktx, tests.Renderer)
 		assert.NotContains(t, render, "┃ >")
 
 		section.Update(tests.Key('/'))
-		render = section.View(ktx, tests.TestRenderer)
+		render = section.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "┃ > ")
 
 		section.Update(tests.Key(tea.KeyEsc))
-		render = section.View(ktx, tests.TestRenderer)
+		render = section.View(ktx, tests.Renderer)
 		assert.NotContains(t, render, "┃ > \n")
 	})
 
@@ -184,17 +184,17 @@ func TestConfigsPage_Searching(t *testing.T) {
 		section := newSection()
 
 		section.Update(tests.Key('/'))
-		render := section.View(ktx, tests.TestRenderer)
+		render := section.View(ktx, tests.Renderer)
 		section.Update(tests.Key('a'))
-		render = section.View(ktx, tests.TestRenderer)
+		render = section.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "┃ > a ")
 
 		section.Update(tests.Key(tea.KeyEsc))
-		render = section.View(ktx, tests.TestRenderer)
+		render = section.View(ktx, tests.Renderer)
 		assert.NotContains(t, render, "┃ > \n")
 
 		section.Update(tests.Key('/'))
-		render = section.View(ktx, tests.TestRenderer)
+		render = section.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "┃ > ")
 
 	})
@@ -216,14 +216,14 @@ func TestConfigsPage_Editing(t *testing.T) {
 		render := section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		section.Update(tests.Key('e'))
 
 		render = section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 		assert.Contains(t, render, "┃ > delete")
 	})
 
@@ -232,7 +232,7 @@ func TestConfigsPage_Editing(t *testing.T) {
 		render := section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		section.Update(tests.Key('e'))
 		section.Update(tests.Key(tea.KeyCtrlU))
@@ -242,7 +242,7 @@ func TestConfigsPage_Editing(t *testing.T) {
 		render = section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 		assert.NotContains(t, render, "┃ > delete \n")
 		assert.Contains(t, render, "Updating Topic Config")
 	})

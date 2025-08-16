@@ -74,12 +74,12 @@ func TestTopicsPage(t *testing.T) {
 		page.Update(tests.Key('/'))
 		tests.UpdateKeys(page, "topic2")
 
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 		assert.Contains(t, render, "> topic2")
 
 		page.Update(kadmin.TopicsListedMsg{})
 
-		render = page.View(tests.NewKontext(), tests.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.Renderer)
 		assert.NotContains(t, render, "> topic2")
 	})
 
@@ -95,19 +95,19 @@ func TestTopicsPage(t *testing.T) {
 			})
 		}
 		_ = page.Update(kadmin.TopicsListedMsg{Topics: topics})
-		page.View(tests.NewKontext(), tests.TestRenderer)
+		page.View(tests.NewKontext(), tests.Renderer)
 
 		page.Update(tests.Key(tea.KeyDown))
 		page.Update(tests.Key(tea.KeyDown))
 		page.Update(tests.Key(tea.KeyDown))
 
-		page.View(tests.NewKontext(), tests.TestRenderer)
+		page.View(tests.NewKontext(), tests.Renderer)
 		assert.Equal(t, "topic3", page.table.SelectedRow()[0])
 
 		page.Update(tests.Key('/'))
 		tests.UpdateKeys(page, "topic")
 
-		page.View(tests.NewKontext(), tests.TestRenderer)
+		page.View(tests.NewKontext(), tests.Renderer)
 		assert.Equal(t, "topic0", page.table.SelectedRow()[0])
 	})
 
@@ -134,7 +134,7 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "▲ Name")
 	})
@@ -164,9 +164,9 @@ func TestTopicsPage(t *testing.T) {
 
 		page.Update(tests.Key(tea.KeyF3))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 
-		render = page.View(tests.NewKontext(), tests.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "▼ Name")
 
@@ -205,7 +205,7 @@ func TestTopicsPage(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF3))
 		page.Update(tests.Key(tea.KeyRight))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.NotContains(t, render, "▲ Name")
 		assert.Contains(t, render, "▼ Part")
@@ -219,7 +219,7 @@ func TestTopicsPage(t *testing.T) {
 		assert.Less(t, t2Idx, t1Idx)
 
 		page.Update(tests.Key(tea.KeyEnter))
-		render = page.View(tests.NewKontext(), tests.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "▲ Part")
 
@@ -259,7 +259,7 @@ func TestTopicsPage(t *testing.T) {
 		page.Update(tests.Key(tea.KeyRight))
 		page.Update(tests.Key(tea.KeyRight))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.NotContains(t, render, "▲ Name")
 		assert.Contains(t, render, "▼ Repl")
@@ -273,7 +273,7 @@ func TestTopicsPage(t *testing.T) {
 		assert.Less(t, t2Idx, t1Idx)
 
 		page.Update(tests.Key(tea.KeyEnter))
-		render = page.View(tests.NewKontext(), tests.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "▲ Repl")
 

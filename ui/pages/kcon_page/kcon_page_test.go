@@ -107,7 +107,7 @@ func TestKconsPage(t *testing.T) {
 			},
 		})
 
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "▲ Name")
 
@@ -167,9 +167,9 @@ func TestKconsPage(t *testing.T) {
 
 		page.Update(tests.Key(tea.KeyF3))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 
-		render = page.View(tests.NewKontext(), tests.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "▼ Name")
 
@@ -229,13 +229,13 @@ func TestKconsPage(t *testing.T) {
 
 		page.Update(tests.Key(tea.KeyF3))
 
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 		assert.Contains(t, render, "Name ▲")
 
 		cmd := page.Update(tests.Key(tea.KeyEsc))
 
 		assert.Nil(t, cmd)
-		render = page.View(tests.NewKontext(), tests.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.Renderer)
 		assert.NotContains(t, render, "Name ▲")
 	})
 
@@ -287,7 +287,7 @@ func TestKconsPage(t *testing.T) {
 		page.Update(tests.Key('/'))
 		page.Update(tests.Key('a'))
 
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "1/3")
 		assert.Greater(t, strings.Index(render, "a-my-connector"), -1)
@@ -346,7 +346,7 @@ func TestKconsPage(t *testing.T) {
 		})
 
 		t.Run("pause running connector", func(t *testing.T) {
-			page.View(tests.TestKontext, tests.TestRenderer)
+			page.View(tests.Kontext, tests.Renderer)
 			cmds := page.Update(tests.Key('P'))
 
 			msgs := tests.ExecuteBatchCmd(cmds)
@@ -356,7 +356,7 @@ func TestKconsPage(t *testing.T) {
 		})
 
 		t.Run("resume running connector", func(t *testing.T) {
-			page.View(tests.TestKontext, tests.TestRenderer)
+			page.View(tests.Kontext, tests.Renderer)
 			cmds := page.Update(tests.Key('R'))
 
 			msgs := tests.ExecuteBatchCmd(cmds)
@@ -366,7 +366,7 @@ func TestKconsPage(t *testing.T) {
 
 			page.Update(kcadmin.ResumingStartedMsg{})
 
-			render := page.View(tests.TestKontext, tests.TestRenderer)
+			render := page.View(tests.Kontext, tests.Renderer)
 			assert.Contains(t, render, "RESUMING")
 
 			page.Update(ConnectorStateChanged{
@@ -407,7 +407,7 @@ func TestKconsPage(t *testing.T) {
 				},
 			})
 
-			render = page.View(tests.TestKontext, tests.TestRenderer)
+			render = page.View(tests.Kontext, tests.Renderer)
 			assert.NotContains(t, render, "RESUMING")
 		})
 	})

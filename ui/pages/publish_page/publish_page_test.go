@@ -75,7 +75,7 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		// Key
 		tests.UpdateKeys(m, "key")
@@ -120,7 +120,7 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		// Key
 		tests.UpdateKeys(m, "key")
@@ -173,7 +173,7 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		// Key
 		tests.UpdateKeys(m, "key")
@@ -200,7 +200,7 @@ func TestPublish(t *testing.T) {
 
 		m.Update(kadmin.PublicationSucceeded{})
 
-		render := m.View(tests.TestKontext, tests.TestRenderer)
+		render := m.View(tests.Kontext, tests.Renderer)
 
 		assert.Regexp(t, "Key\\W+Payload\\W+\n.*1.*\n\\W+>\\W+\n", render)
 		assert.Regexp(t, "Partition\\W+\n.*\n\\W+>\\W+\n", render)
@@ -223,7 +223,7 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		// Key
 		tests.UpdateKeys(m, "key")
@@ -266,7 +266,7 @@ func TestPublish(t *testing.T) {
 		msgs := executeBatchCmd(cmds)
 
 		t.Run("displays success notification", func(t *testing.T) {
-			render := m.View(tests.TestKontext, tests.TestRenderer)
+			render := m.View(tests.Kontext, tests.Renderer)
 			assert.Contains(t, render, "🎉 Record published!")
 			assert.Contains(t, msgs, notifier.HideNotificationMsg{})
 		})
@@ -275,7 +275,7 @@ func TestPublish(t *testing.T) {
 			cmds := m.Update(notifier.HideNotificationMsg{})
 			executeBatchCmd(cmds)
 
-			render := m.View(tests.TestKontext, tests.TestRenderer)
+			render := m.View(tests.Kontext, tests.Renderer)
 			assert.NotContains(t, render, "🎉 Record published!")
 		})
 	})
@@ -294,7 +294,7 @@ func TestPublish(t *testing.T) {
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
 			WindowHeight: 100,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		// Key
 		tests.UpdateKeys(m, "key")
@@ -319,7 +319,7 @@ func TestPublish(t *testing.T) {
 
 		m.Update(tests.Key(tea.KeyCtrlR))
 
-		render := m.View(tests.TestKontext, tests.TestRenderer)
+		render := m.View(tests.Kontext, tests.Renderer)
 
 		assert.Regexp(t, "Key\\W+Payload\\W+\n.*1.*\n\\W+>\\W+\n", render)
 		assert.Regexp(t, "Partition\\W+\n.*\n\\W+>\\W+\n", render)
@@ -338,7 +338,7 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 			// Key
 			tests.UpdateKeys(m, "key")
 			cmd := m.Update(tests.Key(tea.KeyEnter))
@@ -350,7 +350,7 @@ func TestPublish(t *testing.T) {
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 			assert.Contains(t, render, "'a1' is not a valid numeric partition value")
 		})
 
@@ -364,7 +364,7 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 			// Key
 			tests.UpdateKeys(m, "key")
 			cmd := m.Update(tests.Key(tea.KeyEnter))
@@ -376,7 +376,7 @@ func TestPublish(t *testing.T) {
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 			assert.Contains(t, render, "value must be at least zero")
 		})
 
@@ -390,7 +390,7 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 			// Key
 			tests.UpdateKeys(m, "key")
 			cmd := m.Update(tests.Key(tea.KeyEnter))
@@ -402,7 +402,7 @@ func TestPublish(t *testing.T) {
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 
 			assert.Regexp(t, "┃ Partition.\\W+\n.*\n\\W+┃ > 0", render)
 			assert.NotContains(t, render, "value must be at least zero")
@@ -418,7 +418,7 @@ func TestPublish(t *testing.T) {
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 			// Key
 			tests.UpdateKeys(m, "key")
 			cmd := m.Update(tests.Key(tea.KeyEnter))
@@ -430,7 +430,7 @@ func TestPublish(t *testing.T) {
 			render := m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 			assert.Contains(t, render, "partition index 10 is invalid, valid range is 0-4")
 		})
 	})

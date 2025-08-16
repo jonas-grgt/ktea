@@ -31,7 +31,7 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 		createEnvPage := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
 
 		// then
-		render := createEnvPage.View(&ktx, tests.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "No clusters configured. Please create your first cluster!")
 	})
 
@@ -50,7 +50,7 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 					},
 				},
 			},
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 		assert.NotContains(t, render, "No clusters configured. Please create your first cluster!")
 	})
 }
@@ -74,7 +74,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF5))
 
 		// then: schema registry tab is visible
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "Schema Registry URL")
 		assert.Contains(t, render, "Schema Registry Username")
 		assert.Contains(t, render, "Schema Registry Password")
@@ -98,7 +98,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF6))
 
 		// then: kafka connect tab is visible
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "Kafka Connect URL")
 		assert.Contains(t, render, "Kafka Connect Username")
 		assert.Contains(t, render, "Kafka Connect Password")
@@ -128,12 +128,12 @@ func TestTabs(t *testing.T) {
 
 		// when
 		page.Update(tests.Key(tea.KeyF5))
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "Schema Registry URL")
 		page.Update(tests.Key(tea.KeyF4))
 
 		// then: previously entered details are visible
-		render = page.View(&ktx, tests.TestRenderer)
+		render = page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, "localhost:9092")
 	})
@@ -146,7 +146,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF5))
 
 		// then
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "create a cluster before adding a schema registry")
 	})
 }
@@ -160,7 +160,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "name cannot be empty")
 	})
 
@@ -194,7 +194,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "cluster prd already exists, name most be unique")
 	})
 
@@ -213,7 +213,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "host cannot be empty")
 	})
 }
@@ -311,7 +311,7 @@ func TestClusterForm(t *testing.T) {
 		page.Update(tests.Key(tea.KeyDown))
 
 		// then
-		render := page.View(&programKtx, tests.TestRenderer)
+		render := page.View(&programKtx, tests.Renderer)
 		assert.Contains(t, render, "SASL_PLAINTEXT")
 		assert.Contains(t, render, "Username")
 		assert.Contains(t, render, "Password")
@@ -358,7 +358,7 @@ func TestClusterForm(t *testing.T) {
 		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
 
 		// then
-		render := createEnvPage.View(&programKtx, tests.TestRenderer)
+		render := createEnvPage.View(&programKtx, tests.Renderer)
 		assert.NotContains(t, render, "Username")
 		assert.NotContains(t, render, "Password")
 	})
@@ -560,7 +560,7 @@ func TestClusterForm(t *testing.T) {
 		tests.UpdateKeys(page, "password")
 		cmd = page.Update(tests.Key(tea.KeyEnter))
 
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, ">  blue")
 		assert.Contains(t, render, "localhost:9092")
@@ -572,7 +572,7 @@ func TestClusterForm(t *testing.T) {
 		page.Update(tests.Key(tea.KeyCtrlR))
 
 		// then
-		render = page.View(&ktx, tests.TestRenderer)
+		render = page.View(&ktx, tests.Renderer)
 		assert.NotContains(t, render, "TST")
 		assert.NotContains(t, render, ">  blue")
 		assert.Contains(t, render, ">  green")
@@ -590,7 +590,7 @@ func TestClusterForm(t *testing.T) {
 		createEnvPage.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := createEnvPage.View(&ktx, tests.TestRenderer)
+		render := createEnvPage.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 
@@ -766,7 +766,7 @@ func TestEditClusterForm(t *testing.T) {
 		page.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := page.View(programKtx, tests.TestRenderer)
+		render := page.View(programKtx, tests.Renderer)
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 
@@ -885,7 +885,7 @@ func TestEditClusterForm(t *testing.T) {
 		page.Update(kadmin.ConnCheckErrMsg{Err: fmt.Errorf("kafka: client has run out of available brokers to talk to")})
 
 		// then
-		render := page.View(programKtx, tests.TestRenderer)
+		render := page.View(programKtx, tests.Renderer)
 		assert.Contains(t, render, "Cluster not updated: kafka: client has run out of available brokers to talk to")
 	})
 
@@ -946,7 +946,7 @@ func TestEditClusterForm(t *testing.T) {
 		})
 
 		// then
-		render := page.View(programKtx, tests.TestRenderer)
+		render := page.View(programKtx, tests.Renderer)
 		assert.Contains(t, render, "Cluster updated!")
 	})
 }
@@ -1048,7 +1048,7 @@ func TestCreateSchemaRegistry(t *testing.T) {
 	t.Run("Display error notification when connection cannot be made", func(t *testing.T) {
 		page.Update(sradmin.ConnCheckErrMsg{Err: fmt.Errorf("cannot connect")})
 
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 
 		assert.Contains(t, render, "unable to reach the schema registry")
 	})
@@ -1106,7 +1106,7 @@ func TestSchemaRegistryForm(t *testing.T) {
 		tests.UpdateKeys(page, "password")
 		cmd = page.Update(tests.Key(tea.KeyEnter))
 
-		render := page.View(&ktx, tests.TestRenderer)
+		render := page.View(&ktx, tests.Renderer)
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, ">  blue")
 		assert.Contains(t, render, "localhost:9092")
@@ -1118,7 +1118,7 @@ func TestSchemaRegistryForm(t *testing.T) {
 		page.Update(tests.Key(tea.KeyCtrlR))
 
 		// then
-		render = page.View(&ktx, tests.TestRenderer)
+		render = page.View(&ktx, tests.Renderer)
 		assert.NotContains(t, render, "TST")
 		assert.NotContains(t, render, ">  blue")
 		assert.Contains(t, render, ">  green")

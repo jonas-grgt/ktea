@@ -79,7 +79,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 		t.Run("visible when fetching schemas", func(t *testing.T) {
 			page.Update(sradmin.SchemaListingStarted{})
 
-			render := page.View(tests.NewKontext(), tests.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "Loading schema")
 		})
@@ -96,7 +96,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 				},
 			})
 
-			render := page.View(tests.NewKontext(), tests.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.Renderer)
 
 			assert.NotContains(t, render, "Loading schema")
 		})
@@ -126,7 +126,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			},
 		})
 
-		render := ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Regexp(t, "│\\W+\"type\": \"string\"\\W+│\n│ }", render)
 	})
@@ -157,7 +157,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			},
 		})
 
-		render := ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Regexp(t, "1\\W+2\\W+«3»", render)
 	})
@@ -188,7 +188,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			},
 		})
 
-		render := ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Regexp(t, "ID\\W+: 333", render)
 
@@ -196,7 +196,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 		page.Update(tests.Key(tea.KeyLeft))
 		page.Update(tests.Key(tea.KeyEnter))
 
-		render = ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Regexp(t, "ID\\W+: 111", render)
 	})
@@ -220,7 +220,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			WindowWidth:     100,
 			WindowHeight:    25,
 			AvailableHeight: 8,
-		}, tests.TestRenderer))
+		}, tests.Renderer))
 
 		assert.Regexp(t, "│ {\\W+│\n│\\W+\"type\": \"record\",", render)
 		assert.NotContains(t, render, "userId")
@@ -234,7 +234,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			WindowWidth:     100,
 			WindowHeight:    30,
 			AvailableHeight: 9,
-		}, tests.TestRenderer))
+		}, tests.Renderer))
 
 		assert.NotRegexp(t, "│ {\\W+│\n│\\W+\"type\": \"record\",", render)
 		assert.Contains(t, render, "userId")
@@ -263,13 +263,13 @@ func TestSchemaDetailsPage(t *testing.T) {
 				},
 			},
 		})
-		page.View(tests.NewKontext(), tests.TestRenderer)
+		page.View(tests.NewKontext(), tests.Renderer)
 
 		t.Run("F2 triggers version delete", func(t *testing.T) {
 			page.Update(tests.Key(tea.KeyDown))
 			page.Update(tests.Key(tea.KeyF2))
 
-			render := page.View(tests.NewKontext(), tests.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Regexp(t, "┃ 🗑️  Delete version 2 of schema?\\W+Delete!\\W+Cancel.", render)
 		})
@@ -277,7 +277,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 		t.Run("esc cancels deletion", func(t *testing.T) {
 			page.Update(tests.Key(tea.KeyEsc))
 
-			render := page.View(tests.NewKontext(), tests.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.Renderer)
 
 			assert.NotRegexp(t, "┃ 🗑️  Delete version 2 of schema?\\W+Delete!\\W+Cancel.", render)
 			assert.Contains(t, render, "ID      : 123")
@@ -288,7 +288,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			page.Update(tests.Key(tea.KeyF2))
 			page.Update(tests.Key(tea.KeyEnter))
 
-			render := page.View(tests.NewKontext(), tests.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.Renderer)
 
 			assert.NotRegexp(t, "┃ 🗑️  Delete version 2 of schema?\\W+Delete!\\W+Cancel.", render)
 			assert.Contains(t, render, "ID      : 123")
@@ -307,7 +307,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 				Version: 1,
 			})
 
-			render := page.View(tests.NewKontext(), tests.TestRenderer)
+			render := page.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "Versions:  «2»                                                                                     \n")
 			assert.IsType(t, notifier.HideNotificationMsg{}, cmd())
@@ -367,7 +367,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			page.Update(msg)
 		}
 
-		render := ansi.Strip(page.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Equal(t, "{\n  \"type\": \"record\",\n  \"name\": \"UserProfile2\",\n  \"namespace\": \"com.example.avro\",\n  \"fields\": [\n    {\n      \"name\": \"userId\",\n      \"type\": \"string\",\n      \"doc\": \"Unique identifier for the user\"\n    },\n    {\n      \"name\": \"firstName\",\n      \"type\": [\"null\", \"string\"],\n      \"default\": null,\n      \"doc\": \"The user's first name, optional\"\n    },\n    {\n      \"name\": \"lastName\",\n      \"type\": [\"null\", \"string\"],\n      \"default\": null,\n      \"doc\": \"The user's last name, optional\"\n    },\n    {\n      \"name\": \"email\",\n      \"type\": \"string\",\n      \"doc\": \"Email address of the user\"\n    },\n    {\n      \"name\": \"age\",\n      \"type\": [\"null\", \"int\"],\n      \"default\": null,\n      \"doc\": \"Age of the user, optional\"\n    },\n    {\n      \"name\": \"isActive\",\n      \"type\": \"boolean\",\n      \"doc\": \"Indicates if the user is active\"\n    },\n    {\n      \"name\": \"signupDate\",\n      \"type\": {\n        \"type\": \"long\",\n        \"logicalType\": \"timestamp-millis\"\n      },\n      \"doc\": \"Timestamp of when the user signed up\"\n    }\n  ],\n  \"doc\": \"Schema for storing user profile data\"\n}\n", clippedText)
 		assert.Contains(t, render, "Schema copied")

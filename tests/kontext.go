@@ -6,24 +6,24 @@ import (
 	"ktea/ui"
 )
 
-var TestKontext = &kontext.ProgramKtx{
+var Kontext = &kontext.ProgramKtx{
 	Config:          nil,
 	WindowWidth:     100,
 	WindowHeight:    100,
 	AvailableHeight: 100,
 }
 
-var TestRenderer = ui.NewRenderer(TestKontext)
+var Renderer = ui.NewRenderer(Kontext)
 
-type TestContextOption func(ktx *kontext.ProgramKtx)
+type ContextOption func(ktx *kontext.ProgramKtx)
 
-func WithConfig(config *config.Config) TestContextOption {
+func WithConfig(config *config.Config) ContextOption {
 	return func(ktx *kontext.ProgramKtx) {
 		ktx.Config = config
 	}
 }
 
-func NewKontext(options ...TestContextOption) *kontext.ProgramKtx {
+func NewKontext(options ...ContextOption) *kontext.ProgramKtx {
 	model := &kontext.ProgramKtx{
 		Config:          nil,
 		WindowWidth:     100,

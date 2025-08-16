@@ -179,7 +179,7 @@ func TestDeleteCmdBar(t *testing.T) {
 		cmdBar.Update(tests.Key(tea.KeyF2))
 		cmdBar.Delete("subjectX")
 
-		render := cmdBar.View(tests.TestKontext, tests.TestRenderer)
+		render := cmdBar.View(tests.Kontext, tests.Renderer)
 
 		assert.Contains(t, render, `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃┃ 🗑️  subjectX    Delete!     Cancel.                                                             ┃

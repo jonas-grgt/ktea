@@ -17,9 +17,9 @@ func (m *MockSubjectCreator) CreateSchema(details sradmin.SubjectCreationDetails
 
 func TestCreateSubjectsPage(t *testing.T) {
 	t.Run("Create schema", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.TestKontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
 		// initialize form
-		subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		subjectPage.View(tests.Kontext, tests.Renderer)
 
 		tests.UpdateKeys(subjectPage, "subject")
 		cmd := subjectPage.Update(tests.Key(tea.KeyEnter))
@@ -39,7 +39,7 @@ func TestCreateSubjectsPage(t *testing.T) {
 		t.Run("Create another schema", func(t *testing.T) {
 			subjectPage.Update(sradmin.SchemaCreatedMsg{})
 			// re-initialize form
-			subjectPage.View(tests.TestKontext, tests.TestRenderer)
+			subjectPage.View(tests.Kontext, tests.Renderer)
 
 			tests.UpdateKeys(subjectPage, "subject")
 			cmd := subjectPage.Update(tests.Key(tea.KeyEnter))
@@ -58,9 +58,9 @@ func TestCreateSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Unable to go back when schema is being created", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.TestKontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
 		// initialize form
-		subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		subjectPage.View(tests.Kontext, tests.Renderer)
 
 		tests.UpdateKeys(subjectPage, "subject")
 		cmd := subjectPage.Update(tests.Key(tea.KeyEnter))
@@ -76,9 +76,9 @@ func TestCreateSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Esc goes back not refreshing when no schemas were created", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.TestKontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
 		// initialize form
-		subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		subjectPage.View(tests.Kontext, tests.Renderer)
 
 		cmds := subjectPage.Update(tests.Key(tea.KeyEsc))
 		msgs := tests.ExecuteBatchCmd(cmds)
@@ -87,9 +87,9 @@ func TestCreateSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Esc goes back refreshing when a schema has been created", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.TestKontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
 		// initialize form
-		subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		subjectPage.View(tests.Kontext, tests.Renderer)
 
 		subjectPage.Update(sradmin.SchemaCreatedMsg{})
 
@@ -100,21 +100,21 @@ func TestCreateSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Subject is mandatory", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.TestKontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
 		// initialize form
-		subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		subjectPage.View(tests.Kontext, tests.Renderer)
 
 		subjectPage.Update(tests.Key(tea.KeyEnter))
 
-		render := subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		render := subjectPage.View(tests.Kontext, tests.Renderer)
 
 		assert.Contains(t, render, "subject cannot be empty")
 	})
 
 	t.Run("Schema is mandatory", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.TestKontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
 		// initialize form
-		subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		subjectPage.View(tests.Kontext, tests.Renderer)
 
 		tests.UpdateKeys(subjectPage, "subject")
 		cmd := subjectPage.Update(tests.Key(tea.KeyEnter))
@@ -123,7 +123,7 @@ func TestCreateSubjectsPage(t *testing.T) {
 
 		subjectPage.Update(tests.Key(tea.KeyEnter))
 
-		render := subjectPage.View(tests.TestKontext, tests.TestRenderer)
+		render := subjectPage.View(tests.Kontext, tests.Renderer)
 
 		assert.Contains(t, render, "schema cannot be empty")
 	})

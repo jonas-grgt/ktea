@@ -33,7 +33,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 		// init ui
-		m.View(tests.TestKontext, tests.TestRenderer)
+		m.View(tests.Kontext, tests.Renderer)
 
 		assert.Equal(t, mainViewFocus, m.focus)
 
@@ -185,10 +185,10 @@ func TestRecordDetailsPage(t *testing.T) {
 				&ktx,
 			)
 
-			m.View(tests.NewKontext(), tests.TestRenderer)
+			m.View(tests.NewKontext(), tests.Renderer)
 			m.Update(tests.Key(tea.KeyTab))
 
-			render := ansi.Strip(m.View(tests.NewKontext(), tests.TestRenderer))
+			render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 			assert.Contains(t, render, `"namespace": "ktea.test"`)
 		})
@@ -207,7 +207,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 
-		render := m.View(tests.NewKontext(), tests.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "No headers present")
 	})
@@ -236,14 +236,14 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		cmds := m.Update(tests.Key('c'))
 		for _, msg := range tests.ExecuteBatchCmd(cmds) {
 			m.Update(msg)
 		}
 
-		render := ansi.Strip(m.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Equal(t, "{\n\t\"name\": \"John\"\n}", clippedText)
 		assert.Contains(t, render, "Payload copied")
@@ -279,7 +279,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		cmds := m.Update(tests.Key(tea.KeyTab))
 		cmds = m.Update(tests.Key('c'))
@@ -287,7 +287,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			m.Update(msg)
 		}
 
-		render := ansi.Strip(m.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		tests.TrimAndEqual(t, clippedText, `
 {
@@ -331,7 +331,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		m.Update(tests.Key(tea.KeyCtrlH))
 		m.Update(tests.Key(tea.KeyDown))
@@ -342,7 +342,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			m.Update(msg)
 		}
 
-		render := ansi.Strip(m.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Equal(t, "v3\nv3", clippedText)
 		assert.Contains(t, render, "Header Value copied")
@@ -378,7 +378,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		m.Update(tests.Key(tea.KeyCtrlH))
 		m.Update(tests.Key(tea.KeyDown))
@@ -389,7 +389,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			m.Update(msg)
 		}
 
-		render := ansi.Strip(m.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "Copy failed: unable to access clipboard")
 	})
@@ -416,14 +416,14 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		cmds := m.Update(tests.Key('c'))
 		for _, msg := range tests.ExecuteBatchCmd(cmds) {
 			m.Update(msg)
 		}
 
-		render := ansi.Strip(m.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "Copy failed: unable to access clipboard")
 	})
@@ -443,7 +443,7 @@ func TestRecordDetailsPage(t *testing.T) {
 		)
 
 		// init ui
-		render := m.View(tests.NewKontext(), tests.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "deserialization error")
 		assert.Contains(t, render, "Unable to render payload")

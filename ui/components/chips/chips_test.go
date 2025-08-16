@@ -12,7 +12,7 @@ func TestChips(t *testing.T) {
 	t.Run("Render all chips", func(t *testing.T) {
 		chips := New("label", "a1", "b2", "c3", "d4", "e5")
 
-		render := ansi.Strip(chips.View(tests.NewKontext(), tests.TestRenderer))
+		render := ansi.Strip(chips.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Equal(t, "label:  «a1»    b2     c3     d4     e5  ", render)
 	})

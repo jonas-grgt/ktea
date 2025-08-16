@@ -66,7 +66,7 @@ func TestGroupsTab(t *testing.T) {
 					},
 				},
 			},
-		}, tests.TestRenderer))
+		}, tests.Renderer))
 
 		assert.Contains(t, render, "Group1")
 		assert.Contains(t, render, "Group2")
@@ -104,7 +104,7 @@ func TestGroupsTab(t *testing.T) {
 						},
 					},
 				},
-			}, tests.TestRenderer))
+			}, tests.Renderer))
 
 			g1Count := strings.Count(render, "Group1")
 			g2Count := strings.Count(render, "Group2")

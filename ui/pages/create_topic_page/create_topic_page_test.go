@@ -127,14 +127,14 @@ func TestCreateTopic(t *testing.T) {
 		// next group
 		cmd = m.Update(cmd())
 
-		render := m.View(tests.NewKontext(), tests.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "Custom Topic configurations:")
 		assert.Contains(t, render, "2")
 		assert.Contains(t, render, "1")
 
 		m.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
-		render = m.View(tests.NewKontext(), tests.TestRenderer)
+		render = m.View(tests.NewKontext(), tests.Renderer)
 
 		assert.NotContains(t, render, "Custom Topic configurations:")
 		assert.NotContains(t, render, "2")
@@ -153,7 +153,7 @@ func TestCreateTopic(t *testing.T) {
 			Err: fmt.Errorf("Topic with this name already exists - Topic 'topic-0' already exists."),
 		})
 
-		render := m.View(tests.NewKontext(), tests.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "Failed to create Topic: Topic with this name already exists - Topic 'topic-0' already exists.")
 
@@ -229,7 +229,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "* topic Name cannot be empty")
 		})
@@ -243,7 +243,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "* number of Partitions cannot be empty")
 		})
@@ -261,7 +261,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -285,7 +285,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -298,7 +298,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "'a' is not a valid numeric partition count value")
 		})
@@ -310,7 +310,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 
 			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "* replication factory cannot be empty")
 		})
@@ -326,7 +326,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			})
 			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -349,7 +349,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			})
 			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -360,7 +360,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			m.Update(tests.Key('a'))
 			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.TestRenderer)
+			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
 
 			assert.Contains(t, render, "'a' is not a valid numeric partition count value")
 		})
@@ -391,7 +391,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			tests.UpdateKeys(m, "foo:bar")
 			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
-			render := m.View(tests.NewKontext(), tests.TestRenderer)
+			render := m.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "please enter configurations in the format \"config=value\"")
 		})
@@ -419,7 +419,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(tests.NewKontext(), tests.TestRenderer)
+			render := m.View(tests.NewKontext(), tests.Renderer)
 
 			assert.NotContains(t, render, "please enter configurations in the format \"config=value\"")
 		})

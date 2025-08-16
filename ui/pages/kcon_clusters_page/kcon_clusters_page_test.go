@@ -36,14 +36,14 @@ func TestKConsPage(t *testing.T) {
 		}
 		page, _ := New(&cluster, kcon_page.LoadKConPageMock)
 
-		ktx := tests.TestKontext
+		ktx := tests.Kontext
 		ktx.Config = &config.Config{
 			Clusters: []config.Cluster{
 				cluster,
 			},
 		}
 
-		render := page.View(ktx, tests.TestRenderer)
+		render := page.View(ktx, tests.Renderer)
 
 		assert.Contains(t, render, "s3-sink")
 	})
@@ -68,12 +68,12 @@ func TestKConsPage(t *testing.T) {
 		}
 		page, _ := New(&cluster, kcon_page.LoadKConPageMock)
 
-		ktx := tests.TestKontext
+		ktx := tests.Kontext
 		ktx.Config = &config.Config{
 			Clusters: []config.Cluster{cluster},
 		}
 
-		page.View(ktx, tests.TestRenderer)
+		page.View(ktx, tests.Renderer)
 		cmd := page.Update(tests.Key(tea.KeyEnter))
 
 		msg := cmd()

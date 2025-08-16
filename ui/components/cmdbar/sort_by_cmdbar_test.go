@@ -36,7 +36,7 @@ func TestSortByCmdBar(t *testing.T) {
 	t.Run("Renders all options", func(t *testing.T) {
 		bar := newTestBar(func(label SortLabel) {})
 
-		render := bar.View(tests.NewKontext(), tests.TestRenderer)
+		render := bar.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓

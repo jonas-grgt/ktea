@@ -96,7 +96,7 @@ func TestTabs(t *testing.T) {
 			// given
 			tabs := New(Tab{Title: "tab1", Label: "tab1"}, Tab{Title: "tab2", Label: "tab2"})
 			// when
-			actual := tabs.View(tests.TestKontext, tests.TestRenderer)
+			actual := tabs.View(tests.Kontext, tests.Renderer)
 			// then
 			assert.Equal(t, "╭──────╮╭──────╮\n│ tab1 ││ tab2 │\n┘      └┴──────┴────────────────────────────────────────────────────────────────────────────────────", actual)
 		})
@@ -105,7 +105,7 @@ func TestTabs(t *testing.T) {
 			// given
 			tabs := New(Tab{Title: "tab1", Label: "tab1"})
 			// when
-			actual := tabs.View(tests.TestKontext, tests.TestRenderer)
+			actual := tabs.View(tests.Kontext, tests.Renderer)
 			// then
 			assert.NotContains(t, actual, "Meta")
 		})

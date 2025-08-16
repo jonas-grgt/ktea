@@ -16,7 +16,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 		model, _ := New(kadmin.NewMockKadmin(), "test-group")
 
 		model.Update(kadmin.OffsetListingStartedMsg{})
-		view := model.View(tests.NewKontext(), tests.TestRenderer)
+		view := model.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, view,
 			`┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -56,7 +56,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 			},
 		})
 
-		view := model.View(tests.NewKontext(), tests.TestRenderer)
+		view := model.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, view, "topic-1")
 		assert.Contains(t, view, "topic-2")
@@ -82,11 +82,11 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 			Offsets: topicPartOffsets,
 		})
 
-		view := model.View(tests.NewKontext(), tests.TestRenderer)
+		view := model.View(tests.NewKontext(), tests.Renderer)
 
 		model.Update(tests.Key('/'))
 
-		view = model.View(tests.NewKontext(), tests.TestRenderer)
+		view = model.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, view, "┃ >")
 
@@ -94,7 +94,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 			model.Update(tests.Key('2'))
 			model.Update(tests.Key('2'))
 
-			view = model.View(tests.NewKontext(), tests.TestRenderer)
+			view = model.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, view, "┃ > 22")
 
@@ -119,7 +119,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 			Offsets: topicPartOffsets,
 		})
 
-		view := model.View(tests.NewKontext(), tests.TestRenderer)
+		view := model.View(tests.NewKontext(), tests.Renderer)
 
 		idx10 := strings.Index(view, "│ 10                      10")
 		assert.Greater(t, idx10, 0, "Expected partition 10 to be present")
@@ -151,7 +151,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 			Offsets: nil,
 		})
 
-		view := model.View(tests.NewKontext(), tests.TestRenderer)
+		view := model.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, view, "👀 No Committed Offsets Found")
 	})

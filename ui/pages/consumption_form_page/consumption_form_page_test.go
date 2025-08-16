@@ -21,7 +21,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			PartitionCount: 10,
 		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		cmd := m.Update(tests.Key(tea.KeyEsc))
 
@@ -36,9 +36,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		}, tests.NewKontext())
 
 		// make sure form has been initialized
-		m.View(tests.TestKontext, tests.TestRenderer)
+		m.View(tests.Kontext, tests.Renderer)
 
-		render := m.View(tests.NewKontext(), tests.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "> • 0")
 		for i := 1; i < 10; i++ {
@@ -60,9 +60,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			PartitionCount: 100,
 		}, ktx)
 		// make sure form has been initialized
-		m.View(ktx, tests.TestRenderer)
+		m.View(ktx, tests.Renderer)
 
-		render := m.View(ktx, tests.TestRenderer)
+		render := m.View(ktx, tests.Renderer)
 
 		assert.Contains(t, render, `> • 0`)
 		assert.Contains(t, render, `• 1`)
@@ -91,9 +91,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		}, tests.NewKontext())
 
 		// make sure form has been initialized
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
-		render := m.View(tests.TestKontext, tests.TestRenderer)
+		render := m.View(tests.Kontext, tests.Renderer)
 
 		assert.Contains(t, render, "> Most Recent")
 		assert.NotContains(t, render, "> Beginning")
@@ -122,9 +122,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			}, tests.NewKontext())
 
 			// make sure form has been initialized
-			m.View(tests.NewKontext(), tests.TestRenderer)
+			m.View(tests.NewKontext(), tests.Renderer)
 
-			render := m.View(tests.TestKontext, tests.TestRenderer)
+			render := m.View(tests.Kontext, tests.Renderer)
 
 			for i := 0; i < 10; i++ {
 				assert.NotContains(t, render, fmt.Sprintf("✓ %d", i))
@@ -140,7 +140,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Replicas:       1,
 		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		// select start from most recent
 		cmd := m.Update(tests.Key(tea.KeyDown))
@@ -198,7 +198,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Replicas:       1,
 		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		// select start from most recent
 		cmd := m.Update(tests.Key(tea.KeyDown))
@@ -249,7 +249,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Replicas:       1,
 		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		// select start from most recent
 		cmd := m.Update(tests.Key(tea.KeyDown))
@@ -276,7 +276,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		assert.Contains(t, render, "Key Filter Term")
 
@@ -289,7 +289,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 
 			assert.NotContains(t, render, "Key Filter Value")
 		})
@@ -338,7 +338,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Replicas:       1,
 		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		// select start from most recent
 		cmd := m.Update(tests.Key(tea.KeyDown))
@@ -397,7 +397,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Replicas:       1,
 		}, tests.NewKontext())
 		// make sure form has been initialized
-		m.View(tests.NewKontext(), tests.TestRenderer)
+		m.View(tests.NewKontext(), tests.Renderer)
 
 		// select start from most recent
 		cmd := m.Update(tests.Key(tea.KeyDown))
@@ -428,7 +428,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.TestRenderer)
+		}, tests.Renderer)
 
 		assert.Contains(t, render, "Value Filter Term")
 
@@ -456,7 +456,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, tests.TestRenderer)
+			}, tests.Renderer)
 
 			assert.NotContains(t, render, "Value Filter Term")
 		})

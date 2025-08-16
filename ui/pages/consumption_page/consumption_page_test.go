@@ -14,7 +14,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(EmptyTopicMsg{})
 
-		render := m.View(tests.NewKontext(), tests.TestRenderer)
+		render := m.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "Empty topic")
 

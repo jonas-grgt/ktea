@@ -64,7 +64,7 @@ func TestSubjectsPage(t *testing.T) {
 
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: []sradmin.Subject{}})
 
-		render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+		render := subjectsPage.View(tests.Kontext, tests.Renderer)
 
 		assert.Contains(t, render, "No Subjects Found")
 
@@ -96,7 +96,7 @@ func TestSubjectsPage(t *testing.T) {
 		}
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
-		render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+		render := subjectsPage.View(tests.Kontext, tests.Renderer)
 
 		for i := 0; i < 10; i++ {
 			assert.Regexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
@@ -126,12 +126,12 @@ func TestSubjectsPage(t *testing.T) {
 		page.Update(tests.Key('/'))
 		tests.UpdateKeys(page, "subject2")
 
-		render := page.View(tests.NewKontext(), tests.TestRenderer)
+		render := page.View(tests.NewKontext(), tests.Renderer)
 		assert.Contains(t, render, "> subject2")
 
 		page.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
-		render = page.View(tests.NewKontext(), tests.TestRenderer)
+		render = page.View(tests.NewKontext(), tests.Renderer)
 		assert.NotContains(t, render, "> subject")
 	})
 
@@ -154,18 +154,18 @@ func TestSubjectsPage(t *testing.T) {
 		}
 		page.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
-		page.View(tests.NewKontext(), tests.TestRenderer)
+		page.View(tests.NewKontext(), tests.Renderer)
 
 		page.Update(tests.Key(tea.KeyDown))
 		page.Update(tests.Key(tea.KeyDown))
 
-		page.View(tests.NewKontext(), tests.TestRenderer)
+		page.View(tests.NewKontext(), tests.Renderer)
 		assert.Equal(t, "subject2", page.table.SelectedRow()[0])
 
 		page.Update(tests.Key('/'))
 		tests.UpdateKeys(page, "subject")
 
-		page.View(tests.NewKontext(), tests.TestRenderer)
+		page.View(tests.NewKontext(), tests.Renderer)
 		assert.Equal(t, "subject0", page.table.SelectedRow()[0])
 	})
 
@@ -189,7 +189,7 @@ func TestSubjectsPage(t *testing.T) {
 		}
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 		// init table
-		subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+		subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 		subjectsPage.Update(tests.Key(tea.KeyDown))
 		subjectsPage.Update(tests.Key(tea.KeyDown))
@@ -225,7 +225,7 @@ func TestSubjectsPage(t *testing.T) {
 
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
-		render := subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+		render := subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 		assert.Contains(t, render, "▲ Subject Name")
 
@@ -268,7 +268,7 @@ func TestSubjectsPage(t *testing.T) {
 		shuffle(subjects)
 
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
-		subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+		subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 		t.Run("by Subject Name", func(t *testing.T) {
 
@@ -276,7 +276,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyEnter))
 			subjectsPage.Update(tests.Key(tea.KeyEsc))
 
-			render := subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render := subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "▼ Subject Name")
 
@@ -298,7 +298,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyEnter))
 			subjectsPage.Update(tests.Key(tea.KeyEsc))
 
-			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "▲ Subject Name")
 
@@ -326,7 +326,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyEnter))
 			subjectsPage.Update(tests.Key(tea.KeyEsc))
 
-			render := subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render := subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "▲ Comp")
 
@@ -339,7 +339,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyEnter))
 			subjectsPage.Update(tests.Key(tea.KeyEsc))
 
-			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "▼ Comp")
 
@@ -355,7 +355,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyEnter))
 			subjectsPage.Update(tests.Key(tea.KeyEsc))
 
-			render := subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render := subjectsPage.View(tests.NewKontext(), tests.Renderer)
 			assert.Contains(t, render, "▼ V")
 
 			subject1Idx := strings.Index(render, "subject1")
@@ -367,7 +367,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyEnter))
 			subjectsPage.Update(tests.Key(tea.KeyEsc))
 
-			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 			assert.Contains(t, render, "▲ V")
 
 			subject1Idx = strings.Index(render, "subject1")
@@ -396,7 +396,7 @@ func TestSubjectsPage(t *testing.T) {
 				})
 		}
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
-		subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+		subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 		subjectsPage.Update(tests.Key('/'))
 		tests.UpdateKeys(subjectsPage, "1")
@@ -436,14 +436,14 @@ func TestSubjectsPage(t *testing.T) {
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
 		// render so the table's first row is selected
-		render := subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+		render := subjectsPage.View(tests.NewKontext(), tests.Renderer)
 		assert.NotRegexp(t, "┃ 🗑️  subject1 will be deleted permanently\\W+Delete!\\W+Cancel.", render)
 
 		t.Run("F4 triggers subject hard delete", func(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyDown))
 			subjectsPage.Update(tests.Key(tea.KeyF4))
 
-			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Regexp(t, "┃ 🗑️  subject1 will be deleted permanently \\(hard\\)\\W+Delete!\\W+Cancel.", render)
 
@@ -464,7 +464,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyDown))
 			subjectsPage.Update(tests.Key(tea.KeyF2))
 
-			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Regexp(t, "┃ 🗑️  subject1 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
 
@@ -489,7 +489,7 @@ func TestSubjectsPage(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyDown))
 			subjectsPage.Update(tests.Key(tea.KeyF2))
 
-			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Regexp(t, "┃ 🗑️  subject11 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
 
@@ -512,14 +512,14 @@ func TestSubjectsPage(t *testing.T) {
 				Err: fmt.Errorf("unable to delete subject"),
 			})
 
-			render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Regexp(t, "unable to delete subject", render)
 
 			t.Run("When deletion failure msg visible do allow other cmdbars to activate", func(t *testing.T) {
 				subjectsPage.Update(tests.Key('/'))
 
-				render = subjectsPage.View(tests.NewKontext(), tests.TestRenderer)
+				render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
 				assert.NotContains(t, render, "Failed to delete subject: unable to delete subject")
 				assert.Contains(t, render, "> ")
@@ -538,7 +538,7 @@ func TestSubjectsPage(t *testing.T) {
 
 			subjectsPage.Update(sradmin.SubjectDeletionStartedMsg{})
 
-			render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+			render := subjectsPage.View(tests.Kontext, tests.Renderer)
 
 			assert.Contains(t, render, " ⏳ Deleting Subject")
 		})
@@ -553,11 +553,11 @@ func TestSubjectsPage(t *testing.T) {
 			var subjects []sradmin.Subject
 			emptyPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
-			render := emptyPage.View(tests.NewKontext(), tests.TestRenderer)
+			render := emptyPage.View(tests.NewKontext(), tests.Renderer)
 
 			cmd := emptyPage.Update(tests.Key(tea.KeyF2))
 
-			render = emptyPage.View(tests.NewKontext(), tests.TestRenderer)
+			render = emptyPage.View(tests.NewKontext(), tests.Renderer)
 
 			assert.Contains(t, render, "No Subjects Found")
 			assert.Nil(t, cmd)
@@ -568,7 +568,7 @@ func TestSubjectsPage(t *testing.T) {
 
 			subjectsPage.Update(tests.Key('/'))
 
-			render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+			render := subjectsPage.View(tests.Kontext, tests.Renderer)
 
 			assert.Contains(t, render, " ⏳ Deleting Subject")
 		})
@@ -584,7 +584,7 @@ func TestSubjectsPage(t *testing.T) {
 
 			subjectsPage.Update(sradmin.SubjectDeletedMsg{SubjectName: subjects[4].Name})
 
-			render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+			render := subjectsPage.View(tests.Kontext, tests.Renderer)
 
 			assert.NotRegexp(t, "subject4\\W+5", render)
 		})
@@ -602,7 +602,7 @@ func TestSubjectsPage(t *testing.T) {
 
 		subjectsPage.Update(sradmin.SubjectListingStartedMsg{})
 
-		render := subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+		render := subjectsPage.View(tests.Kontext, tests.Renderer)
 
 		assert.Contains(t, render, " ⏳ Loading subjects")
 	})
@@ -627,7 +627,7 @@ func TestSubjectsPage(t *testing.T) {
 
 		t.Run("when there are subjects", func(t *testing.T) {
 			addSubjects(subjectsPage)
-			subjectsPage.View(tests.TestKontext, tests.TestRenderer)
+			subjectsPage.View(tests.Kontext, tests.Renderer)
 
 			shortcuts := subjectsPage.Shortcuts()
 

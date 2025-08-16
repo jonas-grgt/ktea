@@ -33,7 +33,7 @@ func TestUpsertKcModel(t *testing.T) {
 			mockKafkaConnectRegisterer,
 		)
 
-		render := m.View(&ktx, tests.TestRenderer)
+		render := m.View(&ktx, tests.Renderer)
 
 		assert.Contains(t, render, "Kafka Connect Name")
 		assert.Contains(t, render, "Kafka Connect URL")
@@ -134,7 +134,7 @@ func TestUpsertKcModel(t *testing.T) {
 			},
 		}, kcadmin.NewMockConnChecker(), cmdbar.NewNotifierCmdBar("test"), mockKafkaConnectRegisterer)
 
-		render := m.View(&ktx, tests.TestRenderer)
+		render := m.View(&ktx, tests.Renderer)
 
 		assert.NotContains(t, render, "Kafka Connect URL")
 		assert.NotContains(t, render, "Kafka Connect Username")
