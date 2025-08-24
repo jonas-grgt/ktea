@@ -16,7 +16,7 @@ type SaramaKafkaAdmin struct {
 	addrs    []string
 	config   *sarama.Config
 	producer sarama.SyncProducer
-	sra      sradmin.SrAdmin
+	sra      sradmin.Client
 }
 
 type ConnCheckStartedMsg struct {

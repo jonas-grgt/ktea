@@ -19,7 +19,7 @@ func (c *ConnCheckStartedMsg) AwaitCompletion() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) CheckConnection() tea.Msg {
+func (s *DefaultSrClient) CheckConnection() tea.Msg {
 	connOkChan := make(chan bool)
 	errChan := make(chan error)
 
@@ -28,7 +28,7 @@ func (s *DefaultSrAdmin) CheckConnection() tea.Msg {
 	return ConnCheckStartedMsg{connOkChan, errChan}
 }
 
-func (s *DefaultSrAdmin) doCheckConnection(connOkChan chan bool, errChan chan error) {
+func (s *DefaultSrClient) doCheckConnection(connOkChan chan bool, errChan chan error) {
 	maybeIntroduceLatency()
 
 	_, err := s.client.GetSubjects()

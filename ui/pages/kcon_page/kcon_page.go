@@ -325,11 +325,15 @@ func New(
 	m.state = loading
 
 	m.border = border.New(
-		border.WithTitleFunc(func() string {
+		border.WithTitleFn(func() string {
 			if m.connectors == nil {
-				return styles.BorderTopTitle("Loading Connectors", "", false)
+				return border.Title("Loading Connectors", false)
 			}
-			return styles.BorderTopTitle("Total Connectors", fmt.Sprintf("%d/%d", len(m.rows), len(*m.connectors)), true)
+			return border.KeyValueTitle(
+				"Total Connectors",
+				fmt.Sprintf("%d/%d", len(m.rows), len(*m.connectors)),
+				true,
+			)
 		}))
 	m.border.Focused = false
 

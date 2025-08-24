@@ -24,7 +24,7 @@ func (msg *GlobalCompatibilityListingStartedMsg) AwaitCompletion() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) ListGlobalCompatibility() tea.Msg {
+func (s *DefaultSrClient) ListGlobalCompatibility() tea.Msg {
 	maybeIntroduceLatency()
 
 	compatibilityChan := make(chan string)
@@ -38,7 +38,7 @@ func (s *DefaultSrAdmin) ListGlobalCompatibility() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) doListGlobalCompatibility(
+func (s *DefaultSrClient) doListGlobalCompatibility(
 	compatibilityChan chan string,
 	errChan chan error,
 ) {

@@ -6,7 +6,19 @@ import (
 )
 
 type MockSrAdmin struct {
-	GetSchemaByIdFunc func(id int) tea.Msg
+	GetSchemaByIdFunc           func(id int) tea.Msg
+	hardDeleteSubjectCallbackFn func(string) tea.Msg
+	softDeleteSubjectCallbackFn func(string) tea.Msg
+}
+
+type Option func(m *MockSrAdmin)
+
+type HardDeletedSubjectMsg struct {
+	Subject string
+}
+
+type SoftDeletedSubjectMsg struct {
+	Subject string
 }
 
 func (m *MockSrAdmin) DeleteSchema(subject string, version int) tea.Msg {
@@ -14,7 +26,10 @@ func (m *MockSrAdmin) DeleteSchema(subject string, version int) tea.Msg {
 }
 
 func (m *MockSrAdmin) SoftDeleteSubject(subject string) tea.Msg {
-	panic("implement me")
+	if m.softDeleteSubjectCallbackFn != nil {
+		return m.softDeleteSubjectCallbackFn(subject)
+	}
+	return nil
 }
 
 type MockConnectionCheckedMsg struct {
@@ -25,7 +40,10 @@ func MockConnChecker(config *config.SchemaRegistryConfig) tea.Msg {
 	return MockConnectionCheckedMsg{config}
 }
 
-func (m *MockSrAdmin) SoftDeleteSchema(string, int) tea.Msg {
+func (m *MockSrAdmin) SoftDeleteSchema(subject string) tea.Msg {
+	if m.softDeleteSubjectCallbackFn != nil {
+		return m.softDeleteSubjectCallbackFn(subject)
+	}
 	return nil
 }
 
@@ -40,11 +58,10 @@ func (m *MockSrAdmin) GetSchemaById(id int) tea.Msg {
 	return nil
 }
 
-func (m *MockSrAdmin) HardDeleteSubject(string) tea.Msg {
-	return nil
-}
-
-func (m *MockSrAdmin) ListSubjects() tea.Msg {
+func (m *MockSrAdmin) HardDeleteSubject(subject string) tea.Msg {
+	if m.hardDeleteSubjectCallbackFn != nil {
+		return m.hardDeleteSubjectCallbackFn(subject)
+	}
 	return nil
 }
 
@@ -60,6 +77,26 @@ func (m *MockSrAdmin) GetLatestSchemaBySubject(string) tea.Msg {
 	return nil
 }
 
-func NewMock() *MockSrAdmin {
-	return &MockSrAdmin{}
+func (m *MockSrAdmin) ListSubjects() tea.Msg {
+	return nil
+}
+
+func WithSoftDeleteSubjectCallbackFn(fn func(string) tea.Msg) Option {
+	return func(m *MockSrAdmin) {
+		m.softDeleteSubjectCallbackFn = fn
+	}
+}
+
+func WithHardDeleteSubjectCallbackFn(fn func(string) tea.Msg) Option {
+	return func(m *MockSrAdmin) {
+		m.hardDeleteSubjectCallbackFn = fn
+	}
+}
+
+func NewMock(options ...Option) *MockSrAdmin {
+	admin := &MockSrAdmin{}
+	for _, opt := range options {
+		opt(admin)
+	}
+	return admin
 }

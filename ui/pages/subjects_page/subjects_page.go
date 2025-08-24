@@ -7,6 +7,7 @@ import (
 	"ktea/sradmin"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
@@ -25,23 +26,26 @@ import (
 type state int
 
 const (
-	initialized     state = 0
-	subjectsLoaded  state = 1
-	loading         state = 2
-	noSubjectsFound state = 3
-	deleting        state = 4
+	initialized state = iota
+	subjectsLoaded
+	loading
+	noSubjectsFound
+	deleting
+	activeTabLbl  = border.TabLabel("active")
+	deletedTabLbl = border.TabLabel("deleted")
 )
 
 type Model struct {
-	table            table.Model
-	rows             []table.Row
-	tcb              *TableCmdsBar
-	subjects         []sradmin.Subject
-	renderedSubjects []sradmin.Subject
-	tableFocussed    bool
-	lister           sradmin.SubjectLister
-	gCompLister      sradmin.GlobalCompatibilityLister
-	state            state
+	table           table.Model
+	rows            []table.Row
+	tcb             *TableCmdsBar
+	border          *border.Model
+	subjects        []sradmin.Subject
+	visibleSubjects []sradmin.Subject
+	tableFocussed   bool
+	lister          sradmin.SubjectLister
+	gCompLister     sradmin.GlobalCompatibilityLister
+	state           state
 	// when last subject in table is deleted no subject is focussed anymore
 	deletedLast     bool
 	sort            cmdbar.SortLabel
@@ -50,14 +54,14 @@ type Model struct {
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
+
 	if m.state == noSubjectsFound {
-		return lipgloss.NewStyle().
+		return m.border.View(lipgloss.NewStyle().
 			Width(ktx.WindowWidth - 2).
-			Height(ktx.AvailableHeight - 2).
+			Height(ktx.AvailableHeight - 3).
 			AlignVertical(lipgloss.Center).
 			AlignHorizontal(lipgloss.Center).
-			BorderStyle(lipgloss.RoundedBorder()).
-			Render("No Subjects Found")
+			Render("No Subjects Found"))
 	}
 
 	cmdBarView := m.tcb.View(ktx, renderer)
@@ -71,7 +75,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		{m.columnTitle("Versions"), versionCol},
 		{m.columnTitle("Compatibility"), compCol},
 	})
-	m.table.SetHeight(ktx.AvailableHeight - 2)
+	m.table.SetHeight(ktx.AvailableHeight - 3)
 	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetRows(m.rows)
 
@@ -87,23 +91,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		m.goToTop = false
 	}
 
-	embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-		styles.TopMiddleBorder: func(active bool) string {
-			var compLevel string
-			if m.globalCompLevel == "" {
-				compLevel = ""
-			} else {
-				compLevel = " ── " +
-					styles.EmbeddedBorderText("Global Compatibility", m.globalCompLevel)(active)
-			}
-			return styles.EmbeddedBorderText("Total Subjects", fmt.Sprintf(" %d/%d", len(m.rows), len(m.subjects)))(active) +
-				compLevel
-		},
-		styles.BottomMiddleBorder: styles.EmbeddedBorderText("Total Subjects", fmt.Sprintf(" %d/%d", len(m.rows), len(m.subjects))),
-	}
-
-	tableView := styles.Borderize(m.table.View(), m.tableFocussed, embeddedText)
-	return ui.JoinVertical(lipgloss.Top, cmdBarView, tableView)
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(m.table.View()))
 }
 
 func (m *Model) columnTitle(title string) string {
@@ -125,6 +113,10 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "tab":
+			m.border.NextTab()
+			m.table.GotoTop()
+			m.tcb.Reset()
 		case "f5":
 			m.state = loading
 			m.subjects = nil
@@ -178,10 +170,17 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	m.tableFocussed = !m.tcb.IsFocussed()
 	cmds = append(cmds, cmd)
 
-	subjects := m.filterSubjectsBySearchTerm()
-	subjects = m.sortSubjects(subjects)
-	m.renderedSubjects = subjects
-	m.rows = m.createRows(subjects)
+	var visSubjects []sradmin.Subject
+	for _, subject := range m.subjects {
+		if m.border.ActiveTab() == deletedTabLbl && subject.Deleted {
+			visSubjects = append(visSubjects, subject)
+		} else if m.border.ActiveTab() == activeTabLbl && !subject.Deleted {
+			visSubjects = append(visSubjects, subject)
+		}
+	}
+	visSubjects = m.filterSubjectsBySearchTerm(visSubjects)
+	m.visibleSubjects = visSubjects
+	m.rows = m.createRows(visSubjects)
 
 	// make sure table navigation is off when the cmdbar is focussed
 	if !m.tcb.IsFocussed() {
@@ -208,13 +207,6 @@ func (m *Model) removeDeletedSubjectFromModel(subjectName string) {
 	}
 }
 
-func (m *Model) sortSubjects(subjects []sradmin.Subject) []sradmin.Subject {
-	sort.Slice(subjects, func(i int, y int) bool {
-		return subjects[i].Name < subjects[y].Name
-	})
-	return subjects
-}
-
 func (m *Model) createRows(subjects []sradmin.Subject) []table.Row {
 	var rows []table.Row
 	for _, subject := range subjects {
@@ -223,6 +215,7 @@ func (m *Model) createRows(subjects []sradmin.Subject) []table.Row {
 			strconv.Itoa(len(subject.Versions)),
 			subject.Compatibility,
 		})
+		rows = rows
 	}
 
 	sort.SliceStable(rows, func(i, j int) bool {
@@ -245,45 +238,56 @@ func (m *Model) createRows(subjects []sradmin.Subject) []table.Row {
 			}
 			return rows[i][2] > rows[j][2]
 		default:
-			panic(fmt.Sprintf("unexpected sort label: %s", m.sort.Label))
+			return rows[i][0] < rows[j][0]
 		}
 	})
 
 	return rows
 }
-
-func (m *Model) filterSubjectsBySearchTerm() []sradmin.Subject {
-	var subjects []sradmin.Subject
+func (m *Model) filterSubjectsBySearchTerm(subjects []sradmin.Subject) []sradmin.Subject {
+	var resSubjects []sradmin.Subject
 	searchTerm := m.tcb.GetSearchTerm()
-	for _, subject := range m.subjects {
+	for _, subject := range subjects {
 		if searchTerm != "" {
 			if strings.Contains(strings.ToUpper(subject.Name), strings.ToUpper(searchTerm)) {
-				subjects = append(subjects, subject)
+				resSubjects = append(resSubjects, subject)
 			}
 		} else {
-			subjects = append(subjects, subject)
+			resSubjects = append(resSubjects, subject)
 		}
 	}
-	return subjects
+	return resSubjects
 }
 
 func (m *Model) Shortcuts() []statusbar.Shortcut {
 	shortcuts := m.tcb.Shortcuts()
 	if shortcuts == nil {
 		var extraShortcuts []statusbar.Shortcut
-		if len(m.subjects) > 0 {
+		if len(m.visibleSubjects) > 0 {
+			var deleteType string
+			var tabShortcut statusbar.Shortcut
+			if m.border.ActiveTab() == activeTabLbl {
+				deleteType = "soft"
+				tabShortcut = statusbar.Shortcut{
+					Name:       "Deleted Subjects",
+					Keybinding: "tab",
+				}
+			} else {
+				deleteType = "hard"
+				tabShortcut = statusbar.Shortcut{
+					Name:       "Active Subjects",
+					Keybinding: "tab",
+				}
+			}
 			extraShortcuts = []statusbar.Shortcut{
+				tabShortcut,
 				{
 					Name:       "Search",
 					Keybinding: "/",
 				},
 				{
-					Name:       "Delete (soft)",
+					Name:       fmt.Sprintf("Delete (%s)", deleteType),
 					Keybinding: "F2",
-				},
-				{
-					Name:       "Delete (hard)",
-					Keybinding: "F4",
 				},
 			}
 		}
@@ -308,10 +312,14 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 }
 
 func (m *Model) SelectedSubject() *sradmin.Subject {
-	if len(m.renderedSubjects) > 0 {
+	if len(m.visibleSubjects) > 0 {
 		selectedRow := m.table.SelectedRow()
 		if selectedRow != nil {
-			return &m.renderedSubjects[m.table.Cursor()]
+			for _, subject := range m.visibleSubjects {
+				if subject.Name == selectedRow[0] {
+					return &subject
+				}
+			}
 		}
 		return nil
 	}
@@ -322,29 +330,35 @@ func (m *Model) Title() string {
 	return "Subjects"
 }
 
-func New(
-	lister sradmin.SubjectLister,
-	compLister sradmin.GlobalCompatibilityLister,
-	deleter sradmin.SubjectDeleter,
-) (*Model, tea.Cmd) {
+func New(srClient sradmin.Client) (*Model, tea.Cmd) {
 	model := Model{
 		table:         ktable.NewDefaultTable(),
 		tableFocussed: true,
-		lister:        lister,
+		lister:        srClient,
 		state:         initialized,
 	}
 
 	deleteMsgFn := func(subject sradmin.Subject) string {
+		var deleteType string
+		if model.border.ActiveTab() == activeTabLbl {
+			deleteType = "soft"
+		} else {
+			deleteType = "hard"
+		}
 		message := subject.Name + lipgloss.NewStyle().
 			Foreground(lipgloss.Color(styles.ColorIndigo)).
 			Bold(true).
-			Render(" will be deleted (soft)")
+			Render(fmt.Sprintf(" will be deleted (%s)", deleteType))
 		return message
 	}
 
 	deleteFn := func(subject sradmin.Subject) tea.Cmd {
 		return func() tea.Msg {
-			return deleter.SoftDeleteSubject(subject.Name)
+			if model.border.ActiveTab() == activeTabLbl {
+				return srClient.SoftDeleteSubject(subject.Name)
+			} else {
+				return srClient.HardDeleteSubject(subject.Name)
+			}
 		}
 	}
 
@@ -421,12 +435,31 @@ func New(
 
 	model.sort = sortByBar.SortedBy()
 
+	model.border = border.New(
+		border.WithInnerPaddingTop(),
+		border.WithTabs(
+			border.Tab{Title: "Active Subjects", TabLabel: activeTabLbl},
+			border.Tab{Title: "Deleted Subjects (soft)", TabLabel: deletedTabLbl},
+		),
+		border.WithTitleFn(func() string {
+			var compLevel string
+			if model.globalCompLevel == "" {
+				compLevel = ""
+			} else {
+				compLevel = border.KeyValueTitle("Global Compatibility", model.globalCompLevel, model.tableFocussed)
+			}
+			return border.KeyValueTitle("Total Subjects", fmt.Sprintf(" %d/%d", len(model.rows), len(model.subjects)), model.tableFocussed) + compLevel
+		}))
+
 	model.tcb = NewTableCmdsBar(
-		deleter,
+		srClient,
 		cmdbar.NewDeleteCmdBar(deleteMsgFn, deleteFn),
 		cmdbar.NewSearchCmdBar("Search subjects by name"),
 		notifierCmdBar,
 		sortByBar,
 	)
-	return &model, tea.Batch(lister.ListSubjects, compLister.ListGlobalCompatibility)
+	return &model, tea.Batch(
+		srClient.ListSubjects,
+		srClient.ListGlobalCompatibility,
+	)
 }

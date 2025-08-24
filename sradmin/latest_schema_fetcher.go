@@ -33,7 +33,7 @@ func (msg *FetchingLatestSchemaBySubjectMsg) AwaitCompletion() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) GetLatestSchemaBySubject(subject string) tea.Msg {
+func (s *DefaultSrClient) GetLatestSchemaBySubject(subject string) tea.Msg {
 	schemaChan := make(chan Schema)
 	errChan := make(chan error)
 
@@ -44,7 +44,7 @@ func (s *DefaultSrAdmin) GetLatestSchemaBySubject(subject string) tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) doGetLatestSchema(subject string, schemaChan chan Schema, errChan chan error) {
+func (s *DefaultSrClient) doGetLatestSchema(subject string, schemaChan chan Schema, errChan chan error) {
 	schema, err := s.client.GetLatestSchema(subject)
 	if err != nil {
 		errChan <- err
