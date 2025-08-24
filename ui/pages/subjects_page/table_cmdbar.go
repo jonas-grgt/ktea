@@ -57,8 +57,10 @@ func (m *TableCmdsBar) IsFocussed() bool {
 }
 
 func (m *TableCmdsBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
-	if m.mainCBar.IsFocussed() {
-		return m.mainCBar.View(ktx, renderer)
+	var view string
+	view = m.mainCBar.View(ktx, renderer)
+	if view != "" {
+		return view
 	}
 	if m.hardDeleteCBar.IsFocussed() {
 		return m.hardDeleteCBar.View(ktx, renderer)

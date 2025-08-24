@@ -413,7 +413,7 @@ func publish(ka kadmin.Kadmin, topic string, id string, event interface{}, schem
 	}
 }
 
-func getLatestSchema(sa sradmin.SrAdmin, subject string) sradmin.Schema {
+func getLatestSchema(sa sradmin.Client, subject string) sradmin.Schema {
 	msg := sa.GetLatestSchemaBySubject(subject).(sradmin.FetchingLatestSchemaBySubjectMsg)
 
 	var schemaInfo sradmin.Schema
@@ -427,7 +427,7 @@ func getLatestSchema(sa sradmin.SrAdmin, subject string) sradmin.Schema {
 	return schemaInfo
 }
 
-func registerSchema(srAdmin sradmin.SrAdmin, subject string, schema string) {
+func registerSchema(srAdmin sradmin.Client, subject string, schema string) {
 	msg := srAdmin.CreateSchema(sradmin.SubjectCreationDetails{
 		Subject: subject,
 		Schema:  schema,
@@ -441,7 +441,7 @@ func registerSchema(srAdmin sradmin.SrAdmin, subject string, schema string) {
 	}
 }
 
-func getAdmins() (kadmin.Kadmin, sradmin.SrAdmin) {
+func getAdmins() (kadmin.Kadmin, sradmin.Client) {
 	ka, err := kadmin.NewSaramaKadmin(kadmin.ConnectionDetails{
 		BootstrapServers: []string{"localhost:9092"},
 		SASLConfig:       nil,
@@ -492,7 +492,7 @@ func topicExists(ka kadmin.Kadmin, expectedTopic string) bool {
 	return false
 }
 
-func subjectExists(srAdmin sradmin.SrAdmin, subject string) bool {
+func subjectExists(srAdmin sradmin.Client, subject string) bool {
 	msg := srAdmin.ListSubjects().(sradmin.SubjectListingStartedMsg)
 	switch msg := msg.AwaitCompletion().(type) {
 	case sradmin.SubjectsListedMsg:

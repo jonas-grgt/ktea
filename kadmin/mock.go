@@ -59,7 +59,7 @@ func (m MockKadmin) ListConfigs(topic string) tea.Msg {
 	return nil
 }
 
-func (m MockKadmin) SetSra(sra sradmin.SrAdmin) {
+func (m MockKadmin) SetSra(sra sradmin.Client) {
 }
 
 func (m MockKadmin) GetClusterConfig() tea.Msg {

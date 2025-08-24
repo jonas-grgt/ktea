@@ -11,7 +11,7 @@ import (
 )
 
 type GoAvroDeserializer struct {
-	sra sradmin.SrAdmin
+	sra sradmin.Client
 }
 
 type DesData struct {
@@ -108,6 +108,6 @@ func isAvroWithSchemaID(data []byte) (int, bool) {
 	return int(schemaId), true
 }
 
-func NewAvroDeserializer(sra sradmin.SrAdmin) Deserializer {
+func NewAvroDeserializer(sra sradmin.Client) Deserializer {
 	return &GoAvroDeserializer{sra: sra}
 }

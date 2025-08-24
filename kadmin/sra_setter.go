@@ -5,9 +5,9 @@ import (
 )
 
 type SraSetter interface {
-	SetSra(sra sradmin.SrAdmin)
+	SetSra(sra sradmin.Client)
 }
 
-func (ka *SaramaKafkaAdmin) SetSra(sra sradmin.SrAdmin) {
+func (ka *SaramaKafkaAdmin) SetSra(sra sradmin.Client) {
 	ka.sra = sra
 }

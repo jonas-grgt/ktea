@@ -18,5 +18,7 @@ type CmdBar interface {
 	// or nil if there are none, i.e. due to CmdBar not being active
 	Shortcuts() []statusbar.Shortcut
 
+	// IsFocussed returns true if the CmdBar is currently focussed
+	// as in accepting input and can be interacted with
 	IsFocussed() bool
 }
