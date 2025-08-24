@@ -33,7 +33,7 @@ func (msg *GettingSchemaByIdMsg) AwaitCompletion() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) GetSchemaById(id int) tea.Msg {
+func (s *DefaultSrClient) GetSchemaById(id int) tea.Msg {
 	if schema, ok := s.schemaCache[id]; ok {
 		return SchemaByIdReceived{Schema: schema}
 	}
@@ -47,7 +47,7 @@ func (s *DefaultSrAdmin) GetSchemaById(id int) tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) doGetSchemaById(id int, schemaChan chan Schema, errChan chan error) {
+func (s *DefaultSrClient) doGetSchemaById(id int, schemaChan chan Schema, errChan chan error) {
 	schema, err := s.client.GetSchema(id)
 	if err != nil {
 		errChan <- err

@@ -18,14 +18,10 @@ type Model struct {
 	active            nav.Page
 	statusbar         *statusbar.Model
 	ktx               *kontext.ProgramKtx
-	schemaCreator     sradmin.SchemaCreator
-	subjectLister     sradmin.SubjectLister
 	compLister        sradmin.GlobalCompatibilityLister
-	subjectDeleter    sradmin.SubjectDeleter
 	subjectsPage      *subjects_page.Model
 	schemaDetailsPage *schema_details_page.Model
-	schemaLister      sradmin.VersionLister
-	schemaDeleter     sradmin.SchemaDeleter
+	srClient          sradmin.Client
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -44,19 +40,19 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case sradmin.SubjectsListedMsg:
 		return m.subjectsPage.Update(msg)
 	case nav.LoadCreateSubjectPageMsg:
-		createPage, cmd := create_schema_page.New(m.schemaCreator, m.ktx)
+		createPage, cmd := create_schema_page.New(m.srClient, m.ktx)
 		cmds = append(cmds, cmd)
 		m.active = createPage
 	case nav.LoadSubjectsPageMsg:
 		if m.subjectsPage == nil || msg.Refresh && m.active != m.subjectsPage {
 			var cmd tea.Cmd
-			m.subjectsPage, cmd = subjects_page.New(m.subjectLister, m.compLister, m.subjectDeleter)
+			m.subjectsPage, cmd = subjects_page.New(m.srClient)
 			cmds = append(cmds, cmd)
 		}
 		m.active = m.subjectsPage
 	case nav.LoadSchemaDetailsPageMsg:
 		var cmd tea.Cmd
-		m.schemaDetailsPage, cmd = schema_details_page.New(m.schemaLister, m.schemaDeleter, msg.Subject, clipper.New())
+		m.schemaDetailsPage, cmd = schema_details_page.New(m.srClient, m.srClient, msg.Subject, clipper.New())
 		m.active = m.schemaDetailsPage
 		cmds = append(cmds, cmd)
 	}
@@ -69,24 +65,14 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 }
 
 func New(
-	subjectLister sradmin.SrAdmin,
-	compLister sradmin.GlobalCompatibilityLister,
-	schemaLister sradmin.VersionLister,
-	subjectCreator sradmin.SchemaCreator,
-	subjectDeleter sradmin.SubjectDeleter,
-	schemaDeleter sradmin.SchemaDeleter,
+	srClient sradmin.Client,
 	ktx *kontext.ProgramKtx,
 ) (*Model, tea.Cmd) {
-	subjectsPage, cmd := subjects_page.New(subjectLister, compLister, subjectDeleter)
+	subjectsPage, cmd := subjects_page.New(srClient)
 	model := Model{active: subjectsPage}
 	model.subjectsPage = subjectsPage
 	model.statusbar = statusbar.New(subjectsPage)
+	model.srClient = srClient
 	model.ktx = ktx
-	model.schemaCreator = subjectCreator
-	model.subjectLister = subjectLister
-	model.compLister = compLister
-	model.schemaLister = schemaLister
-	model.subjectDeleter = subjectDeleter
-	model.schemaDeleter = schemaDeleter
 	return &model, cmd
 }

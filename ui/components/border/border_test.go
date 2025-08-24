@@ -30,16 +30,16 @@ func TestBorderTab(t *testing.T) {
 		render := bt.View(content())
 
 		tests.TrimAndEqual(t, render, `
-╭──────────────────── My Title ────────────────────╮
+╭──────────────────────────────────────── My Title ╮
 │content                                           │
-╰──────────────────────────────────────────────────╯`)
+╰──────────────────────────────────────── My Title ╯`)
 	})
 
 	t.Run("Render title func", func(t *testing.T) {
 		title := "My Title"
 		bt := New(
 			WithOnTabChanged(func(t string, m *Model) {}),
-			WithTitleFunc(func() string {
+			WithTitleFn(func() string {
 				return title
 			}),
 		)
@@ -47,9 +47,9 @@ func TestBorderTab(t *testing.T) {
 		render := bt.View(content())
 
 		tests.TrimAndEqual(t, render, `
-╭──────────────────── My Title ────────────────────╮
+╭──────────────────────────────────────── My Title ╮
 │content                                           │
-╰──────────────────────────────────────────────────╯`)
+╰──────────────────────────────────────── My Title ╯`)
 	})
 
 	t.Run("Render tabs", func(t *testing.T) {
@@ -99,9 +99,9 @@ func TestBorderTab(t *testing.T) {
 		render := bt.View(content())
 
 		tests.TrimAndEqual(t, render, `
-╭ | tab1  tab2 | ──────────── My Title ────────────╮
+╭ | tab1  tab2 | ──────────────────────── My Title ╮
 │content                                           │
-╰──────────────────────────────────────────────────╯`)
+╰──────────────────────────────────────── My Title ╯`)
 	})
 
 	t.Run("Next tab", func(t *testing.T) {
@@ -113,13 +113,13 @@ func TestBorderTab(t *testing.T) {
 			),
 		)
 
-		assert.Equal(t, 0, bt.activeTabIdx)
+		assert.Equal(t, TabLabel("tab1"), bt.ActiveTab())
 
 		bt.NextTab()
-		assert.Equal(t, 1, bt.activeTabIdx)
+		assert.Equal(t, TabLabel("tab2"), bt.ActiveTab())
 
 		bt.NextTab()
-		assert.Equal(t, 0, bt.activeTabIdx)
+		assert.Equal(t, TabLabel("tab1"), bt.ActiveTab())
 	})
 
 	t.Run("Go to tab", func(t *testing.T) {
@@ -141,6 +141,28 @@ func TestBorderTab(t *testing.T) {
 		bt.GoTo("tabY")
 
 		assert.Equal(t, 2, bt.activeTabIdx)
+	})
+
+	t.Run("WithInnerPaddingTop", func(t *testing.T) {
+		bt := New(
+			WithInnerPaddingTop(),
+			WithOnTabChanged(func(t string, m *Model) {}),
+			WithTabs(
+				Tab{Title: "tab1", TabLabel: "tab1"},
+				Tab{Title: "tab2", TabLabel: "tab2"},
+				Tab{Title: "tab3", TabLabel: "tab3"},
+				Tab{Title: "tab4", TabLabel: "tab4"},
+				Tab{Title: "tab5", TabLabel: "tab5"},
+			),
+		)
+
+		render := bt.View(content())
+
+		tests.TrimAndEqual(t, render, `
+╭ | tab1  tab2  tab3  tab4  tab5 | ────────────────╮
+│                                                  │
+│content                                           │
+╰──────────────────────────────────────────────────╯`)
 	})
 }
 

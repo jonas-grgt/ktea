@@ -1,6 +1,7 @@
 package sradmin
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"testing"
@@ -9,11 +10,11 @@ import (
 func TestHardSubjectDelete(t *testing.T) {
 
 	sra := New(&config.SchemaRegistryConfig{
-		Url: "http://localhost:8081",
+		Url: fmt.Sprintf("http://localhost:%s", schemaRegistryPort.Port()),
 	})
 
 	t.Run("Delete Subject Permanently", func(t *testing.T) {
-		// given
+		// given a soft deleted subject
 		msg := sra.CreateSchema(SubjectCreationDetails{
 			Subject: "test.hard.subject",
 			Schema:  `{"type":"string"}`,
@@ -24,12 +25,21 @@ func TestHardSubjectDelete(t *testing.T) {
 		msg = scsMsg.AwaitCompletion()
 		assert.IsType(t, SchemaCreatedMsg{}, msg)
 
+		msg = sra.SoftDeleteSubject("test.hard.subject")
+
+		assert.IsType(t, msg, SubjectDeletionStartedMsg{})
+		sdsMsg := msg.(SubjectDeletionStartedMsg)
+		msg = sdsMsg.AwaitCompletion()
+
+		assert.IsType(t, msg, SubjectDeletedMsg{})
+		assert.Equal(t, SubjectDeletedMsg{"test.hard.subject"}, msg)
+
 		// when
 		msg = sra.HardDeleteSubject("test.hard.subject")
 
 		// then
 		assert.IsType(t, msg, SubjectDeletionStartedMsg{})
-		sdsMsg := msg.(SubjectDeletionStartedMsg)
+		sdsMsg = msg.(SubjectDeletionStartedMsg)
 		msg = sdsMsg.AwaitCompletion()
 
 		assert.IsType(t, msg, SubjectDeletedMsg{})
@@ -40,7 +50,7 @@ func TestHardSubjectDelete(t *testing.T) {
 func TestSoftSubjectDelete(t *testing.T) {
 
 	sra := New(&config.SchemaRegistryConfig{
-		Url: "http://localhost:8081",
+		Url: fmt.Sprintf("http://localhost:%s", schemaRegistryPort.Port()),
 	})
 
 	t.Run("Delete Subject Permanently", func(t *testing.T) {
@@ -61,6 +71,17 @@ func TestSoftSubjectDelete(t *testing.T) {
 		// then
 		assert.IsType(t, msg, SubjectDeletionStartedMsg{})
 		sdsMsg := msg.(SubjectDeletionStartedMsg)
+		msg = sdsMsg.AwaitCompletion()
+
+		assert.IsType(t, msg, SubjectDeletedMsg{})
+		assert.Equal(t, SubjectDeletedMsg{"test.soft.subject"}, msg)
+
+		// clean-up
+		msg = sra.HardDeleteSubject("test.soft.subject")
+
+		// then
+		assert.IsType(t, msg, SubjectDeletionStartedMsg{})
+		sdsMsg = msg.(SubjectDeletionStartedMsg)
 		msg = sdsMsg.AwaitCompletion()
 
 		assert.IsType(t, msg, SubjectDeletedMsg{})

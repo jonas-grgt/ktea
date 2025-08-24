@@ -14,53 +14,11 @@ import (
 	"time"
 )
 
-type MockSubjectsLister struct {
-	subjectListingStartedMsg sradmin.SubjectListingStartedMsg
-}
-
-func (m *MockSubjectsLister) ListSubjects() tea.Msg {
-	return nil
-}
-
-type MockSubjectsDeleter struct {
-	hardDeletionResultMsg tea.Msg
-	softDeletionResultMsg tea.Msg
-}
-
-type HardDeletedSubjectMsg struct {
-	Subject string
-	Version int
-}
-
-type SoftDeletedSubjectMsg struct {
-	Subject string
-	Version int
-}
-
-type MockGlobalCompatibilityLister struct {
-}
-
-func (m MockGlobalCompatibilityLister) ListGlobalCompatibility() tea.Msg {
-	return nil
-}
-
-func (m *MockSubjectsDeleter) HardDeleteSubject(string) tea.Msg {
-	return m.hardDeletionResultMsg
-}
-
-func (m *MockSubjectsDeleter) SoftDeleteSubject(string) tea.Msg {
-	return m.softDeletionResultMsg
-}
-
 func TestSubjectsPage(t *testing.T) {
 
 	t.Run("No subjects found", func(t *testing.T) {
 
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: []sradmin.Subject{}})
 
@@ -76,13 +34,37 @@ func TestSubjectsPage(t *testing.T) {
 		})
 	})
 
-	t.Run("Render listed subjects and number of versions", func(t *testing.T) {
+	t.Run("List subjects and number of versions", func(t *testing.T) {
 
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
+
+		var subjects []sradmin.Subject
+		var versions []int
+		for i := 0; i < 20; i++ {
+			versions = append(versions, i)
+			subjects = append(subjects,
+				sradmin.Subject{
+					Name:     fmt.Sprintf("subject%d", i),
+					Versions: versions,
+					Deleted:  i%2 != 0,
+				})
+		}
+		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
+
+		render := subjectsPage.View(tests.Kontext, tests.Renderer)
+
+		for i := 0; i < 20; i++ {
+			if i%2 == 0 {
+				assert.Regexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
+			} else {
+				assert.NotRegexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
+			}
+		}
+	})
+
+	t.Run("When subjects are loaded or refresh then the search form is reset", func(t *testing.T) {
+
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -96,51 +78,20 @@ func TestSubjectsPage(t *testing.T) {
 		}
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
-		render := subjectsPage.View(tests.Kontext, tests.Renderer)
+		subjectsPage.Update(tests.Key('/'))
+		tests.UpdateKeys(subjectsPage, "subject2")
 
-		for i := 0; i < 10; i++ {
-			assert.Regexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
-		}
-	})
-
-	t.Run("When subjects are loaded or refresh then the search form is reset", func(t *testing.T) {
-
-		page, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
-
-		var subjects []sradmin.Subject
-		var versions []int
-		for i := 0; i < 10; i++ {
-			versions = append(versions, i)
-			subjects = append(subjects,
-				sradmin.Subject{
-					Name:     fmt.Sprintf("subject%d", i),
-					Versions: versions,
-				})
-		}
-		page.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
-
-		page.Update(tests.Key('/'))
-		tests.UpdateKeys(page, "subject2")
-
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := subjectsPage.View(tests.NewKontext(), tests.Renderer)
 		assert.Contains(t, render, "> subject2")
 
-		page.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
+		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
 
-		render = page.View(tests.NewKontext(), tests.Renderer)
+		render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 		assert.NotContains(t, render, "> subject")
 	})
 
 	t.Run("Searching resets selected row to top row", func(t *testing.T) {
-		page, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
+		page, _ := New(sradmin.NewMock())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -148,8 +99,10 @@ func TestSubjectsPage(t *testing.T) {
 			versions = append(versions, i)
 			subjects = append(subjects,
 				sradmin.Subject{
-					Name:     fmt.Sprintf("subject%d", i),
-					Versions: versions,
+					Name:          fmt.Sprintf("subject%d", i),
+					Versions:      versions,
+					Deleted:       false,
+					Compatibility: "BACKWARD",
 				})
 		}
 		page.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
@@ -171,11 +124,7 @@ func TestSubjectsPage(t *testing.T) {
 
 	t.Run("Enter opens schema detail page", func(t *testing.T) {
 
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -204,12 +153,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Order subjects default by Subject Name Asc", func(t *testing.T) {
-		deleter := MockSubjectsDeleter{}
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&deleter,
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -239,12 +183,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Sorting", func(t *testing.T) {
-		deleter := MockSubjectsDeleter{}
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&deleter,
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		var (
 			subjects      []sradmin.Subject
@@ -378,12 +317,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Loading details page (enter) after searching from selective list", func(t *testing.T) {
-		deleter := MockSubjectsDeleter{}
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&deleter,
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -391,8 +325,10 @@ func TestSubjectsPage(t *testing.T) {
 			versions = append(versions, i)
 			subjects = append(subjects,
 				sradmin.Subject{
-					Name:     fmt.Sprintf("subject%d", i),
-					Versions: versions,
+					Name:          fmt.Sprintf("subject%d", i),
+					Versions:      versions,
+					Deleted:       false,
+					Compatibility: "BACKWARD",
 				})
 		}
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
@@ -409,18 +345,29 @@ func TestSubjectsPage(t *testing.T) {
 
 		assert.Contains(t, msgs, nav.LoadSchemaDetailsPageMsg{
 			Subject: sradmin.Subject{
-				Name:     "subject11",
-				Versions: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+				Name:          "subject10",
+				Versions:      []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+				Deleted:       false,
+				Compatibility: "BACKWARD",
 			},
 		})
 	})
 
 	t.Run("Delete subject", func(t *testing.T) {
-		deleter := MockSubjectsDeleter{}
 		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&deleter,
+			sradmin.NewMock(
+				sradmin.WithHardDeleteSubjectCallbackFn(
+					func(subject string) tea.Msg {
+						return sradmin.HardDeletedSubjectMsg{Subject: subject}
+					},
+				),
+				sradmin.WithSoftDeleteSubjectCallbackFn(
+					func(subject string) tea.Msg {
+						return sradmin.SoftDeletedSubjectMsg{Subject: subject}
+
+					},
+				),
+			),
 		)
 
 		var subjects []sradmin.Subject
@@ -439,27 +386,6 @@ func TestSubjectsPage(t *testing.T) {
 		render := subjectsPage.View(tests.NewKontext(), tests.Renderer)
 		assert.NotRegexp(t, "┃ 🗑️  subject1 will be deleted permanently\\W+Delete!\\W+Cancel.", render)
 
-		t.Run("F4 triggers subject hard delete", func(t *testing.T) {
-			subjectsPage.Update(tests.Key(tea.KeyDown))
-			subjectsPage.Update(tests.Key(tea.KeyF4))
-
-			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
-
-			assert.Regexp(t, "┃ 🗑️  subject1 will be deleted permanently \\(hard\\)\\W+Delete!\\W+Cancel.", render)
-
-			t.Run("Enter hard deletes the subject", func(t *testing.T) {
-				deleter.hardDeletionResultMsg = HardDeletedSubjectMsg{"subject1", 1}
-				deleter.softDeletionResultMsg = SoftDeletedSubjectMsg{"subject1", 1}
-
-				subjectsPage.Update(tests.Key('d'))
-				cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
-				msgs := tests.ExecuteBatchCmd(cmds)
-
-				assert.Contains(t, msgs, HardDeletedSubjectMsg{"subject1", 1})
-			})
-
-		})
-
 		t.Run("F2 triggers subject soft delete", func(t *testing.T) {
 			subjectsPage.Update(tests.Key(tea.KeyDown))
 			subjectsPage.Update(tests.Key(tea.KeyF2))
@@ -469,29 +395,52 @@ func TestSubjectsPage(t *testing.T) {
 			assert.Regexp(t, "┃ 🗑️  subject1 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
 
 			t.Run("Enter soft deletes the subject", func(t *testing.T) {
-				deleter.hardDeletionResultMsg = HardDeletedSubjectMsg{"subject1", 1}
-				deleter.softDeletionResultMsg = SoftDeletedSubjectMsg{"subject1", 1}
-
 				subjectsPage.Update(tests.Key('d'))
 				cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
 				msgs := tests.ExecuteBatchCmd(cmds)
 
-				assert.Contains(t, msgs, SoftDeletedSubjectMsg{"subject1", 1})
+				assert.Contains(t, msgs, sradmin.SoftDeletedSubjectMsg{Subject: "subject1"})
+			})
+		})
+
+		t.Run("Delete after sorting", func(t *testing.T) {
+			subjectsPage.Update(tests.Key(tea.KeyF3))
+			subjectsPage.Update(tests.Key(tea.KeyEnter))
+			subjectsPage.Update(tests.Key(tea.KeyEsc))
+
+			subjectsPage.View(tests.NewKontext(), tests.Renderer)
+
+			subjectsPage.Update(tests.Key(tea.KeyUp))
+			subjectsPage.Update(tests.Key(tea.KeyF2))
+
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
+
+			assert.Regexp(t, "┃ 🗑️  subject99 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
+
+			t.Run("Enter soft deletes the subject", func(t *testing.T) {
+				subjectsPage.Update(tests.Key('d'))
+				cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
+				msgs := tests.ExecuteBatchCmd(cmds)
+
+				assert.Contains(t, msgs, sradmin.SoftDeletedSubjectMsg{Subject: "subject99"})
 			})
 
 		})
 
 		t.Run("Delete after searching from selective list", func(t *testing.T) {
 			subjectsPage.Update(tests.Key('/'))
-			tests.UpdateKeys(subjectsPage, "1")
+			tests.UpdateKeys(subjectsPage, "2")
 			subjectsPage.Update(tests.Key(tea.KeyEnter))
+
+			subjectsPage.View(tests.NewKontext(), tests.Renderer)
+
 			subjectsPage.Update(tests.Key(tea.KeyDown))
 			subjectsPage.Update(tests.Key(tea.KeyDown))
 			subjectsPage.Update(tests.Key(tea.KeyF2))
 
 			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
 
-			assert.Regexp(t, "┃ 🗑️  subject11 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
+			assert.Regexp(t, "┃ 🗑️  subject72 will be deleted \\(soft\\)\\W+Delete!\\W+Cancel.", render)
 
 			// reset search
 			subjectsPage.Update(tests.Key('/'))
@@ -499,8 +448,6 @@ func TestSubjectsPage(t *testing.T) {
 		})
 
 		t.Run("Display error when deletion fails", func(t *testing.T) {
-			deleter.hardDeletionResultMsg = sradmin.SubjectDeletionStartedMsg{}
-
 			subjectsPage.Update(tests.Key(tea.KeyF2))
 			subjectsPage.Update(tests.Key('d'))
 			cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
@@ -528,11 +475,7 @@ func TestSubjectsPage(t *testing.T) {
 
 		t.Run("When deletion started show spinning indicator", func(t *testing.T) {
 
-			subjectsPage, _ := New(
-				&MockSubjectsLister{},
-				&MockGlobalCompatibilityLister{},
-				&MockSubjectsDeleter{},
-			)
+			subjectsPage, _ := New(sradmin.NewMock())
 
 			addSubjects(subjectsPage)
 
@@ -544,11 +487,7 @@ func TestSubjectsPage(t *testing.T) {
 		})
 
 		t.Run("Disable delete when no subject selected", func(t *testing.T) {
-			emptyPage, _ := New(
-				&MockSubjectsLister{},
-				&MockGlobalCompatibilityLister{},
-				&deleter,
-			)
+			emptyPage, _ := New(sradmin.NewMock())
 
 			var subjects []sradmin.Subject
 			emptyPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
@@ -574,11 +513,7 @@ func TestSubjectsPage(t *testing.T) {
 		})
 
 		t.Run("Remove delete subject from table", func(t *testing.T) {
-			subjectsPage, _ := New(
-				&MockSubjectsLister{},
-				&MockGlobalCompatibilityLister{},
-				&MockSubjectsDeleter{},
-			)
+			subjectsPage, _ := New(sradmin.NewMock())
 
 			subjects := addSubjects(subjectsPage)
 
@@ -590,13 +525,95 @@ func TestSubjectsPage(t *testing.T) {
 		})
 	})
 
+	t.Run("List soft deleted subjects", func(t *testing.T) {
+
+		srAdminMock := sradmin.NewMock(
+			sradmin.WithHardDeleteSubjectCallbackFn(
+				func(subject string) tea.Msg {
+					return sradmin.HardDeletedSubjectMsg{Subject: subject}
+				},
+			),
+		)
+		subjectsPage, _ := New(srAdminMock)
+
+		var subjects []sradmin.Subject
+		var versions []int
+		for i := 0; i < 20; i++ {
+			versions = append(versions, i)
+			subjects = append(subjects,
+				sradmin.Subject{
+					Name:     fmt.Sprintf("subject%d", i),
+					Versions: versions,
+					Deleted:  i%2 != 0,
+				})
+		}
+
+		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
+
+		render := subjectsPage.View(tests.Kontext, tests.Renderer)
+
+		for i := 0; i < 20; i++ {
+			if i%2 == 0 {
+				assert.Regexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
+			} else {
+				assert.NotRegexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
+			}
+		}
+
+		t.Run("Tab switches to soft deleted subjects", func(t *testing.T) {
+			// move down first to later assert cursor went up after switching
+			subjectsPage.Update(tests.Key(tea.KeyDown))
+			subjectsPage.Update(tests.Key(tea.KeyDown))
+			assert.Equal(t, "subject12", subjectsPage.table.SelectedRow()[0])
+			// switch to soft deleted subjects
+			subjectsPage.Update(tests.Key(tea.KeyTab))
+
+			render := subjectsPage.View(tests.Kontext, tests.Renderer)
+
+			assert.Contains(t, render, "Total Subjects:  10/20")
+
+			for i := 0; i < 20; i++ {
+				if i%2 != 0 {
+					assert.Regexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
+				} else {
+					assert.NotRegexp(t, fmt.Sprintf("subject%d\\W+%d", i, i+1), render)
+				}
+			}
+
+			// assert cursor is at top
+			assert.Equal(t, "subject1", subjectsPage.table.SelectedRow()[0])
+		})
+
+		t.Run("Shortcuts list hard delete option", func(t *testing.T) {
+			assert.Contains(t, subjectsPage.Shortcuts(), statusbar.Shortcut{
+				Name:       "Delete (hard)",
+				Keybinding: "F2",
+			})
+		})
+
+		t.Run("F2 triggers subject hard delete", func(t *testing.T) {
+			subjectsPage.Update(tests.Key(tea.KeyDown))
+			subjectsPage.Update(tests.Key(tea.KeyF2))
+
+			render = subjectsPage.View(tests.NewKontext(), tests.Renderer)
+
+			assert.Regexp(t, "┃ 🗑️  subject11 will be deleted \\(hard\\)\\W+Delete!\\W+Cancel.", render)
+
+		})
+
+		t.Run("Enter hard deletes the subject", func(t *testing.T) {
+			subjectsPage.Update(tests.Key('d'))
+			cmds := subjectsPage.Update(tests.Key(tea.KeyEnter))
+			msgs := tests.ExecuteBatchCmd(cmds)
+
+			assert.Contains(t, msgs, sradmin.HardDeletedSubjectMsg{Subject: "subject11"})
+		})
+
+	})
+
 	t.Run("When listing started show spinning indicator", func(t *testing.T) {
 
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		addSubjects(subjectsPage)
 
@@ -608,11 +625,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Shortcuts", func(t *testing.T) {
-		subjectsPage, _ := New(
-			&MockSubjectsLister{},
-			&MockGlobalCompatibilityLister{},
-			&MockSubjectsDeleter{},
-		)
+		subjectsPage, _ := New(sradmin.NewMock())
 
 		t.Run("when there are no subjects", func(t *testing.T) {
 			subjectsPage.subjects = nil
@@ -635,9 +648,9 @@ func TestSubjectsPage(t *testing.T) {
 				[]statusbar.Shortcut{
 					{Name: "Register New Schema", Keybinding: "C-n"},
 					{Name: "Refresh", Keybinding: "F5"},
+					{Name: "Deleted Subjects", Keybinding: "tab"},
 					{Name: "Search", Keybinding: "/"},
 					{Name: "Delete (soft)", Keybinding: "F2"},
-					{Name: "Delete (hard)", Keybinding: "F4"},
 				}, shortcuts)
 		})
 

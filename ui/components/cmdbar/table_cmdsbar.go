@@ -130,7 +130,6 @@ func (m *TableCmdsBar[T]) HasSearchedAtLeastOneChar() bool {
 }
 
 func (m *TableCmdsBar[T]) IsFocussed() bool {
-
 	return m.activeCBar != nil && m.activeCBar.IsFocussed()
 }
 
