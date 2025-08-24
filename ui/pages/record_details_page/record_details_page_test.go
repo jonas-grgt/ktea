@@ -37,11 +37,11 @@ func TestRecordDetailsPage(t *testing.T) {
 
 		assert.Equal(t, mainViewFocus, m.focus)
 
-		m.Update(tests.Key(tea.KeyCtrlH))
+		m.Update(tests.Key('h'))
 
 		assert.Equal(t, headersViewFocus, m.focus)
 
-		m.Update(tests.Key(tea.KeyCtrlH))
+		m.Update(tests.Key(tea.KeyRight))
 
 		assert.Equal(t, mainViewFocus, m.focus)
 
@@ -333,7 +333,7 @@ func TestRecordDetailsPage(t *testing.T) {
 
 		m.View(tests.NewKontext(), tests.TestRenderer)
 
-		m.Update(tests.Key(tea.KeyCtrlH))
+		m.Update(tests.Key('h'))
 		m.Update(tests.Key(tea.KeyDown))
 		m.Update(tests.Key(tea.KeyDown))
 
@@ -380,7 +380,7 @@ func TestRecordDetailsPage(t *testing.T) {
 
 		m.View(tests.NewKontext(), tests.TestRenderer)
 
-		m.Update(tests.Key(tea.KeyCtrlH))
+		m.Update(tests.Key('h'))
 		m.Update(tests.Key(tea.KeyDown))
 		m.Update(tests.Key(tea.KeyDown))
 
