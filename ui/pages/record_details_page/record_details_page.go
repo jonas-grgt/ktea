@@ -101,7 +101,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		switch msg.String() {
 		case "esc":
 			return ui.PublishMsg(nav.LoadCachedConsumptionPageMsg{})
-		case "ctrl+h", "left", "right":
+		case "h", "left", "right":
 			if len(m.record.Headers) >= 1 {
 				m.focus = !m.focus
 				m.border.Focused = m.focus == mainViewFocus
@@ -308,7 +308,7 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 	}
 	if m.err == nil {
 		shortcuts := []statusbar.Shortcut{
-			{"Toggle Headers/Content", "C-h/left/right"},
+			{"Toggle Headers/Content", "h/left/right"},
 			{"Go Back", "esc"},
 			{"Copy " + whatToCopy, "c"},
 		}
