@@ -41,7 +41,7 @@ func (s *SchemaListingStarted) AwaitCompletion() tea.Msg {
 	return SchemasListed{Schemas: schemas}
 }
 
-func (s *DefaultSrAdmin) ListVersions(subject string, versions []int) tea.Msg {
+func (s *DefaultSrClient) ListVersions(subject string, versions []int) tea.Msg {
 	schemaChan := make(chan Schema, len(versions))
 	var wg sync.WaitGroup
 

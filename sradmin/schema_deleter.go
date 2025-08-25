@@ -26,7 +26,7 @@ func (m *SchemaDeletionStartedMsg) AwaitCompletion() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) DeleteSchema(subject string, version int) tea.Msg {
+func (s *DefaultSrClient) DeleteSchema(subject string, version int) tea.Msg {
 	deletedChan := make(chan bool)
 	errChan := make(chan error)
 
@@ -40,7 +40,7 @@ func (s *DefaultSrAdmin) DeleteSchema(subject string, version int) tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) doDeleteSchema(
+func (s *DefaultSrClient) doDeleteSchema(
 	subject string,
 	version int,
 	deletedChan chan bool,

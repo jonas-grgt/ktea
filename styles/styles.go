@@ -80,39 +80,6 @@ const (
 	BottomRightBorder
 )
 
-func BorderTopTitle(keyLabel string, valueLabel string, active bool) string {
-	var (
-		colorLabel lipgloss.Color
-		colorCount lipgloss.Color
-	)
-	if active {
-		colorLabel = ColorWhite
-		colorCount = ColorPink
-	} else {
-		colorLabel = ColorGrey
-		colorCount = ColorLightPink
-	}
-
-	var renderedValueLabel string
-	if valueLabel == "" {
-		renderedValueLabel = ""
-	} else {
-		renderedValueLabel = ":" + lipgloss.NewStyle().
-			Foreground(colorCount).
-			Bold(true).
-			Render(fmt.Sprintf(" %s", valueLabel))
-	}
-
-	return lipgloss.NewStyle().
-		Foreground(colorLabel).
-		Bold(true).
-		Render(fmt.Sprintf("[ %s", keyLabel)) + renderedValueLabel +
-		lipgloss.NewStyle().
-			Foreground(colorLabel).
-			Bold(true).
-			Render(" ]")
-}
-
 type EmbeddedTextFunc func(active bool) string
 
 func EmbeddedBorderText(

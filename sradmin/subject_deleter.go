@@ -25,7 +25,7 @@ func (msg *SubjectDeletionStartedMsg) AwaitCompletion() tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) HardDeleteSubject(subject string) tea.Msg {
+func (s *DefaultSrClient) HardDeleteSubject(subject string) tea.Msg {
 	deletedChan := make(chan bool)
 	errChan := make(chan error)
 
@@ -38,7 +38,7 @@ func (s *DefaultSrAdmin) HardDeleteSubject(subject string) tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) SoftDeleteSubject(subject string) tea.Msg {
+func (s *DefaultSrClient) SoftDeleteSubject(subject string) tea.Msg {
 	deletedChan := make(chan bool)
 	errChan := make(chan error)
 
@@ -51,7 +51,7 @@ func (s *DefaultSrAdmin) SoftDeleteSubject(subject string) tea.Msg {
 	}
 }
 
-func (s *DefaultSrAdmin) doDeleteSubject(
+func (s *DefaultSrClient) doDeleteSubject(
 	subject string,
 	permanent bool,
 	deletedChan chan bool,

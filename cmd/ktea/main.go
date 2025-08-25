@@ -51,7 +51,7 @@ type Model struct {
 	cgroupsTabCtrl        *cgroups_tab.Model
 	kaInstantiator        kadmin.Instantiator
 	ka                    kadmin.Kadmin
-	sra                   sradmin.SrAdmin
+	sra                   sradmin.Client
 	renderer              *ui.Renderer
 	schemaRegistryTabCtrl *sr_tab.Model
 	clustersTabCtrl       *clusters_tab.Model
@@ -293,7 +293,7 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 		var cmds []tea.Cmd
 		m.recreateTabs(cluster)
 		if m.ktx.Config.ActiveCluster().HasSchemaRegistry() {
-			m.schemaRegistryTabCtrl, cmd = sr_tab.New(m.sra, m.sra, m.sra, m.sra, m.sra, m.sra, m.ktx)
+			m.schemaRegistryTabCtrl, cmd = sr_tab.New(m.sra, m.ktx)
 			cmds = append(cmds, cmd)
 		}
 		m.cgroupsTabCtrl, cmd = cgroups_tab.New(m.ka, m.ka, m.ka)

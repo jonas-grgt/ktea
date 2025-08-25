@@ -24,6 +24,7 @@ type Model struct {
 	activeTabIdx  int
 	activeColor   lipgloss.Color
 	inActiveColor lipgloss.Color
+	paddingTop    string
 }
 
 type TabLabel string
@@ -42,7 +43,7 @@ type OnTabChangedFunc func(newTab string, m *Model)
 type Option func(m *Model)
 
 func (m *Model) View(content string) string {
-	return m.borderize(content)
+	return m.borderize(m.paddingTop + content)
 }
 
 func (m *Model) encloseText(text string) string {
@@ -170,18 +171,67 @@ func (m *Model) WithInActiveColor(c lipgloss.Color) {
 func (m *Model) ActiveTab() TabLabel {
 	return m.tabs[m.activeTabIdx].TabLabel
 }
+func Title(title string, active bool) string {
+	return KeyValueTitle(title, "", active)
+}
 
+func KeyValueTitle(
+	keyLabel string,
+	valueLabel string,
+	active bool,
+) string {
+	var (
+		colorLabel lipgloss.Color
+		colorCount lipgloss.Color
+	)
+	if active {
+		colorLabel = styles.ColorWhite
+		colorCount = styles.ColorPink
+	} else {
+		colorLabel = styles.ColorGrey
+		colorCount = styles.ColorLightPink
+	}
+
+	var renderedValueLabel string
+	if valueLabel == "" {
+		renderedValueLabel = ""
+	} else {
+		renderedValueLabel = ":" + lipgloss.NewStyle().
+			Foreground(colorCount).
+			Bold(true).
+			Render(fmt.Sprintf(" %s", valueLabel))
+	}
+
+	return lipgloss.NewStyle().
+		Foreground(colorLabel).
+		Bold(true).
+		Render(fmt.Sprintf("[ %s", keyLabel)) + renderedValueLabel +
+		lipgloss.NewStyle().
+			Foreground(colorLabel).
+			Bold(true).
+			Render(" ]")
+}
+
+// WithTitle adds a right aligned top and bottom title string
 func WithTitle(title string) Option {
 	return func(m *Model) {
-		m.textByPos[TopMiddleBorder] = func(_ *Model) string {
+		m.textByPos[TopRightBorder] = func(_ *Model) string {
+			return title
+		}
+		m.textByPos[BottomRightBorder] = func(_ *Model) string {
 			return title
 		}
 	}
 }
 
-func WithTitleFunc(titleFunc func() string) Option {
+// WithTitleFn adds the string result of the function
+// as a right top and bottom aligned title string
+func WithTitleFn(titleFunc func() string) Option {
 	return func(m *Model) {
-		m.textByPos[TopMiddleBorder] = func(_ *Model) string {
+		m.textByPos[TopRightBorder] = func(_ *Model) string {
+			return titleFunc()
+		}
+		m.textByPos[BottomRightBorder] = func(_ *Model) string {
 			return titleFunc()
 		}
 	}
@@ -216,12 +266,6 @@ func WithTabs(tabs ...Tab) Option {
 	}
 }
 
-func WithActiveColor(c lipgloss.Color) Option {
-	return func(m *Model) {
-		m.activeColor = c
-	}
-}
-
 func WithInactiveColor(c lipgloss.Color) Option {
 	return func(m *Model) {
 		m.inActiveColor = c
@@ -231,6 +275,12 @@ func WithInactiveColor(c lipgloss.Color) Option {
 func WithOnTabChanged(o OnTabChangedFunc) Option {
 	return func(m *Model) {
 		m.onTabChanged = o
+	}
+}
+
+func WithInnerPaddingTop() Option {
+	return func(m *Model) {
+		m.paddingTop = "\n"
 	}
 }
 
