@@ -7,6 +7,7 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/statusbar"
 	"ktea/ui/pages/nav"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 
 type Model struct {
 	table              *table.Model
+	border             *border.Model
 	cmdBar             *ConsumptionCmdBar
 	consumerRecordChan chan kadmin.ConsumerRecord
 	emptyTopicChan     chan bool
@@ -55,19 +57,11 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 			{Title: "Partition", Width: int(float64(ktx.WindowWidth-9) * 0.10)},
 			{Title: "Offset", Width: int(float64(ktx.WindowWidth-9) * 0.10)},
 		})
-		m.table.SetHeight(ktx.AvailableHeight - 2)
 		m.table.SetRows(m.rows)
+		m.table.SetWidth(ktx.WindowWidth - 2)
+		m.table.SetHeight(ktx.AvailableTableHeight())
 
-		embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-			styles.TopMiddleBorder: func(active bool) string {
-				return lipgloss.NewStyle().
-					Foreground(lipgloss.Color(styles.ColorPink)).
-					Bold(true).
-					Render(fmt.Sprintf("Records: %d", len(m.rows)))
-			},
-		}
-		borderedView := styles.Borderize(m.table.View(), true, embeddedText)
-		views = append(views, borderedView)
+		views = append(views, m.border.View(m.table.View()))
 	}
 
 	return ui.JoinVertical(lipgloss.Top, views...)
@@ -201,6 +195,11 @@ func New(
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	m.cancelConsumption = cancelFunc
 
+	m.border = border.New(
+		border.WithInnerPaddingTop(),
+		border.WithTitleFn(func() string {
+			return border.KeyValueTitle("Records", fmt.Sprintf(" %d", len(m.rows)), true)
+		}))
 	return m, func() tea.Msg {
 		return m.reader.ReadRecords(ctx, readDetails)
 	}

@@ -11,6 +11,7 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
@@ -24,6 +25,7 @@ import (
 type Model struct {
 	table         *table.Model
 	rows          []table.Row
+	border        *border.Model
 	ktx           *kontext.ProgramKtx
 	cmdBar        *cmdbar.TableCmdsBar[string]
 	tableFocussed bool
@@ -41,18 +43,11 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		{"Active", int(float64(ktx.WindowWidth-5) * 0.05)},
 		{"Name", int(float64(ktx.WindowWidth-5) * 0.95)},
 	})
-	m.table.SetHeight(ktx.AvailableHeight - 2)
-	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetRows(m.rows)
+	m.table.SetWidth(ktx.WindowWidth - 2)
+	m.table.SetHeight(ktx.AvailableTableHeight())
 
-	embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-		styles.TopMiddleBorder:    styles.EmbeddedBorderText("Total Clusters", fmt.Sprintf(" %d/%d", len(m.rows), len(m.ktx.Config.Clusters))),
-		styles.BottomMiddleBorder: styles.EmbeddedBorderText("Total Clusters", fmt.Sprintf(" %d/%d", len(m.rows), len(m.ktx.Config.Clusters))),
-	}
-
-	borderedView := styles.Borderize(m.table.View(), m.tableFocussed, embeddedText)
-
-	return ui.JoinVertical(lipgloss.Top, cmdBarView, borderedView)
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(m.table.View()))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -230,6 +225,11 @@ func New(
 		notifierCmdBar,
 		nil,
 	)
+	model.border = border.New(
+		border.WithInnerPaddingTop(),
+		border.WithTitleFn(func() string {
+			return border.KeyValueTitle("Total Clusters", fmt.Sprintf(" %d/%d", len(model.rows), len(model.ktx.Config.Clusters)), model.tableFocussed)
+		}))
 	model.rows = model.createRows()
 	return &model, nil
 }

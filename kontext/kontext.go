@@ -19,6 +19,11 @@ func (k *ProgramKtx) HeightUsed(height int) {
 	}
 }
 
+func (k *ProgramKtx) AvailableTableHeight() int {
+	// 2 for top and bottom border + 1 for top extra padding
+	return k.AvailableHeight - 3
+}
+
 func New() *ProgramKtx {
 	return &ProgramKtx{}
 }

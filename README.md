@@ -99,3 +99,13 @@ using`go run ./cmd/generate`.
 Use `go run -tags dev cmd/ktea/main.go` to run `ktea` from the root of the repository.
 
 > Note: running the tui with dev build tag will simulate an artificial slow network by sleeping for 2 seconds when doing network IO. This way the loaders and spinners can be visually asserted.
+> 
+
+### Run tests
+
+Because of interfering testcontainers kafka brokers the tests, for now, can't be run in parallel.
+This will be fixed in the future.
+
+```sh
+go test -count=1 ./...  -p 1
+```
