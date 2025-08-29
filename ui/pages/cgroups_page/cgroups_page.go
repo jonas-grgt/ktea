@@ -7,6 +7,7 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
@@ -34,6 +35,7 @@ const (
 type Model struct {
 	lister        kadmin.CGroupLister
 	table         table.Model
+	border        *border.Model
 	tcb           *cmdbar.TableCmdsBar[string]
 	groups        []*kadmin.ConsumerGroup
 	rows          []table.Row
@@ -48,13 +50,13 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	cmdBarView := m.tcb.View(ktx, renderer)
 	views = append(views, cmdBarView)
 
-	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetColumns([]table.Column{
 		{m.columnTitle("Consumer Group"), int(float64(ktx.WindowWidth-5) * 0.7)},
 		{m.columnTitle("Members"), int(float64(ktx.WindowWidth-5) * 0.3)},
 	})
 	m.table.SetRows(m.rows)
-	m.table.SetHeight(ktx.AvailableHeight - 2)
+	m.table.SetWidth(ktx.WindowWidth - 2)
+	m.table.SetHeight(ktx.AvailableTableHeight())
 
 	if m.table.SelectedRow() == nil && len(m.table.Rows()) > 0 {
 		m.goToTop = true
@@ -65,17 +67,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		m.goToTop = false
 	}
 
-	var tableView string
-
-	styledTable := renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
-
-	embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-		styles.TopMiddleBorder:    styles.EmbeddedBorderText("Total Consumer Groups", fmt.Sprintf(" %d/%d", len(m.rows), len(m.groups))),
-		styles.BottomMiddleBorder: styles.EmbeddedBorderText("Total Consumer Groups", fmt.Sprintf(" %d/%d", len(m.rows), len(m.groups))),
-	}
-	tableView = styles.Borderize(styledTable, m.tableFocussed, embeddedText)
-
-	return ui.JoinVertical(lipgloss.Top, cmdBarView, tableView)
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(m.table.View()))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -336,6 +328,15 @@ func New(
 		notifierCmdBar,
 		sortByBar,
 	)
+	m.border = border.New(
+		border.WithInnerPaddingTop(),
+		border.WithTitleFn(func() string {
+			return border.KeyValueTitle(
+				"Total Consumer Groups",
+				fmt.Sprintf(" %d/%d", len(m.rows), len(m.groups)),
+				m.tableFocussed,
+			)
+		}))
 	m.sort = sortByBar.SortedBy()
 	m.state = stateLoading
 	return m, m.lister.ListCGroups

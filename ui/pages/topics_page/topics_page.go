@@ -12,6 +12,7 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
@@ -37,6 +38,7 @@ const (
 type Model struct {
 	topics        []kadmin.ListedTopic
 	table         table.Model
+	border        *border.Model
 	shortcuts     []statusbar.Shortcut
 	tcb           *cmdbar.TableCmdsBar[string]
 	rows          []table.Row
@@ -53,14 +55,14 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	cmdBarView := m.tcb.View(ktx, renderer)
 	views = append(views, cmdBarView)
 
-	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetColumns([]table.Column{
 		{m.sortByCmdBar.PrefixSortIcon("Name"), int(float64(ktx.WindowWidth-7) * 0.6)},
 		{m.sortByCmdBar.PrefixSortIcon("Partitions"), int(float64(ktx.WindowWidth-7) * 0.3)},
 		{m.sortByCmdBar.PrefixSortIcon("Replicas"), int(float64(ktx.WindowWidth-7) * 0.1)},
 	})
 	m.table.SetRows(m.rows)
-	m.table.SetHeight(ktx.AvailableHeight - 2)
+	m.table.SetWidth(ktx.WindowWidth - 2)
+	m.table.SetHeight(ktx.AvailableTableHeight())
 
 	if m.table.SelectedRow() == nil && len(m.table.Rows()) > 0 {
 		m.goToTop = true
@@ -71,16 +73,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		m.goToTop = false
 	}
 
-	styledTable := renderer.RenderWithStyle(m.table.View(), styles.Table.Blur)
-
-	embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-		styles.TopMiddleBorder:    styles.EmbeddedBorderText("Total Topics", fmt.Sprintf("%d/%d", len(m.rows), len(m.topics))),
-		styles.BottomMiddleBorder: styles.EmbeddedBorderText("Total Topics", fmt.Sprintf("%d/%d", len(m.rows), len(m.topics))),
-	}
-
-	tableView := styles.Borderize(styledTable, m.tableFocussed, embeddedText)
-
-	return ui.JoinVertical(lipgloss.Top, cmdBarView, tableView)
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(m.table.View()))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -216,13 +209,6 @@ func (m *Model) createRows() []table.Row {
 				return replicasI < replicasJ
 			}
 			return replicasI > replicasJ
-		case "~ Record Count":
-			countI, _ := strconv.Atoi(strings.ReplaceAll(rows[i][3], ",", ""))
-			countJ, _ := strconv.Atoi(strings.ReplaceAll(rows[j][3], ",", ""))
-			if m.sortByCmdBar.SortedBy().Direction == cmdbar.Asc {
-				return countI < countJ
-			}
-			return countI > countJ
 		default:
 			panic(fmt.Sprintf("unexpected sort label: %s", m.sortByCmdBar.SortedBy().Label))
 		}
@@ -284,7 +270,7 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 
 	m.table = ktable.NewDefaultTable()
 
-	deleteMsgFunc := func(topic string) string {
+	deleteMsgFn := func(topic string) string {
 		message := topic + lipgloss.NewStyle().
 			Foreground(lipgloss.Color(styles.ColorIndigo)).
 			Bold(true).
@@ -292,7 +278,7 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 		return message
 	}
 
-	deleteFunc := func(topic string) tea.Cmd {
+	deleteFn := func(topic string) tea.Cmd {
 		return func() tea.Msg {
 			return topicDeleter.DeleteTopic(topic)
 		}
@@ -318,7 +304,6 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 			model *notifier.Model,
 		) (bool, tea.Cmd) {
 			if m.state == stateRefreshing || m.state == stateLoading {
-				log.Debug("skldfjkslfjsdlf//////////", m.state)
 				cmd := model.SpinWithLoadingMsg("Loading Topics")
 				return true, cmd
 			}
@@ -400,13 +385,20 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 	m.sortByCmdBar = sortByCmdBar
 	bar := cmdbar.NewSearchCmdBar("Search topics by name")
 	m.tcb = cmdbar.NewTableCmdsBar[string](
-		cmdbar.NewDeleteCmdBar(deleteMsgFunc, deleteFunc),
+		cmdbar.NewDeleteCmdBar(deleteMsgFn, deleteFn),
 		bar,
 		notifierCmdBar,
 		sortByCmdBar,
 	)
 	m.lister = lister
 	m.state = stateLoading
+
+	m.border = border.New(
+		border.WithInnerPaddingTop(),
+		border.WithTitleFn(func() string {
+			return border.KeyValueTitle("Total Topics", fmt.Sprintf(" %d/%d", len(m.rows), len(m.topics)), m.tableFocussed)
+		}))
+
 	var cmds []tea.Cmd
 	cmds = append(cmds, m.lister.ListTopics)
 	return &m, tea.Batch(cmds...)

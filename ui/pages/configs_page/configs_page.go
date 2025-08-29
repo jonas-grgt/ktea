@@ -6,6 +6,7 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/statusbar"
 	"sort"
 	"strings"
@@ -18,6 +19,7 @@ import (
 type Model struct {
 	rows    []table.Row
 	table   *table.Model
+	border  *border.Model
 	cmdBar  *CmdBarModel
 	configs map[string]string
 	topic   string
@@ -25,9 +27,7 @@ type Model struct {
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
-	var views []string
 	cmdBarView := m.cmdBar.View(ktx, renderer)
-	views = append(views, cmdBarView)
 
 	// TODO errors should not be checked here
 	//if m.err != nil {
@@ -41,10 +41,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	m.table.SetRows(m.rows)
 	m.table.Focus()
 
-	borderedView := styles.Borderize(m.table.View(), m.cmdBar.IsFocused(), nil)
-	views = append(views, borderedView)
-
-	return ui.JoinVertical(lipgloss.Top, views...)
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(m.table.View()))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -110,6 +107,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		rows = append(rows, table.Row{k, m.configs[k]})
 	}
 	m.rows = rows
+
 	return tea.Batch(cmds...)
 }
 
@@ -133,5 +131,11 @@ func New(configUpdater kadmin.ConfigUpdater, topicConfigLister kadmin.TopicConfi
 	)
 	m.table = &t
 	m.topic = topic
+	m.border = border.New(
+		border.WithInnerPaddingTop(),
+		border.WithTitleFn(func() string {
+			return border.KeyValueTitle("Total Clusters", fmt.Sprintf(" %d/%d", len(m.rows), len(m.configs)), true)
+		}))
+
 	return m, func() tea.Msg { return topicConfigLister.ListConfigs(topic) }
 }

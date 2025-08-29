@@ -7,6 +7,7 @@ import (
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
+	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
@@ -40,6 +41,8 @@ type Model struct {
 	tableFocus        tableFocus
 	topicsTable       table.Model
 	offsetsTable      table.Model
+	offsetsBorder     *border.Model
+	topicsBorder      *border.Model
 	topicsRows        []table.Row
 	offsetRows        []table.Row
 	groupName         string
@@ -81,34 +84,20 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		offsetTableStyle = styles.Table.Blur
 	}
 
-	topicsTableView := renderer.RenderWithStyle(m.topicsTable.View(), topicTableStyle)
-	embeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-		styles.TopMiddleBorder: func(active bool) string {
-			return lg.NewStyle().
-				Foreground(lg.Color(styles.ColorPink)).
-				Bold(true).
-				Render(fmt.Sprintf("Total Topics: %d", len(m.topicsRows)))
-		},
-	}
-	topicsTableBorderedView := styles.Borderize(topicsTableView, m.tableFocus == topicFocus, embeddedText)
-	offsetsTableView := renderer.RenderWithStyle(m.offsetsTable.View(), offsetTableStyle)
-	offsetsTableEmbeddedText := map[styles.BorderPosition]styles.EmbeddedTextFunc{
-		styles.TopMiddleBorder: func(active bool) string {
-			return lg.NewStyle().
-				Foreground(lg.Color(styles.ColorPink)).
-				Bold(true).
-				Render(fmt.Sprintf("Total Partitions: %d", len(m.offsetRows)))
-		},
-	}
-	offsetsTableBorderedView := styles.Borderize(offsetsTableView, m.tableFocus == offsetFocus, offsetsTableEmbeddedText)
+	topicsView := m.topicsBorder.View(
+		renderer.RenderWithStyle(m.topicsTable.View(), topicTableStyle),
+	)
+	offsetsView := m.offsetsBorder.View(
+		renderer.RenderWithStyle(m.offsetsTable.View(), offsetTableStyle),
+	)
 
 	return ui.JoinVertical(lg.Left,
 		cmdBarView,
 		lg.JoinHorizontal(
 			lg.Top,
 			[]string{
-				topicsTableBorderedView,
-				offsetsTableBorderedView,
+				topicsView,
+				offsetsView,
 			}...,
 		),
 	)
@@ -278,17 +267,24 @@ func New(lister kadmin.OffsetLister, group string) (*Model, tea.Cmd) {
 		},
 	)
 
-	return &Model{
-			cmdBar: NewCGroupCmdbar[string](
-				cmdbar.NewSearchCmdBar("Search groups by name"),
-				notifierCmdBar,
-			),
-			tableFocus:   topicFocus,
-			groupName:    group,
-			topicsTable:  tt,
-			offsetsTable: ot,
-			state:        stateOffsetsLoading,
-		}, func() tea.Msg {
-			return lister.ListOffsets(group)
-		}
+	model := Model{
+		cmdBar: NewCGroupCmdbar[string](
+			cmdbar.NewSearchCmdBar("Search groups by name"),
+			notifierCmdBar,
+		),
+		tableFocus:   topicFocus,
+		groupName:    group,
+		topicsTable:  tt,
+		offsetsTable: ot,
+		state:        stateOffsetsLoading,
+	}
+	model.topicsBorder = border.New(
+		border.WithInnerPaddingTop(),
+		border.WithTitleFn(func() string {
+			return border.KeyValueTitle("Total Topics", fmt.Sprintf(" %d", len(model.topicsRows)), true)
+		}))
+	model.offsetsBorder = border.New(border.WithInnerPaddingTop())
+	return &model, func() tea.Msg {
+		return lister.ListOffsets(group)
+	}
 }

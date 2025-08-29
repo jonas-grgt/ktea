@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
+	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 	"github.com/linkedin/goavro/v2"
 	"ktea/config"
@@ -365,11 +367,63 @@ func main() {
 				event := gd.eventGenFunc(id)
 				publish(ka, gd.topic, id, event, schemaInfo)
 			}
-			fmt.Printf("Published 10.000 events to topic %s with subject %s\n", gd.topic, gd.subject)
+			fmt.Printf("Published 1000 events to topic %s with subject %s\n", gd.topic, gd.subject)
 		}()
 	}
 
 	wg.Wait()
+
+	cfg := sarama.NewConfig()
+	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
+	brokers := []string{"localhost:9092"}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	groupHandler := &handler{
+		cancel: cancel,
+		limit:  2000,
+	}
+	if group, err := sarama.NewConsumerGroup(brokers, "generator", cfg); err != nil {
+		panic(fmt.Sprintf("Failed to create consumer group: %v", err))
+	} else {
+		defer func() { _ = group.Close() }()
+		for {
+			if ctx.Err() != nil {
+				break
+			}
+			if err := group.Consume(ctx, []string{"dev.finance.invoice", "dev.finance.payment"}, groupHandler); err != nil {
+				fmt.Printf("Error from consumer: %v", err)
+				cancel()
+			}
+		}
+	}
+
+}
+
+type handler struct {
+	count  int
+	limit  int
+	cancel context.CancelFunc
+}
+
+func (h *handler) Setup(s sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+func (h *handler) Cleanup(s sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+func (h *handler) ConsumeClaim(s sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for msg := range claim.Messages() {
+		h.count++
+		fmt.Println(fmt.Sprintf("Consumed message number %d", h.count))
+		s.MarkMessage(msg, "")
+		if h.count >= h.limit {
+			h.cancel()
+			return nil
+		}
+	}
+	return nil
 }
 
 func publish(ka kadmin.Kadmin, topic string, id string, event interface{}, schemaInfo sradmin.Schema) {

@@ -8,6 +8,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/kafka"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"testing"
 )
@@ -25,18 +26,17 @@ func topicName() string {
 	return topicName
 }
 
-func init() {
+func TestMain(m *testing.M) {
 	ctx = context.Background()
+
 	id := kafka.WithClusterID("")
-	k, err := kafka.Run(ctx,
-		"confluentinc/confluent-local:7.5.0",
-		id,
-	)
+	k, err := kafka.Run(ctx, "confluentinc/confluent-local:7.5.0", id)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to start container: %s", err))
 	}
 	kc = k
 	brokers, _ = kc.Brokers(ctx)
+
 	ka, err = NewSaramaKadmin(ConnectionDetails{
 		BootstrapServers: brokers,
 		SASLConfig:       nil,
@@ -44,6 +44,14 @@ func init() {
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to create connection: %s", err))
 	}
+
+	exitCode := m.Run()
+
+	if err := kc.Terminate(ctx); err != nil {
+		log.Printf("Failed to terminate Kafka container: %v", err)
+	}
+
+	os.Exit(exitCode)
 }
 
 func kafkaClient() sarama.Client {

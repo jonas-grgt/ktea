@@ -25,7 +25,7 @@ jobs:
       run: go test -v ./...
 
     - name: Run coverage
-      run: go test ./... -coverpkg "$(go list || go list -m | head -1)/..." -coverprofile coverage-raw.out
+      run: go test ./... -coverpkg "$(go list || go list -m | head -1)/..." -coverprofile coverage-raw.out -p 1
 
     - name: Clean coverage
       run: cat coverage-raw.out | grep -vE 'mock|test|file.go' > coverage.out
