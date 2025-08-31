@@ -79,9 +79,9 @@ func TestKtea(t *testing.T) {
 			view := model.View()
 
 			var expectedLayout = `
-╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                                        
-│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │                                                        
-┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────                
+╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
+│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
+┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────
 `
 			assert.Contains(t, view, expectedLayout)
 
@@ -103,7 +103,7 @@ func TestKtea(t *testing.T) {
 
 			expectedLayout = `
 ╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
-│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │                                        
+│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
 ┴────────┴┴─────────────────┴┘                 └┴──────────┴────────────────────────────────────────
 `
 			assert.Contains(t, view, expectedLayout)
@@ -125,9 +125,9 @@ func TestKtea(t *testing.T) {
 			view = model.View()
 
 			expectedLayout = `
-╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                                        
-│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │                                                        
-┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────                
+╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
+│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
+┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────
 `
 
 			assert.Contains(t, view, expectedLayout)

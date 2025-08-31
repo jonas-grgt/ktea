@@ -7,13 +7,14 @@ import (
 	"ktea/kontext"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages"
 	"ktea/ui/pages/cgroups_page"
 	"ktea/ui/pages/cgroups_topics_page"
 	"ktea/ui/pages/nav"
 )
 
 type Model struct {
-	active        nav.Page
+	active        pages.Page
 	statusbar     *statusbar.Model
 	offsetLister  kadmin.OffsetLister
 	cgroupLister  kadmin.CGroupLister
@@ -50,8 +51,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 
 	cmd := m.active.Update(msg)
 
-	// always recreate the statusbar in case the active page might have changed
-	m.statusbar = statusbar.New(m.active)
+	// in case the active page might have changed, update the statusbar provider
+	m.statusbar.SetProvider(m.active)
 
 	cmds = append(cmds, cmd)
 	return tea.Batch(cmds...)
@@ -61,6 +62,7 @@ func New(
 	cgroupLister kadmin.CGroupLister,
 	cgroupDeleter kadmin.CGroupDeleter,
 	consumerGroupOffsetLister kadmin.OffsetLister,
+	statusbar *statusbar.Model,
 ) (*Model, tea.Cmd) {
 	cgroupsPage, cmd := cgroups_page.New(cgroupLister, cgroupDeleter)
 
@@ -70,7 +72,7 @@ func New(
 	m.cgroupDeleter = cgroupDeleter
 	m.cgroupsPage = cgroupsPage
 	m.active = cgroupsPage
-	m.statusbar = statusbar.New(m.active)
+	m.statusbar = statusbar
 
 	return m, cmd
 }

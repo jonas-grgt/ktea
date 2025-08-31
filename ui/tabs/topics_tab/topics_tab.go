@@ -10,6 +10,7 @@ import (
 	"ktea/ui"
 	"ktea/ui/clipper"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages"
 	"ktea/ui/pages/configs_page"
 	"ktea/ui/pages/consumption_form_page"
 	"ktea/ui/pages/consumption_page"
@@ -22,13 +23,13 @@ import (
 )
 
 type Model struct {
-	active            nav.Page
+	active            pages.Page
 	topicsPage        *topics_page.Model
 	statusbar         *statusbar.Model
 	ka                kadmin.Kadmin
 	ktx               *kontext.ProgramKtx
-	consumptionPage   nav.Page
-	recordDetailsPage nav.Page
+	consumptionPage   pages.Page
+	recordDetailsPage pages.Page
 	ctx               context.Context
 }
 
@@ -115,12 +116,12 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	// always recreate the statusbar in case the active page might have changed
-	m.statusbar = statusbar.New(m.active)
+	m.statusbar.SetProvider(m.active)
 
 	return tea.Batch(cmds...)
 }
 
-func New(ktx *kontext.ProgramKtx, ka kadmin.Kadmin) (*Model, tea.Cmd) {
+func New(ktx *kontext.ProgramKtx, ka kadmin.Kadmin, stsBar *statusbar.Model) (*Model, tea.Cmd) {
 	var cmd tea.Cmd
 	listTopicView, cmd := topics_page.New(ka, ka)
 
@@ -129,7 +130,8 @@ func New(ktx *kontext.ProgramKtx, ka kadmin.Kadmin) (*Model, tea.Cmd) {
 	model.ktx = ktx
 	model.active = listTopicView
 	model.topicsPage = listTopicView
-	model.statusbar = statusbar.New(model.active)
+	model.statusbar = stsBar
+	model.statusbar.SetProvider(model.active)
 
 	return model, cmd
 }

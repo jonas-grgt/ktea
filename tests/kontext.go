@@ -6,12 +6,7 @@ import (
 	"ktea/ui"
 )
 
-var Kontext = &kontext.ProgramKtx{
-	Config:          nil,
-	WindowWidth:     100,
-	WindowHeight:    100,
-	AvailableHeight: 100,
-}
+var Kontext = NewKontext()
 
 var Renderer = ui.NewRenderer(Kontext)
 
@@ -20,6 +15,12 @@ type ContextOption func(ktx *kontext.ProgramKtx)
 func WithConfig(config *config.Config) ContextOption {
 	return func(ktx *kontext.ProgramKtx) {
 		ktx.Config = config
+	}
+}
+
+func WithWindowWidth(width int) ContextOption {
+	return func(ktx *kontext.ProgramKtx) {
+		ktx.WindowWidth = width
 	}
 }
 

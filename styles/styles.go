@@ -143,8 +143,9 @@ func (s *StatusBarStyle) Cluster(color string) lipgloss.Style {
 }
 
 type TabStyle struct {
-	Tab       lipgloss.Style
-	ActiveTab lipgloss.Style
+	Tab    lipgloss.Style
+	Active lipgloss.Style
+	Help   lipgloss.Style
 }
 
 type EnvStyle struct {
@@ -196,14 +197,29 @@ func init() {
 			BottomLeft:  "┴",
 			BottomRight: "┴",
 		}
+		helpBorder := lipgloss.Border{
+			Top:         " ",
+			Bottom:      "─",
+			Left:        " ",
+			Right:       " ",
+			TopLeft:     " ",
+			TopRight:    " ",
+			BottomLeft:  "─",
+			BottomRight: "─",
+		}
 		tabStyle.Tab = lipgloss.NewStyle().
 			Padding(0, 1).
 			Foreground(lipgloss.Color("#AAAAAA")).
 			Border(tabBorder)
-		tabStyle.ActiveTab = lipgloss.NewStyle().
+		tabStyle.Active = lipgloss.NewStyle().
 			Padding(0, 1).
 			Border(activeTabBorder).
 			Foreground(lipgloss.Color(ColorPink)).
+			Bold(true)
+		tabStyle.Help = lipgloss.NewStyle().
+			Padding(0, 1).
+			Border(helpBorder).
+			Foreground(lipgloss.Color(ColorWhite)).
 			Bold(true)
 		Tab = tabStyle
 	}

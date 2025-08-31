@@ -3,14 +3,7 @@ package nav
 import (
 	"ktea/kadmin"
 	"ktea/sradmin"
-	"ktea/ui"
-	"ktea/ui/components/statusbar"
 )
-
-type Page interface {
-	ui.View
-	statusbar.Provider
-}
 
 type LoadTopicsPageMsg struct {
 	Refresh bool

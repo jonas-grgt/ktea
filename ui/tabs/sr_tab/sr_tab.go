@@ -8,6 +8,7 @@ import (
 	"ktea/ui"
 	"ktea/ui/clipper"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages"
 	"ktea/ui/pages/create_schema_page"
 	"ktea/ui/pages/nav"
 	"ktea/ui/pages/schema_details_page"
@@ -15,7 +16,7 @@ import (
 )
 
 type Model struct {
-	active            nav.Page
+	active            pages.Page
 	statusbar         *statusbar.Model
 	ktx               *kontext.ProgramKtx
 	compLister        sradmin.GlobalCompatibilityLister
@@ -57,21 +58,19 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		cmds = append(cmds, cmd)
 	}
 
-	m.statusbar = statusbar.New(m.active)
+	// in case the active page might have changed, update the statusbar provider
+	m.statusbar.SetProvider(m.active)
 
 	cmds = append(cmds, m.active.Update(msg))
 
 	return tea.Batch(cmds...)
 }
 
-func New(
-	srClient sradmin.Client,
-	ktx *kontext.ProgramKtx,
-) (*Model, tea.Cmd) {
+func New(srClient sradmin.Client, ktx *kontext.ProgramKtx, stsBar *statusbar.Model) (*Model, tea.Cmd) {
 	subjectsPage, cmd := subjects_page.New(srClient)
 	model := Model{active: subjectsPage}
 	model.subjectsPage = subjectsPage
-	model.statusbar = statusbar.New(subjectsPage)
+	model.statusbar = stsBar
 	model.srClient = srClient
 	model.ktx = ktx
 	return &model, cmd

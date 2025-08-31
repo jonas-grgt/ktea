@@ -10,17 +10,17 @@ import (
 	"ktea/sradmin"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages"
 	"ktea/ui/pages/clusters_page"
 	"ktea/ui/pages/create_cluster_page"
-	"ktea/ui/pages/nav"
 )
 
 type state int
 
 type Model struct {
 	state         state
-	active        nav.Page
-	createPage    nav.Page
+	active        pages.Page
+	createPage    pages.Page
 	config        *config.Config
 	statusbar     *statusbar.Model
 	ktx           *kontext.ProgramKtx
@@ -91,8 +91,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 	}
 
-	// always recreate the statusbar in case the active page might have changed
-	m.statusbar = statusbar.New(m.active)
+	// in case the active page might have changed, update the statusbar provider
+	m.statusbar.SetProvider(m.active)
 
 	return m.active.Update(msg)
 }
@@ -100,7 +100,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 func (m *Model) GoBack() tea.Cmd {
 	var cmd tea.Cmd
 	m.active, cmd = clusters_page.New(m.ktx, m.kConnChecker)
-	m.statusbar = statusbar.New(m.active)
+	m.statusbar.SetProvider(m.active)
 	return cmd
 }
 
@@ -108,6 +108,7 @@ func New(
 	ktx *kontext.ProgramKtx,
 	kConnChecker kadmin.ConnChecker,
 	srConnChecker sradmin.ConnChecker,
+	stsBar *statusbar.Model,
 ) (*Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m := Model{}
@@ -120,7 +121,8 @@ func New(
 		cmd = c
 		m.escGoesBack = true
 		m.active = listPage
-		m.statusbar = statusbar.New(m.active)
+		m.statusbar = stsBar
+		m.statusbar.SetProvider(m.active)
 	} else {
 		m.active = create_cluster_page.NewCreateClusterPage(
 			m.GoBack,
