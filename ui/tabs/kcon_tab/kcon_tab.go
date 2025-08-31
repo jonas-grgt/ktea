@@ -8,14 +8,14 @@ import (
 	"ktea/kontext"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages"
 	"ktea/ui/pages/kcon_clusters_page"
 	"ktea/ui/pages/kcon_page"
-	"ktea/ui/pages/nav"
 	"net/http"
 )
 
 type Model struct {
-	active    nav.Page
+	active    pages.Page
 	statusbar *statusbar.Model
 	kconsPage *kcon_clusters_page.Model
 }
@@ -32,15 +32,15 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
-	// always recreate the statusbar in case the active page might have changed
-	m.statusbar = statusbar.New(m.active)
+	// in case the active page might have changed, update the statusbar provider
+	m.statusbar.SetProvider(m.active)
 
 	return m.active.Update(msg)
 }
 
 func (m *Model) navBack() tea.Cmd {
 	m.active = m.kconsPage
-	m.statusbar = statusbar.New(m.active)
+	m.statusbar.SetProvider(m.active)
 	return nil
 }
 
@@ -51,10 +51,11 @@ func (m *Model) loadKConPage(c config.KafkaConnectConfig) tea.Cmd {
 	return cmd
 }
 
-func New(cluster *config.Cluster) (*Model, tea.Cmd) {
+func New(cluster *config.Cluster, stsBar *statusbar.Model) (*Model, tea.Cmd) {
 	m := Model{}
 	kconsPage, cmd := kcon_clusters_page.New(cluster, m.loadKConPage)
 	m.kconsPage = kconsPage
 	m.active = kconsPage
+	m.statusbar = stsBar
 	return &m, cmd
 }

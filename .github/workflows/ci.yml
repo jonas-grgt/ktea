@@ -22,7 +22,7 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: go test -v ./... -p 1
 
     - name: Run coverage
       run: go test ./... -coverpkg "$(go list || go list -m | head -1)/..." -coverprofile coverage-raw.out -p 1

@@ -8,6 +8,7 @@ import (
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/ui"
+	"ktea/ui/components/statusbar"
 	"ktea/ui/components/tab"
 	"ktea/ui/pages/clusters_page"
 	"ktea/ui/tabs"
@@ -59,6 +60,7 @@ type Model struct {
 	configIO              config.IO
 	switchingCluster      bool
 	startupConnErr        bool
+	statusbar             *statusbar.Model
 }
 
 // RetryClusterConnectionMsg is an internal Msg
@@ -102,6 +104,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			return m, tea.Quit
+		case tea.KeyF1:
+			m.statusbar.ToggleShortcuts()
+			return m, nil
 		}
 
 		// Make sure the events, because of their async nature,
@@ -167,7 +172,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, tea.Batch(cmds...)
 		} else {
-			tCtrl, cmd := clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn)
+			tCtrl, cmd := clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, nil)
 			m.tabCtrl = tCtrl
 			m.tabs = tab.New(clustersTab)
 			return m, cmd
@@ -212,7 +217,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case clustersTabLbl:
 				if m.clustersTabCtrl == nil {
 					var cmd tea.Cmd
-					m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn)
+					m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, nil)
 					cmds = append(cmds, cmd)
 				}
 				m.tabCtrl = m.clustersTabCtrl
@@ -281,7 +286,7 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 	var cmd tea.Cmd
 	if err := m.recreateAdminClients(cluster); err != nil {
 		m.tabs = tab.New(clustersTab)
-		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn)
+		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, nil)
 		m.startupConnErr = true
 		m.tabCtrl = m.clustersTabCtrl
 		return tea.Batch(cmd, func() tea.Msg {
@@ -292,18 +297,20 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 	} else {
 		var cmds []tea.Cmd
 		m.recreateTabs(cluster)
+		m.statusbar = statusbar.New()
+		m.topicsTabCtrl, cmd = topics_tab.New(m.ktx, m.ka, m.statusbar)
+		cmds = append(cmds, cmd)
+		m.cgroupsTabCtrl, cmd = cgroups_tab.New(m.ka, m.ka, m.ka, m.statusbar)
+		cmds = append(cmds, cmd)
+		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, m.statusbar)
+		cmds = append(cmds, cmd)
+		m.kconTabCtrl, cmd = kcon_tab.New(m.ktx.Config.ActiveCluster(), m.statusbar)
+		cmds = append(cmds, cmd)
+
 		if m.ktx.Config.ActiveCluster().HasSchemaRegistry() {
-			m.schemaRegistryTabCtrl, cmd = sr_tab.New(m.sra, m.ktx)
+			m.schemaRegistryTabCtrl, cmd = sr_tab.New(m.sra, m.ktx, m.statusbar)
 			cmds = append(cmds, cmd)
 		}
-		m.cgroupsTabCtrl, cmd = cgroups_tab.New(m.ka, m.ka, m.ka)
-		cmds = append(cmds, cmd)
-		m.topicsTabCtrl, cmd = topics_tab.New(m.ktx, m.ka)
-		cmds = append(cmds, cmd)
-		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn)
-		cmds = append(cmds, cmd)
-		m.kconTabCtrl, cmd = kcon_tab.New(m.ktx.Config.ActiveCluster())
-		cmds = append(cmds, cmd)
 
 		m.tabCtrl = m.topicsTabCtrl
 

@@ -8,6 +8,7 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
+	"ktea/ui/components/statusbar"
 	"strings"
 	"testing"
 )
@@ -32,7 +33,7 @@ func (m *MockConsumerGroupDeleter) DeleteCGroup(name string) tea.Msg {
 
 func TestGroupsTab(t *testing.T) {
 	t.Run("List consumer groups", func(t *testing.T) {
-		groupsTab, _ := New(&MockConsumerGroupLister{}, &MockConsumerGroupDeleter{}, &MockConsumerGroupOffsetLister{})
+		groupsTab, _ := New(&MockConsumerGroupLister{}, &MockConsumerGroupDeleter{}, &MockConsumerGroupOffsetLister{}, statusbar.New())
 
 		groupsTab.Update(kadmin.ConsumerGroupsListedMsg{
 			ConsumerGroups: []*kadmin.ConsumerGroup{

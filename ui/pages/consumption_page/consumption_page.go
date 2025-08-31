@@ -9,6 +9,7 @@ import (
 	"ktea/ui"
 	"ktea/ui/components/border"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages"
 	"ktea/ui/pages/nav"
 	"strconv"
 
@@ -179,7 +180,7 @@ func New(
 	reader kadmin.RecordReader,
 	readDetails kadmin.ReadDetails,
 	topic *kadmin.ListedTopic,
-) (nav.Page, tea.Cmd) {
+) (pages.Page, tea.Cmd) {
 	m := &Model{}
 
 	t := table.New(

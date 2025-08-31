@@ -16,7 +16,7 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
-	"ktea/ui/pages/nav"
+	"ktea/ui/pages"
 	"reflect"
 	"sort"
 	"strings"
@@ -145,7 +145,7 @@ type ActiveClusterDeleteErrMsg struct {
 func New(
 	ktx *kontext.ProgramKtx,
 	connChecker kadmin.ConnChecker,
-) (nav.Page, tea.Cmd) {
+) (pages.Page, tea.Cmd) {
 
 	model := Model{}
 	model.connChecker = connChecker

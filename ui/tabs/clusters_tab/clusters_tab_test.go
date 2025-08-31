@@ -8,6 +8,7 @@ import (
 	"ktea/sradmin"
 	"ktea/styles"
 	"ktea/tests"
+	"ktea/ui/components/statusbar"
 	"ktea/ui/pages/clusters_page"
 	"testing"
 
@@ -29,7 +30,7 @@ func TestClustersTab(t *testing.T) {
 			Config:       &config.Config{},
 			WindowWidth:  200,
 			WindowHeight: 200,
-		}, kadmin.MockConnChecker, sradmin.MockConnChecker)
+		}, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 
 		// when
 		render := clustersTab.View(&ktx, tests.Renderer)
@@ -56,7 +57,7 @@ func TestClustersTab(t *testing.T) {
 				WindowWidth:  100,
 				WindowHeight: 100,
 			}
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 
 			// when
 			render := clustersTab.View(programKtx, tests.Renderer)
@@ -97,7 +98,7 @@ func TestClustersTab(t *testing.T) {
 				WindowHeight:    100,
 				AvailableHeight: 100,
 			}
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 
 			// when
 			render := clustersTab.View(programKtx, tests.Renderer)
@@ -143,7 +144,7 @@ func TestClustersTab(t *testing.T) {
 				WindowHeight:    100,
 				AvailableHeight: 100,
 			}
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
 			clustersTab.View(programKtx, tests.Renderer)
 
@@ -238,7 +239,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("/ raises search prompt", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.Renderer)
 
@@ -252,7 +253,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("F2 raises delete confirmation", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.Renderer)
 
@@ -266,7 +267,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("esc cancels raised delete confirmation", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.Renderer)
 			// and delete confirmation has been raised
@@ -284,7 +285,7 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("enter deletes cluster", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.Renderer)
 
@@ -331,7 +332,7 @@ func TestClustersTab(t *testing.T) {
 				AvailableHeight: 100,
 			}
 			// and
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
 			render := clustersTab.View(programKtx, tests.Renderer)
 
@@ -382,7 +383,9 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("c-e opens edit page", func(t *testing.T) {
 			// given
-			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+			stsBar := statusbar.New()
+			stsBar.ToggleShortcuts()
+			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, stsBar)
 			// and table has been initialized
 			clustersTab.View(programKtx, tests.Renderer)
 
@@ -429,7 +432,7 @@ func TestClustersTab(t *testing.T) {
 			WindowHeight:    100,
 			AvailableHeight: 100,
 		}
-		var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker)
+		var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 		clustersTab.View(programKtx, tests.Renderer)
 
 		// when

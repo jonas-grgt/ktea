@@ -98,7 +98,7 @@ func TestTabs(t *testing.T) {
 			// when
 			actual := tabs.View(tests.Kontext, tests.Renderer)
 			// then
-			assert.Equal(t, "╭──────╮╭──────╮\n│ tab1 ││ tab2 │\n┘      └┴──────┴────────────────────────────────────────────────────────────────────────────────────", actual)
+			assert.Equal(t, "╭──────╮╭──────╮               \n│ tab1 ││ tab2 │  ≪ F1 » help  \n┘      └┴──────┴────────────────────────────────────────────────────────────────────────────────────", actual)
 		})
 
 		t.Run("Single tab no shortcut", func(t *testing.T) {
