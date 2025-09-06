@@ -172,7 +172,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, tea.Batch(cmds...)
 		} else {
-			tCtrl, cmd := clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, nil)
+			m.statusbar = statusbar.New()
+			tCtrl, cmd := clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, m.statusbar)
 			m.tabCtrl = tCtrl
 			m.tabs = tab.New(clustersTab)
 			return m, cmd
@@ -217,7 +218,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case clustersTabLbl:
 				if m.clustersTabCtrl == nil {
 					var cmd tea.Cmd
-					m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, nil)
+					m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, m.statusbar)
 					cmds = append(cmds, cmd)
 				}
 				m.tabCtrl = m.clustersTabCtrl
@@ -284,9 +285,10 @@ func (m *Model) onWindowSizeUpdated(msg tea.WindowSizeMsg) {
 
 func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 	var cmd tea.Cmd
+	m.statusbar = statusbar.New()
 	if err := m.recreateAdminClients(cluster); err != nil {
 		m.tabs = tab.New(clustersTab)
-		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, nil)
+		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, m.statusbar)
 		m.startupConnErr = true
 		m.tabCtrl = m.clustersTabCtrl
 		return tea.Batch(cmd, func() tea.Msg {
@@ -297,7 +299,6 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 	} else {
 		var cmds []tea.Cmd
 		m.recreateTabs(cluster)
-		m.statusbar = statusbar.New()
 		m.topicsTabCtrl, cmd = topics_tab.New(m.ktx, m.ka, m.statusbar)
 		cmds = append(cmds, cmd)
 		m.cgroupsTabCtrl, cmd = cgroups_tab.New(m.ka, m.ka, m.ka, m.statusbar)

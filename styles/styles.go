@@ -42,6 +42,7 @@ const ColorGrey = "#C1C1C1"
 const ColorDarkGrey = "#343433"
 const ColorFocusBorder = "#F5F5F5"
 const ColorBlurBorder = "235"
+const ColorMidGrey = "#353533"
 
 type NotifierStyle struct {
 	Spinner lipgloss.Style
@@ -227,8 +228,7 @@ func init() {
 	{
 		statusBarStyle := StatusBarStyle{}
 		statusBarStyle.style = lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: ColorDarkGrey, Dark: "#C1C6B2"}).
-			Background(lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#353533"})
+			Background(lipgloss.Color("#353533"))
 
 		statusBarStyle.Indicator = lipgloss.NewStyle().
 			Inherit(statusBarStyle.style).

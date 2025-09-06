@@ -116,13 +116,12 @@ func New(
 	m.srConnChecker = srConnChecker
 	m.ktx = ktx
 	m.config = ktx.Config
+	m.statusbar = stsBar
 	if m.config.HasClusters() {
 		var listPage, c = clusters_page.New(ktx, m.kConnChecker)
 		cmd = c
 		m.escGoesBack = true
 		m.active = listPage
-		m.statusbar = stsBar
-		m.statusbar.SetProvider(m.active)
 	} else {
 		m.active = create_cluster_page.NewCreateClusterPage(
 			m.GoBack,
@@ -140,6 +139,7 @@ func New(
 		)
 		m.escGoesBack = false
 	}
+	m.statusbar.SetProvider(m.active)
 
 	return &m, cmd
 }

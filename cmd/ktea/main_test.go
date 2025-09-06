@@ -109,6 +109,29 @@ func TestKtea(t *testing.T) {
 			assert.Contains(t, view, expectedLayout)
 
 			model.Update(tea.KeyMsg{
+				Type:  tea.KeyCtrlL,
+				Runes: []rune{},
+				Alt:   false,
+				Paste: false,
+			})
+
+			view = model.View()
+
+			expectedLayout = `
+╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
+│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
+┴────────┴┴─────────────────┴┴─────────────────┴┘          └────────────────────────────────────────
+`
+			assert.Contains(t, view, expectedLayout)
+
+			model.Update(tea.KeyMsg{
+				Type:  tea.KeyCtrlLeft,
+				Runes: []rune{},
+				Alt:   false,
+				Paste: false,
+			})
+
+			model.Update(tea.KeyMsg{
 				Type:  tea.KeyCtrlLeft,
 				Runes: []rune{},
 				Alt:   false,

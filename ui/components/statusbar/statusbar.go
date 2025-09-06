@@ -33,6 +33,11 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		activeCluster = styles.Statusbar.
 			Cluster(ktx.Config.ActiveCluster().Color).
 			Render(ktx.Config.ActiveCluster().Name)
+		clusterColor := ktx.Config.ActiveCluster().Color
+		clusterRight := renderRune("\uE0B0", clusterColor, styles.ColorPink)
+		clusterLeft := renderRune("\uE0B6", clusterColor, "")
+
+		activeCluster = clusterLeft + activeCluster + clusterRight
 	}
 	indicator := styles.Statusbar.Indicator.Render(m.provider.Title())
 
@@ -105,18 +110,38 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		shortCuts = ""
 	}
 
-	leftover := ktx.WindowWidth - (lg.Width(activeCluster)) - (lg.Width(indicator))
-	barView := lg.NewStyle().MarginTop(1).Render(lg.JoinHorizontal(lg.Top,
-		activeCluster,
-		indicator,
-		styles.Statusbar.Spacer.Width(leftover).Render(""),
-	))
+	indicator += renderRune("\uE0B4", styles.ColorPink, styles.ColorMidGrey)
+
+	leftover := ktx.WindowWidth - lg.Width(activeCluster) - lg.Width(indicator)
+
+	barView := lg.NewStyle().
+		MarginTop(1).
+		MarginBottom(1).
+		Render(lg.JoinHorizontal(lg.Top,
+			activeCluster,
+			indicator,
+			styles.Statusbar.Spacer.Width(leftover-1).Render(""),
+			renderText("\uE0B4", styles.ColorMidGrey),
+		))
 
 	if shortCuts == "" {
 		return renderer.Render(barView)
 	} else {
 		return renderer.Render(lg.JoinVertical(lg.Top, styles.Statusbar.Shortcuts.Render(shortCuts), barView))
 	}
+}
+
+func renderRune(symbol string, fg, bg string) string {
+	return lg.NewStyle().
+		Foreground(lg.Color(fg)).
+		Background(lg.Color(bg)).
+		Render(symbol)
+}
+
+func renderText(text, fg string) string {
+	return lg.NewStyle().
+		Foreground(lg.Color(fg)).
+		Render(text)
 }
 
 func (m *Model) ToggleShortcuts() {

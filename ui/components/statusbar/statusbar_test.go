@@ -37,7 +37,7 @@ func TestStatusbar(t *testing.T) {
 				ConfigIO: nil,
 			})), tests.Renderer)
 
-		assert.Equal(t, "                              \n  test provider               ", render)
+		assert.Contains(t, render, "\n  test provider  \ue0b4           \ue0b4\n")
 	})
 
 	t.Run("toggle shortcuts", func(t *testing.T) {
@@ -51,7 +51,7 @@ func TestStatusbar(t *testing.T) {
 				ConfigIO: nil,
 			})), tests.Renderer)
 
-		assert.Equal(t, "                              \n  test provider               ", render)
+		assert.Contains(t, render, "\n  test provider  \ue0b4           \ue0b4\n")
 
 		sb.ToggleShortcuts()
 
@@ -62,7 +62,7 @@ func TestStatusbar(t *testing.T) {
 				ConfigIO: nil,
 			})), tests.Renderer)
 
-		assert.Equal(t, "                                                    \n  Switch Tabs: ≪ C-←/→/h/l »   Open: ≪ C-o »        \n                                                    \n  test provider                                     ", render)
+		assert.Contains(t, render, "\n  Switch Tabs: ≪ C-←/→/h/l »   Open: ≪ C-o »        \n", render)
 	})
 
 	t.Run("with active cluster", func(t *testing.T) {
