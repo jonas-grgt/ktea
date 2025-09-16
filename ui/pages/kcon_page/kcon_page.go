@@ -17,6 +17,7 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
+	"ktea/ui/tabs"
 	"reflect"
 	"sort"
 	"strconv"
@@ -36,8 +37,8 @@ type Model struct {
 
 	sortByCmdBar *cmdbar.SortByCmdBar
 
-	kca     kcadmin.Admin
-	navBack ui.NavBack
+	kca       kcadmin.Admin
+	navigator tabs.KConTabNavigator
 
 	connectorName string
 	state
@@ -92,7 +93,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		switch msg.String() {
 		case "esc":
 			if !m.cmdBar.IsFocussed() {
-				return m.navBack()
+				return m.navigator.ToKConsPage()
 			}
 		case "P":
 			if m.stateChangingConnectorName == "" {
@@ -314,13 +315,13 @@ func (m *Model) createRows() []table.Row {
 }
 
 func New(
-	navBack ui.NavBack,
+	navigator tabs.KConTabNavigator,
 	kca kcadmin.Admin,
 	connectorName string,
 ) (*Model, tea.Cmd) {
 	m := Model{}
 	m.connectorName = connectorName
-	m.navBack = navBack
+	m.navigator = navigator
 	m.kca = kca
 	m.state = loading
 

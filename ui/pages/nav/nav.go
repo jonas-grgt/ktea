@@ -17,7 +17,15 @@ type LoadPublishPageMsg struct {
 	Topic *kadmin.ListedTopic
 }
 
-type LoadConsumptionPageMsg struct {
+type Origin int
+
+const (
+	OriginTopicsPage Origin = iota
+	OriginConsumeFormPage
+)
+
+type ConsumePageDetails struct {
+	Origin      Origin
 	ReadDetails kadmin.ReadDetails
 	Topic       *kadmin.ListedTopic
 }
@@ -29,9 +37,9 @@ type LoadLiveConsumePageMsg struct {
 type LoadCachedConsumptionPageMsg struct {
 }
 
-type LoadConsumptionFormPageMsg struct {
+type ConsumeFormPageDetails struct {
 	Topic *kadmin.ListedTopic
-	// ReadDetails is used to pre-fill the form with the provided details.
+	// ReadDetails is used to pre-fill the consume form with the provided - previous - details.
 	ReadDetails *kadmin.ReadDetails
 }
 

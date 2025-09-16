@@ -1,4 +1,4 @@
-package consumption_page
+package consume_page
 
 import (
 	tea "github.com/charmbracelet/bubbletea"

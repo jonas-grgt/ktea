@@ -1,4 +1,4 @@
-package consumption_form_page
+package consume_form_page
 
 import (
 	"fmt"
@@ -9,17 +9,21 @@ import (
 	"ktea/kontext"
 	"ktea/tests"
 	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"testing"
 )
 
 func TestConsumeForm_Navigation(t *testing.T) {
 
 	t.Run("esc goes back to topic list page", func(t *testing.T) {
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			Replicas:       1,
-			PartitionCount: 10,
-		}, tests.NewKontext())
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				Replicas:       1,
+				PartitionCount: 10,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -29,11 +33,14 @@ func TestConsumeForm_Navigation(t *testing.T) {
 	})
 
 	t.Run("renders all available partitions when there is height enough", func(t *testing.T) {
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			Replicas:       1,
-			PartitionCount: 10,
-		}, tests.NewKontext())
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				Replicas:       1,
+				PartitionCount: 10,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
 
 		// make sure form has been initialized
 		m.View(tests.Kontext, tests.Renderer)
@@ -54,11 +61,14 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			WindowHeight:    20,
 			AvailableHeight: 20,
 		}
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			Replicas:       1,
-			PartitionCount: 100,
-		}, ktx)
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				Replicas:       1,
+				PartitionCount: 100,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			ktx)
 		// make sure form has been initialized
 		m.View(ktx, tests.Renderer)
 
@@ -88,7 +98,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       3,
-		}, tests.NewKontext())
+		}, nil, tests.NewKontext())
 
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
@@ -119,7 +129,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 10,
 				Replicas:       3,
-			}, tests.NewKontext())
+			}, nil, tests.NewKontext())
 
 			// make sure form has been initialized
 			m.View(tests.NewKontext(), tests.Renderer)
@@ -134,11 +144,14 @@ func TestConsumeForm_Navigation(t *testing.T) {
 	})
 
 	t.Run("submitting form loads consumption page with consumption information", func(t *testing.T) {
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			PartitionCount: 10,
-			Replicas:       1,
-		}, tests.NewKontext())
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -172,7 +185,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// no value filter
 		msgs := tests.Submit(m)
 
-		assert.Equal(t, nav.LoadConsumptionPageMsg{
+		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
+
+		assert.Equal(t, nav.ConsumePageDetails{
 			ReadDetails: kadmin.ReadDetails{
 				TopicName: "topic1",
 				Filter: &kadmin.Filter{
@@ -188,15 +203,19 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				PartitionCount: 10,
 				Replicas:       1,
 			},
-		}, msgs[0])
+			Origin: nav.OriginConsumeFormPage,
+		}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 	})
 
 	t.Run("selecting partitions is optional", func(t *testing.T) {
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			PartitionCount: 10,
-			Replicas:       1,
-		}, tests.NewKontext())
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -223,7 +242,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// no value filter
 		msgs := tests.Submit(m)
 
-		assert.Equal(t, nav.LoadConsumptionPageMsg{
+		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
+
+		assert.Equal(t, nav.ConsumePageDetails{
 			ReadDetails: kadmin.ReadDetails{
 				TopicName: "topic1",
 				Filter: &kadmin.Filter{
@@ -239,15 +260,19 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				PartitionCount: 10,
 				Replicas:       1,
 			},
-		}, msgs[0])
+			Origin: nav.OriginConsumeFormPage,
+		}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 	})
 
 	t.Run("selecting key filter type starts-with displays key filter value field", func(t *testing.T) {
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			PartitionCount: 10,
-			Replicas:       1,
-		}, tests.NewKontext())
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -311,7 +336,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			// no value filter
 			msgs := tests.Submit(m)
 
-			assert.Equal(t, nav.LoadConsumptionPageMsg{
+			assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
+
+			assert.Equal(t, nav.ConsumePageDetails{
 				ReadDetails: kadmin.ReadDetails{
 					TopicName: "topic1",
 					Filter: &kadmin.Filter{
@@ -327,16 +354,20 @@ func TestConsumeForm_Navigation(t *testing.T) {
 					PartitionCount: 10,
 					Replicas:       1,
 				},
-			}, msgs[0])
+				Origin: nav.OriginConsumeFormPage,
+			}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 		})
 	})
 
 	t.Run("filter on key value", func(t *testing.T) {
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			PartitionCount: 10,
-			Replicas:       1,
-		}, tests.NewKontext())
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -370,7 +401,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// no value filter
 		msgs := tests.Submit(m)
 
-		assert.EqualValues(t, nav.LoadConsumptionPageMsg{
+		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
+
+		assert.EqualValues(t, nav.ConsumePageDetails{
 			ReadDetails: kadmin.ReadDetails{
 				TopicName: "topic1",
 				Filter: &kadmin.Filter{
@@ -387,15 +420,19 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				PartitionCount: 10,
 				Replicas:       1,
 			},
-		}, msgs[0])
+			Origin: nav.OriginConsumeFormPage,
+		}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 	})
 
 	t.Run("selecting value filter type starts-with displays filter value field", func(t *testing.T) {
-		m := New(&kadmin.ListedTopic{
-			Name:           "topic1",
-			PartitionCount: 10,
-			Replicas:       1,
-		}, tests.NewKontext())
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -478,7 +515,9 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			// no value filter
 			msgs := tests.Submit(m)
 
-			assert.Equal(t, nav.LoadConsumptionPageMsg{
+			assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
+
+			assert.Equal(t, nav.ConsumePageDetails{
 				ReadDetails: kadmin.ReadDetails{
 					TopicName: "topic1",
 					Filter: &kadmin.Filter{
@@ -494,8 +533,8 @@ func TestConsumeForm_Navigation(t *testing.T) {
 					PartitionCount: 10,
 					Replicas:       1,
 				},
-			},
-				msgs[0])
+				Origin: nav.OriginConsumeFormPage,
+			}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 		})
 	})
 }

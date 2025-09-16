@@ -7,8 +7,8 @@ import (
 	"ktea/kcadmin"
 	"ktea/kontext"
 	"ktea/tests"
-	"ktea/ui"
 	"ktea/ui/components/cmdbar"
+	"ktea/ui/tabs"
 	"testing"
 )
 
@@ -24,7 +24,7 @@ func TestUpsertKcModel(t *testing.T) {
 
 	t.Run("Immediately show form when no clusters registered", func(t *testing.T) {
 		m := NewUpsertKcModel(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			&ktx,
 			nil,
 			[]config.KafkaConnectConfig{},
@@ -83,7 +83,7 @@ func TestUpsertKcModel(t *testing.T) {
 
 	t.Run("Set username and password to nil when left empty", func(t *testing.T) {
 		m := NewUpsertKcModel(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			&ktx,
 			nil,
 			[]config.KafkaConnectConfig{},
@@ -125,14 +125,22 @@ func TestUpsertKcModel(t *testing.T) {
 	t.Run("List kafka connect clusters when at least one is already registered", func(t *testing.T) {
 		username := "jane"
 		password := "doe"
-		m := NewUpsertKcModel(ui.NavBackMock, &ktx, nil, []config.KafkaConnectConfig{
-			{
-				Name:     "s3-sink",
-				Url:      "http://localhost:8083",
-				Username: &username,
-				Password: &password,
+		m := NewUpsertKcModel(
+			tabs.NewMockClustersTabNavigator(),
+			&ktx,
+			nil,
+			[]config.KafkaConnectConfig{
+				{
+					Name:     "s3-sink",
+					Url:      "http://localhost:8083",
+					Username: &username,
+					Password: &password,
+				},
 			},
-		}, kcadmin.NewMockConnChecker(), cmdbar.NewNotifierCmdBar("test"), mockKafkaConnectRegisterer)
+			kcadmin.NewMockConnChecker(),
+			cmdbar.NewNotifierCmdBar("test"),
+			mockKafkaConnectRegisterer,
+		)
 
 		render := m.View(&ktx, tests.Renderer)
 

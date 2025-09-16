@@ -38,7 +38,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	return m.active.Update(msg)
 }
 
-func (m *Model) navBack() tea.Cmd {
+func (m *Model) ToKConsPage() tea.Cmd {
 	m.active = m.kconsPage
 	m.statusbar.SetProvider(m.active)
 	return nil
@@ -47,7 +47,7 @@ func (m *Model) navBack() tea.Cmd {
 func (m *Model) loadKConPage(c config.KafkaConnectConfig) tea.Cmd {
 	kca := kcadmin.New(http.DefaultClient, &c)
 	var cmd tea.Cmd
-	m.active, cmd = kcon_page.New(m.navBack, kca, c.Name)
+	m.active, cmd = kcon_page.New(m, kca, c.Name)
 	return cmd
 }
 

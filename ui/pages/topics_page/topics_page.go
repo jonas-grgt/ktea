@@ -18,6 +18,7 @@ import (
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
 	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"reflect"
 	"slices"
 	"sort"
@@ -48,6 +49,7 @@ type Model struct {
 	state         state
 	sortByCmdBar  *cmdbar.SortByCmdBar
 	goToTop       bool
+	navigator     tabs.TopicsTabNavigator
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -110,12 +112,23 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				return nil
 			}
 			return ui.PublishMsg(nav.LoadLiveConsumePageMsg{Topic: m.SelectedTopic()})
+		case "ctrl+g":
+			// only accept enter when the table is focussed
+			if !m.tcb.IsFocussed() {
+				if m.SelectedTopic() != nil {
+					return m.navigator.ToConsumeFormPage(nav.ConsumeFormPageDetails{
+						Topic: m.SelectedTopic(),
+					})
+				}
+			}
 		case "enter":
 			// only accept enter when the table is focussed
 			if !m.tcb.IsFocussed() {
 				if m.SelectedTopic() != nil {
-					return ui.PublishMsg(nav.LoadConsumptionFormPageMsg{
-						Topic: m.SelectedTopic(),
+					return m.navigator.ToConsumePage(nav.ConsumePageDetails{
+						Origin:      nav.OriginTopicsPage,
+						Topic:       m.SelectedTopic(),
+						ReadDetails: kadmin.NewDefaultReadDetails(m.SelectedTopic()),
 					})
 				}
 			}
@@ -262,10 +275,15 @@ func (m *Model) Refresh() tea.Cmd {
 	return m.lister.ListTopics
 }
 
-func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, tea.Cmd) {
+func New(
+	ka kadmin.Kadmin,
+	navigator tabs.TopicsTabNavigator,
+) (*Model, tea.Cmd) {
 	var m = Model{}
+	m.navigator = navigator
 	m.shortcuts = []statusbar.Shortcut{
-		{"Consume", "enter"},
+		{"Quick Consume", "enter"},
+		{"Granular Consume", "C-g"},
 		{"Live Consume", "S-l"},
 		{"Search", "/"},
 		{"Produce", "C-p"},
@@ -288,7 +306,7 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 
 	deleteFn := func(topic string) tea.Cmd {
 		return func() tea.Msg {
-			return topicDeleter.DeleteTopic(topic)
+			return ka.DeleteTopic(topic)
 		}
 	}
 
@@ -402,7 +420,7 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 		notifierCmdBar,
 		sortByCmdBar,
 	)
-	m.lister = lister
+	m.lister = ka
 	m.state = stateLoading
 
 	m.border = border.New(

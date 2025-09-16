@@ -1,16 +1,24 @@
-package consumption_page
+package consume_page
 
 import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/tests"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"testing"
 )
 
 func TestConsumptionPage(t *testing.T) {
 	t.Run("Display empty topic message and adjusted shortcuts", func(t *testing.T) {
-		m, _ := New(nil, kadmin.ReadDetails{}, &kadmin.ListedTopic{})
+		m, _ := New(
+			kadmin.NewMockKadmin(),
+			kadmin.ReadDetails{},
+			&kadmin.ListedTopic{},
+			nav.OriginTopicsPage,
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		m.Update(EmptyTopicMsg{})
 

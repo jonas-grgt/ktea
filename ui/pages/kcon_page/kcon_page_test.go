@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kcadmin"
 	"ktea/tests"
-	"ktea/ui"
+	"ktea/ui/tabs"
 	"strings"
 	"testing"
 	"time"
@@ -17,19 +17,19 @@ func TestKconsPage(t *testing.T) {
 
 	t.Run("esc goes back to Kafka Connect Clusters page", func(t *testing.T) {
 		page, _ := New(
-			ui.NavBackMock,
+			tabs.NewMockKConTabNavigator(),
 			kcadmin.NewMock(),
 			"connector-name",
 		)
 
 		cmd := page.Update(tests.Key(tea.KeyEsc))
 
-		assert.IsType(t, ui.NavBackMockCalledMsg{}, cmd())
+		assert.IsType(t, tabs.ToKConsPageCalledMsg{}, cmd())
 	})
 
 	t.Run("F5 refreshes connectors list", func(t *testing.T) {
 		page, _ := New(
-			ui.NavBackMock,
+			tabs.NewMockKConTabNavigator(),
 			kcadmin.NewMock(),
 			"connector-name",
 		)
@@ -64,7 +64,7 @@ func TestKconsPage(t *testing.T) {
 
 	t.Run("Default sort by Name Asc", func(t *testing.T) {
 		page, _ := New(
-			ui.NavBackMock,
+			tabs.NewMockKConTabNavigator(),
 			kcadmin.NewMock(),
 			"connector-name",
 		)
@@ -122,7 +122,7 @@ func TestKconsPage(t *testing.T) {
 
 	t.Run("Toggle sort by Name", func(t *testing.T) {
 		page, _ := New(
-			ui.NavBackMock,
+			tabs.NewMockKConTabNavigator(),
 			kcadmin.NewMock(),
 			"connector-name",
 		)
@@ -184,7 +184,7 @@ func TestKconsPage(t *testing.T) {
 
 	t.Run("Esc hides toggled sort by", func(t *testing.T) {
 		page, _ := New(
-			ui.NavBackMock,
+			tabs.NewMockKConTabNavigator(),
 			kcadmin.NewMock(),
 			"connector-name",
 		)
@@ -241,7 +241,7 @@ func TestKconsPage(t *testing.T) {
 
 	t.Run("Search for connector", func(t *testing.T) {
 		page, _ := New(
-			ui.NavBackMock,
+			tabs.NewMockKConTabNavigator(),
 			kcadmin.NewMock(),
 			"connector-name",
 		)
@@ -297,7 +297,7 @@ func TestKconsPage(t *testing.T) {
 
 	t.Run("Manage connector", func(t *testing.T) {
 		page, _ := New(
-			ui.NavBackMock,
+			tabs.NewMockKConTabNavigator(),
 			kcadmin.NewMock(),
 			"connector-name",
 		)
@@ -416,7 +416,7 @@ func TestKconsPage(t *testing.T) {
 func TestTickMsgHandled(t *testing.T) {
 	initialSpinner := spinner.New(spinner.WithSpinner(spinner.Dot))
 	model, _ := New(
-		ui.NavBackMock,
+		tabs.NewMockKConTabNavigator(),
 		kcadmin.NewMock(),
 		"connector-name",
 	)
@@ -437,7 +437,7 @@ func TestTickMsgHandled(t *testing.T) {
 func TestTickMsgIgnored(t *testing.T) {
 	initialSpinner := spinner.New(spinner.WithSpinner(spinner.Dot))
 	model, _ := New(
-		ui.NavBackMock,
+		tabs.NewMockKConTabNavigator(),
 		kcadmin.NewMock(),
 		"connector-name",
 	)
