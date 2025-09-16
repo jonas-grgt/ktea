@@ -59,7 +59,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+n":
 			if _, ok := m.active.(*clusters_page.Model); ok {
 				m.active = create_cluster_page.NewCreateClusterPage(
-					m.GoBack,
+					m,
 					m.kConnChecker,
 					m.srConnChecker,
 					m.ktx.Config,
@@ -78,7 +78,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				clusterName := clustersPage.SelectedCluster()
 				selectedCluster := m.ktx.Config.FindClusterByName(*clusterName)
 				m.active = create_cluster_page.NewEditClusterPage(
-					m.GoBack,
+					m,
 					m.kConnChecker,
 					m.srConnChecker,
 					m.ktx.Config,
@@ -97,7 +97,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	return m.active.Update(msg)
 }
 
-func (m *Model) GoBack() tea.Cmd {
+func (m *Model) ToClustersPage() tea.Cmd {
 	var cmd tea.Cmd
 	m.active, cmd = clusters_page.New(m.ktx, m.kConnChecker)
 	m.statusbar.SetProvider(m.active)
@@ -124,7 +124,7 @@ func New(
 		m.active = listPage
 	} else {
 		m.active = create_cluster_page.NewCreateClusterPage(
-			m.GoBack,
+			&m,
 			m.kConnChecker,
 			m.srConnChecker,
 			m.ktx.Config,

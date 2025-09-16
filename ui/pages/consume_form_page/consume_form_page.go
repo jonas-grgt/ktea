@@ -1,4 +1,4 @@
-package consumption_form_page
+package consume_form_page
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,6 +10,7 @@ import (
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
 	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"strconv"
 )
 
@@ -29,6 +30,7 @@ type Model struct {
 	ktx                       *kontext.ProgramKtx
 	availableHeight           int
 	topic                     *kadmin.ListedTopic
+	navigator                 tabs.TopicsTabNavigator
 }
 
 type formValues struct {
@@ -133,8 +135,9 @@ func (m *Model) submit(filter kadmin.Filter) tea.Cmd {
 		partToConsume = m.formValues.partitions
 	}
 
-	return ui.PublishMsg(nav.LoadConsumptionPageMsg{
-		Topic: m.topic,
+	return m.navigator.ToConsumePage(nav.ConsumePageDetails{
+		Origin: nav.OriginConsumeFormPage,
+		Topic:  m.topic,
 		ReadDetails: kadmin.ReadDetails{
 			TopicName:       m.topic.Name,
 			PartitionToRead: partToConsume,
@@ -273,6 +276,7 @@ func (m *Model) NextField(count int) {
 func NewWithDetails(
 	details *kadmin.ReadDetails,
 	topic *kadmin.ListedTopic,
+	navigator tabs.TopicsTabNavigator,
 	ktx *kontext.ProgramKtx,
 ) *Model {
 	var partitionsToRead []int
@@ -280,8 +284,9 @@ func NewWithDetails(
 		partitionsToRead = details.PartitionToRead
 	}
 	return &Model{
-		ktx:   ktx,
-		topic: topic,
+		ktx:       ktx,
+		navigator: navigator,
+		topic:     topic,
 		formValues: &formValues{
 			startPoint:      details.StartPoint,
 			limit:           details.Limit,
@@ -293,9 +298,14 @@ func NewWithDetails(
 		}}
 }
 
-func New(topic *kadmin.ListedTopic, ktx *kontext.ProgramKtx) *Model {
+func New(
+	topic *kadmin.ListedTopic,
+	navigator tabs.TopicsTabNavigator,
+	ktx *kontext.ProgramKtx,
+) *Model {
 	return &Model{
 		topic:      topic,
+		navigator:  navigator,
 		formValues: &formValues{},
 		ktx:        ktx,
 	}

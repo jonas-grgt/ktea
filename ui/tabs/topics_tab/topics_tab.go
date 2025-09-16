@@ -12,8 +12,8 @@ import (
 	"ktea/ui/components/statusbar"
 	"ktea/ui/pages"
 	"ktea/ui/pages/configs_page"
-	"ktea/ui/pages/consumption_form_page"
-	"ktea/ui/pages/consumption_page"
+	"ktea/ui/pages/consume_form_page"
+	"ktea/ui/pages/consume_page"
 	"ktea/ui/pages/create_topic_page"
 	"ktea/ui/pages/nav"
 	"ktea/ui/pages/publish_page"
@@ -64,13 +64,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 		m.active = m.topicsPage
 
-	case nav.LoadConsumptionFormPageMsg:
-		if msg.ReadDetails != nil {
-			m.active = consumption_form_page.NewWithDetails(msg.ReadDetails, msg.Topic, m.ktx)
-		} else {
-			m.active = consumption_form_page.New(msg.Topic, m.ktx)
-		}
-
 	case nav.LoadRecordDetailPageMsg:
 		m.active = record_details_page.New(msg.Record, msg.TopicName, clipper.New(), m.ktx)
 		m.recordDetailsPage = m.active
@@ -90,12 +83,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case nav.LoadCachedConsumptionPageMsg:
 		m.active = m.consumptionPage
 
-	case nav.LoadConsumptionPageMsg:
-		var cmd tea.Cmd
-		m.active, cmd = consumption_page.New(m.ka, msg.ReadDetails, msg.Topic)
-		m.consumptionPage = m.active
-		cmds = append(cmds, cmd)
-
 	case nav.LoadLiveConsumePageMsg:
 		var cmd tea.Cmd
 		readDetails := kadmin.ReadDetails{
@@ -105,7 +92,13 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			Limit:           500,
 			Filter:          nil,
 		}
-		m.active, cmd = consumption_page.New(m.ka, readDetails, msg.Topic)
+		m.active, cmd = consume_page.New(
+			m.ka,
+			readDetails,
+			msg.Topic,
+			0,
+			m,
+		)
 		m.consumptionPage = m.active
 		cmds = append(cmds, cmd)
 
@@ -121,17 +114,57 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+func (m *Model) ToTopicsPage() tea.Cmd {
+	m.active = m.topicsPage
+	return nil
+}
+
+func (m *Model) ToConsumePage(msg nav.ConsumePageDetails) tea.Cmd {
+	var cmd tea.Cmd
+	m.active, cmd = consume_page.New(
+		m.ka,
+		msg.ReadDetails,
+		msg.Topic,
+		msg.Origin,
+		m,
+	)
+	m.consumptionPage = m.active
+	return cmd
+}
+
+func (m *Model) ToConsumeFormPage(d nav.ConsumeFormPageDetails) tea.Cmd {
+	if d.ReadDetails != nil {
+		m.active = consume_form_page.NewWithDetails(
+			d.ReadDetails,
+			d.Topic,
+			m,
+			m.ktx,
+		)
+	} else {
+		m.active = consume_form_page.New(
+			d.Topic,
+			m,
+			m.ktx,
+		)
+	}
+	return nil
+}
+
 func New(ktx *kontext.ProgramKtx, ka kadmin.Kadmin, stsBar *statusbar.Model) (*Model, tea.Cmd) {
 	var cmd tea.Cmd
-	listTopicView, cmd := topics_page.New(ka, ka)
 
 	model := &Model{}
 	model.ka = ka
 	model.ktx = ktx
-	model.active = listTopicView
-	model.topicsPage = listTopicView
 	model.statusbar = stsBar
 	model.statusbar.SetProvider(model.active)
+
+	listTopicView, cmd := topics_page.New(
+		ka,
+		model,
+	)
+	model.active = listTopicView
+	model.topicsPage = listTopicView
 
 	return model, cmd
 }

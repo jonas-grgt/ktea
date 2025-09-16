@@ -15,6 +15,8 @@ type MockConnectionCheckedMsg struct {
 	Cluster *config.Cluster
 }
 
+type ListTopicsCalledMsg struct{}
+
 func MockConnChecker(cluster *config.Cluster) tea.Msg {
 	return MockConnectionCheckedMsg{Cluster: cluster}
 }
@@ -28,7 +30,7 @@ func (m MockKadmin) DeleteTopic(topic string) tea.Msg {
 }
 
 func (m MockKadmin) ListTopics() tea.Msg {
-	return nil
+	return ListTopicsCalledMsg{}
 }
 
 func (m MockKadmin) PublishRecord(p *ProducerRecord) PublicationStartedMsg {

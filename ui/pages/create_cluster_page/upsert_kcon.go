@@ -15,6 +15,7 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
+	"ktea/ui/tabs"
 	"reflect"
 )
 
@@ -30,7 +31,7 @@ type UpsertKcModel struct {
 	formValues
 	state
 	deleteCmdbar *cmdbar.DeleteCmdBar[string]
-	back         ui.NavBack
+	navigator    tabs.ClustersTabNavigator
 }
 
 type state int
@@ -95,7 +96,7 @@ func (m *UpsertKcModel) Update(msg tea.Msg) tea.Cmd {
 					m.state = listing
 				}
 			} else {
-				m.back()
+				m.navigator.ToClustersPage()
 			}
 			return nil
 		case tea.KeyF2:
@@ -289,7 +290,7 @@ func (m *UpsertKcModel) createKcForm() *huh.Form {
 type ClusterDeleter func(name string) tea.Msg
 
 func NewUpsertKcModel(
-	back ui.NavBack,
+	navigator tabs.ClustersTabNavigator,
 	ktx *kontext.ProgramKtx,
 	deleter ClusterDeleter,
 	configs []config.KafkaConnectConfig,
@@ -299,7 +300,7 @@ func NewUpsertKcModel(
 ) *UpsertKcModel {
 	m := UpsertKcModel{}
 
-	m.back = back
+	m.navigator = navigator
 	m.ktx = ktx
 	m.connectClusters = configs
 	m.connChecker = connChecker

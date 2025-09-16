@@ -10,8 +10,8 @@ import (
 	"ktea/sradmin"
 	"ktea/styles"
 	"ktea/tests"
-	"ktea/ui"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/tabs"
 	"testing"
 )
 
@@ -28,7 +28,14 @@ var ktx = kontext.ProgramKtx{
 func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 	t.Run("Display info message when no clusters", func(t *testing.T) {
 		// given
-		createEnvPage := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		createEnvPage := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 
 		// then
 		render := createEnvPage.View(&ktx, tests.Renderer)
@@ -36,7 +43,14 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 	})
 
 	t.Run("Do not display info message when there are clusters", func(t *testing.T) {
-		createEnvPage := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		createEnvPage := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 
 		render := createEnvPage.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
@@ -59,7 +73,7 @@ func TestTabs(t *testing.T) {
 	t.Run("Switch to schema registry tab", func(t *testing.T) {
 		// given
 		page := NewCreateClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -83,7 +97,7 @@ func TestTabs(t *testing.T) {
 	t.Run("Switch to kafka connect tab", func(t *testing.T) {
 		// given
 		page := NewCreateClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -106,7 +120,14 @@ func TestTabs(t *testing.T) {
 
 	t.Run("switching back to clusters tab remembers previously entered state", func(t *testing.T) {
 		// given
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 		// and: a cluster is registered
 		cluster := config.Cluster{}
 		page.clusterToEdit = &cluster
@@ -140,7 +161,14 @@ func TestTabs(t *testing.T) {
 
 	t.Run("Cannot switch to schema registry tab when no cluster registered yet", func(t *testing.T) {
 		// given
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 
 		// when
 		page.Update(tests.Key(tea.KeyF5))
@@ -154,7 +182,14 @@ func TestTabs(t *testing.T) {
 func TestValidation(t *testing.T) {
 	t.Run("Name cannot be empty", func(t *testing.T) {
 		// given
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 
 		// when
 		page.Update(tests.Key(tea.KeyEnter))
@@ -166,28 +201,35 @@ func TestValidation(t *testing.T) {
 
 	t.Run("Name must be unique", func(t *testing.T) {
 		// given
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "prd",
-						Color:            "#808080",
-						Active:           true,
-						BootstrapServers: nil,
-						SASLConfig:       nil,
-					},
-					{
-						Name:             "tst",
-						Color:            "#F0F0F0",
-						Active:           false,
-						BootstrapServers: nil,
-						SASLConfig:       nil,
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&kontext.ProgramKtx{
+				WindowWidth:  100,
+				WindowHeight: 100,
+				Config: &config.Config{
+					Clusters: []config.Cluster{
+						{
+							Name:             "prd",
+							Color:            "#808080",
+							Active:           true,
+							BootstrapServers: nil,
+							SASLConfig:       nil,
+						},
+						{
+							Name:             "tst",
+							Color:            "#F0F0F0",
+							Active:           false,
+							BootstrapServers: nil,
+							SASLConfig:       nil,
+						},
 					},
 				},
 			},
-		}, shortcuts)
+			shortcuts,
+		)
 
 		// when
 		tests.UpdateKeys(page, "prd")
@@ -200,7 +242,14 @@ func TestValidation(t *testing.T) {
 
 	t.Run("Host cannot be empty", func(t *testing.T) {
 		// given
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))
@@ -221,19 +270,26 @@ func TestValidation(t *testing.T) {
 func TestCreateCluster(t *testing.T) {
 	t.Run("Selecting none auth method creates cluster", func(t *testing.T) {
 		// given
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&kontext.ProgramKtx{
+				WindowWidth:  100,
+				WindowHeight: 100,
+				Config: &config.Config{
+					Clusters: []config.Cluster{
+						{
+							Name:             "PRD",
+							BootstrapServers: []string{"localhost:9092"},
+							SASLConfig:       nil,
+						},
 					},
 				},
 			},
-		}, shortcuts)
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))
@@ -287,7 +343,14 @@ func TestClusterForm(t *testing.T) {
 				},
 			},
 		}
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &programKtx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&programKtx,
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))
@@ -332,7 +395,14 @@ func TestClusterForm(t *testing.T) {
 				},
 			},
 		}
-		createEnvPage := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &programKtx, shortcuts)
+		createEnvPage := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&programKtx,
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(createEnvPage, "TST")
 		cmd := createEnvPage.Update(tests.Key(tea.KeyEnter))
@@ -378,7 +448,14 @@ func TestClusterForm(t *testing.T) {
 				},
 			},
 		}
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &programKtx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&programKtx,
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))
@@ -452,7 +529,14 @@ func TestClusterForm(t *testing.T) {
 				},
 			},
 		}
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &programKtx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&programKtx,
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))
@@ -524,7 +608,14 @@ func TestClusterForm(t *testing.T) {
 				},
 			},
 		}
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &programKtx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&programKtx,
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))
@@ -584,7 +675,14 @@ func TestClusterForm(t *testing.T) {
 
 	t.Run("After creating a new cluster, display notification when checking connectivity", func(t *testing.T) {
 		// given
-		createEnvPage := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &ktx, shortcuts)
+		createEnvPage := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&ktx,
+			shortcuts,
+		)
 
 		// when
 		createEnvPage.Update(kadmin.ConnCheckStartedMsg{})
@@ -601,7 +699,7 @@ func TestEditClusterForm(t *testing.T) {
 	t.Run("Sets title", func(t *testing.T) {
 		// given
 		page := NewEditClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -650,7 +748,7 @@ func TestEditClusterForm(t *testing.T) {
 	t.Run("Checks connection upon updating", func(t *testing.T) {
 		// given
 		page := NewEditClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -745,7 +843,7 @@ func TestEditClusterForm(t *testing.T) {
 		}
 
 		page := NewEditClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -796,7 +894,7 @@ func TestEditClusterForm(t *testing.T) {
 		}
 
 		page := NewEditClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -864,7 +962,7 @@ func TestEditClusterForm(t *testing.T) {
 		}
 
 		page := NewEditClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -915,7 +1013,7 @@ func TestEditClusterForm(t *testing.T) {
 		}
 
 		page := NewEditClusterPage(
-			ui.NavBackMock,
+			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
@@ -966,7 +1064,14 @@ func TestCreateSchemaRegistry(t *testing.T) {
 			},
 		},
 	}
-	page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &programKtx, shortcuts)
+	page := NewCreateClusterPage(
+		tabs.NewMockClustersTabNavigator(),
+		kadmin.MockConnChecker,
+		sradmin.MockConnChecker,
+		config.MockClusterRegisterer{},
+		&programKtx,
+		shortcuts,
+	)
 
 	t.Run("Check connectivity before registering the schema registry", func(t *testing.T) {
 		// and: enter name
@@ -1070,7 +1175,14 @@ func TestSchemaRegistryForm(t *testing.T) {
 				},
 			},
 		}
-		page := NewCreateClusterPage(ui.NavBackMock, kadmin.MockConnChecker, sradmin.MockConnChecker, config.MockClusterRegisterer{}, &programKtx, shortcuts)
+		page := NewCreateClusterPage(
+			tabs.NewMockClustersTabNavigator(),
+			kadmin.MockConnChecker,
+			sradmin.MockConnChecker,
+			config.MockClusterRegisterer{},
+			&programKtx,
+			shortcuts,
+		)
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))

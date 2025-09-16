@@ -6,29 +6,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/tests"
+	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"strings"
 	"testing"
 )
 
-type MockTopicLister struct {
-}
-
-type ListTopicsCalledMsg struct{}
-
-func (m *MockTopicLister) ListTopics() tea.Msg {
-	return ListTopicsCalledMsg{}
-}
-
-type MockTopicDeleter struct {
-}
-
-func (m *MockTopicDeleter) DeleteTopic(_ string) tea.Msg {
-	return nil
-}
-
 func TestTopicsPage(t *testing.T) {
 	t.Run("Ignore KeyMsg when topics aren't loaded yet", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		cmd := page.Update(tests.Key(tea.KeyCtrlN))
 		assert.NotNil(t, cmd)
@@ -41,7 +30,10 @@ func TestTopicsPage(t *testing.T) {
 	})
 
 	t.Run("F5 refreshes topic list", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		_ = page.Update(kadmin.TopicsListedMsg{
 			Topics: []kadmin.ListedTopic{
@@ -55,11 +47,14 @@ func TestTopicsPage(t *testing.T) {
 
 		cmd := page.Update(tests.Key(tea.KeyF5))
 
-		assert.Contains(t, tests.ExecuteBatchCmd(cmd), ListTopicsCalledMsg{})
+		assert.Contains(t, tests.ExecuteBatchCmd(cmd), kadmin.ListTopicsCalledMsg{})
 	})
 
 	t.Run("When topics are loaded or refresh then the search form is reset", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		_ = page.Update(kadmin.TopicsListedMsg{
 			Topics: []kadmin.ListedTopic{
@@ -84,7 +79,10 @@ func TestTopicsPage(t *testing.T) {
 	})
 
 	t.Run("Searching resets selected row to top row", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		var topics []kadmin.ListedTopic
 		for i := range 10 {
@@ -112,7 +110,10 @@ func TestTopicsPage(t *testing.T) {
 	})
 
 	t.Run("Default sort by Name Asc", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		_ = page.Update(kadmin.TopicsListedMsg{
 			Topics: []kadmin.ListedTopic{
@@ -140,7 +141,10 @@ func TestTopicsPage(t *testing.T) {
 	})
 
 	t.Run("Toggle sort by Name", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		_ = page.Update(kadmin.TopicsListedMsg{
 			Topics: []kadmin.ListedTopic{
@@ -180,7 +184,10 @@ func TestTopicsPage(t *testing.T) {
 	})
 
 	t.Run("Toggle sort by Partitions", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		_ = page.Update(kadmin.TopicsListedMsg{
 			Topics: []kadmin.ListedTopic{
@@ -233,7 +240,10 @@ func TestTopicsPage(t *testing.T) {
 	})
 
 	t.Run("Toggle sort by Replicas", func(t *testing.T) {
-		page, _ := New(&MockTopicDeleter{}, &MockTopicLister{})
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
 
 		_ = page.Update(kadmin.TopicsListedMsg{
 			Topics: []kadmin.ListedTopic{
@@ -286,4 +296,115 @@ func TestTopicsPage(t *testing.T) {
 		assert.Greater(t, t2Idx, t1Idx)
 	})
 
+	t.Run("C-g navigates to consume form page", func(t *testing.T) {
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		_ = page.Update(kadmin.TopicsListedMsg{
+			Topics: []kadmin.ListedTopic{
+				{
+					Name:           "b-topic1",
+					PartitionCount: 1,
+					Replicas:       1,
+				},
+				{
+					Name:           "c-topic2",
+					PartitionCount: 2,
+					Replicas:       2,
+				},
+				{
+					Name:           "d-topic3",
+					PartitionCount: 3,
+					Replicas:       3,
+				},
+			},
+		})
+
+		page.View(tests.NewKontext(), tests.Renderer)
+
+		cmd := page.Update(tests.Key(tea.KeyCtrlG))
+
+		msgs := tests.ExecuteBatchCmd(cmd)
+
+		assert.Len(t, msgs, 1)
+
+		assert.IsType(t, msgs[0], tabs.ToConsumeFormPageCalledMsg{})
+
+		assert.Equal(
+			t,
+			nav.ConsumeFormPageDetails{
+				Topic: &kadmin.ListedTopic{
+					Name:           "b-topic1",
+					PartitionCount: 1,
+					Replicas:       1,
+				},
+				ReadDetails: nil,
+			},
+			msgs[0].(tabs.ToConsumeFormPageCalledMsg).Details,
+		)
+	})
+
+	t.Run("enter navigates to consume page", func(t *testing.T) {
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		_ = page.Update(kadmin.TopicsListedMsg{
+			Topics: []kadmin.ListedTopic{
+				{
+					Name:           "b-topic1",
+					PartitionCount: 1,
+					Replicas:       1,
+				},
+				{
+					Name:           "c-topic2",
+					PartitionCount: 2,
+					Replicas:       2,
+				},
+				{
+					Name:           "d-topic3",
+					PartitionCount: 3,
+					Replicas:       3,
+				},
+			},
+		})
+
+		page.View(tests.NewKontext(), tests.Renderer)
+
+		cmd := page.Update(tests.Key(tea.KeyEnter))
+
+		msgs := tests.ExecuteBatchCmd(cmd)
+
+		assert.Len(t, msgs, 1)
+
+		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
+
+		assert.Equal(
+			t,
+			nav.ConsumePageDetails{
+				Origin: nav.OriginTopicsPage,
+				ReadDetails: kadmin.ReadDetails{
+					TopicName:       "b-topic1",
+					PartitionToRead: []int{0},
+					StartPoint:      kadmin.MostRecent,
+					Limit:           500,
+					Filter: &kadmin.Filter{
+						KeyFilter:       "",
+						KeySearchTerm:   "",
+						ValueFilter:     "",
+						ValueSearchTerm: "",
+					},
+				},
+				Topic: &kadmin.ListedTopic{
+					Name:           "b-topic1",
+					PartitionCount: 1,
+					Replicas:       1,
+				},
+			},
+			msgs[0].(tabs.ToConsumePageCalledMsg).Details,
+		)
+	})
 }

@@ -1,4 +1,4 @@
-package consumption_page
+package consume_page
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"ktea/ui/components/statusbar"
 	"ktea/ui/pages"
 	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"strconv"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -33,6 +34,8 @@ type Model struct {
 	consuming          bool
 	noRecordsAvailable bool
 	topic              *kadmin.ListedTopic
+	origin             nav.Origin
+	navigator          tabs.TopicsTabNavigator
 }
 
 type ConsumerRecordReceived struct {
@@ -81,7 +84,16 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			if m.readDetails.StartPoint == kadmin.Live {
 				return ui.PublishMsg(nav.LoadTopicsPageMsg{})
 			}
-			return ui.PublishMsg(nav.LoadConsumptionFormPageMsg{ReadDetails: &m.readDetails, Topic: m.topic})
+			if m.origin == nav.OriginTopicsPage {
+				return m.navigator.ToTopicsPage()
+			} else {
+				return m.navigator.ToConsumeFormPage(
+					nav.ConsumeFormPageDetails{
+						ReadDetails: &m.readDetails,
+						Topic:       m.topic,
+					},
+				)
+			}
 		} else if msg.String() == "f2" {
 			m.cancelConsumption()
 			m.consuming = false
@@ -180,6 +192,8 @@ func New(
 	reader kadmin.RecordReader,
 	readDetails kadmin.ReadDetails,
 	topic *kadmin.ListedTopic,
+	origin nav.Origin,
+	navigator tabs.TopicsTabNavigator,
 ) (pages.Page, tea.Cmd) {
 	m := &Model{}
 
@@ -192,6 +206,8 @@ func New(
 	m.cmdBar = NewConsumptionCmdbar()
 	m.readDetails = readDetails
 	m.topic = topic
+	m.navigator = navigator
+	m.origin = origin
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	m.cancelConsumption = cancelFunc

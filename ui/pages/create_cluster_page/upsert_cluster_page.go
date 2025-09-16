@@ -14,6 +14,7 @@ import (
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/tabs"
 	"reflect"
 	"strings"
 
@@ -42,7 +43,7 @@ const (
 )
 
 type Model struct {
-	NavBack            ui.NavBack
+	navigator          tabs.ClustersTabNavigator
 	form               *huh.Form // the active form
 	state              formState
 	srForm             *huh.Form
@@ -128,7 +129,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				return m.kcModel.Update(msg)
 			}
 			m.title = "Clusters"
-			return m.NavBack()
+			return m.navigator.ToClustersPage()
 		case "ctrl+r":
 			m.clusterValues = &clusterValues{}
 			if activeTab == cTab {
@@ -526,7 +527,7 @@ func initBorder(options ...border.Option) *border.Model {
 }
 
 func NewCreateClusterPage(
-	NavBack ui.NavBack,
+	navigator tabs.ClustersTabNavigator,
 	kConnChecker kadmin.ConnChecker,
 	srConnChecker sradmin.ConnChecker,
 	registerer config.ClusterRegisterer,
@@ -536,7 +537,7 @@ func NewCreateClusterPage(
 ) *Model {
 	formValues := &clusterValues{}
 	model := Model{
-		NavBack:       NavBack,
+		navigator:     navigator,
 		clusterValues: formValues,
 		kConnChecker:  kConnChecker,
 		srConnChecker: srConnChecker,
@@ -553,7 +554,7 @@ func NewCreateClusterPage(
 
 	model.createNotifierCmdBar()
 
-	model.kcModel = NewUpsertKcModel(NavBack, ktx, nil, []config.KafkaConnectConfig{}, kcadmin.CheckKafkaConnectClustersConn, model.notifierCmdBar, model.registerCluster)
+	model.kcModel = NewUpsertKcModel(navigator, ktx, nil, []config.KafkaConnectConfig{}, kcadmin.CheckKafkaConnectClustersConn, model.notifierCmdBar, model.registerCluster)
 
 	model.clusterRegisterer = registerer
 
@@ -572,7 +573,7 @@ func NewCreateClusterPage(
 }
 
 func NewEditClusterPage(
-	back ui.NavBack,
+	navigator tabs.ClustersTabNavigator,
 	kConnChecker kadmin.ConnChecker,
 	srConnChecker sradmin.ConnChecker,
 	registerer config.ClusterRegisterer,
@@ -599,7 +600,7 @@ func NewEditClusterPage(
 		formValues.srPassword = cluster.SchemaRegistry.Password
 	}
 	model := Model{
-		NavBack:       back,
+		navigator:     navigator,
 		clusterToEdit: &cluster,
 		clusterValues: formValues,
 		kConnChecker:  kConnChecker,
@@ -628,7 +629,7 @@ func NewEditClusterPage(
 	model.createNotifierCmdBar()
 
 	model.kcModel = NewUpsertKcModel(
-		back,
+		navigator,
 		ktx,
 		func(name string) tea.Msg {
 			return connectClusterDeleter.DeleteKafkaConnectCluster(cluster.Name, name)

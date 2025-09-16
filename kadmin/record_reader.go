@@ -74,6 +74,16 @@ type HeaderValue struct {
 	data []byte
 }
 
+func NewDefaultReadDetails(topic *ListedTopic) ReadDetails {
+	return ReadDetails{
+		TopicName:       topic.Name,
+		PartitionToRead: topic.Partitions(),
+		StartPoint:      MostRecent,
+		Limit:           500,
+		Filter:          &Filter{},
+	}
+}
+
 func NewHeaderValue(data string) HeaderValue {
 	return HeaderValue{[]byte(data)}
 }
