@@ -56,9 +56,10 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	views = append(views, cmdBarView)
 
 	m.table.SetColumns([]table.Column{
-		{m.sortByCmdBar.PrefixSortIcon("Name"), int(float64(ktx.WindowWidth-7) * 0.6)},
-		{m.sortByCmdBar.PrefixSortIcon("Partitions"), int(float64(ktx.WindowWidth-7) * 0.3)},
-		{m.sortByCmdBar.PrefixSortIcon("Replicas"), int(float64(ktx.WindowWidth-7) * 0.1)},
+		{m.sortByCmdBar.PrefixSortIcon("Name"), int(float64(ktx.WindowWidth-9) * 0.5)},
+		{m.sortByCmdBar.PrefixSortIcon("Partitions"), int(float64(ktx.WindowWidth-9) * 0.3)},
+		{m.sortByCmdBar.PrefixSortIcon("Replicas"), int(float64(ktx.WindowWidth-9) * 0.1)},
+		{m.sortByCmdBar.PrefixSortIcon("Cleanup"), int(float64(ktx.WindowWidth-9) * 0.1)},
 	})
 	m.table.SetRows(m.rows)
 	m.table.SetWidth(ktx.WindowWidth - 2)
@@ -173,6 +174,7 @@ func (m *Model) createRows() []table.Row {
 						topic.Name,
 						strconv.Itoa(topic.PartitionCount),
 						strconv.Itoa(topic.Replicas),
+						topic.Cleanup,
 					},
 				)
 			}
@@ -183,6 +185,7 @@ func (m *Model) createRows() []table.Row {
 					topic.Name,
 					strconv.Itoa(topic.PartitionCount),
 					strconv.Itoa(topic.Replicas),
+					topic.Cleanup,
 				},
 			)
 		}
@@ -209,6 +212,11 @@ func (m *Model) createRows() []table.Row {
 				return replicasI < replicasJ
 			}
 			return replicasI > replicasJ
+		case "Cleanup":
+			if m.sortByCmdBar.SortedBy().Direction == cmdbar.Asc {
+				return rows[i][3] < rows[j][3]
+			}
+			return rows[i][3] > rows[j][3]
 		default:
 			panic(fmt.Sprintf("unexpected sort label: %s", m.sortByCmdBar.SortedBy().Label))
 		}
@@ -378,6 +386,10 @@ func New(topicDeleter kadmin.TopicDeleter, lister kadmin.TopicLister) (*Model, t
 			},
 			{
 				Label:     "Replicas",
+				Direction: cmdbar.Desc,
+			},
+			{
+				Label:     "Cleanup",
 				Direction: cmdbar.Desc,
 			},
 		},
