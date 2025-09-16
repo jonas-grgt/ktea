@@ -17,11 +17,23 @@ func TestListTopics(t *testing.T) {
 				Topic:             topic1,
 				NumPartitions:     2,
 				ReplicationFactor: 1,
+				ConfigEntries: []kgo.ConfigEntry{
+					{
+						ConfigName:  "cleanup.policy",
+						ConfigValue: "delete",
+					},
+				},
 			},
 			{
 				Topic:             topic2,
 				NumPartitions:     1,
 				ReplicationFactor: 1,
+				ConfigEntries: []kgo.ConfigEntry{
+					{
+						ConfigName:  "cleanup.policy",
+						ConfigValue: "compact",
+					},
+				},
 			},
 		})
 
@@ -36,8 +48,8 @@ func TestListTopics(t *testing.T) {
 				t.Error(t, "Failed to list topics", err)
 				return
 			}
-			assert.Contains(t, topics, ListedTopic{topic1, 2, 1})
-			assert.Contains(t, topics, ListedTopic{topic2, 1, 1})
+			assert.Contains(t, topics, ListedTopic{topic1, 2, 1, "delete"})
+			assert.Contains(t, topics, ListedTopic{topic2, 1, 1, "compact"})
 		}, 2*time.Second, 10*time.Millisecond)
 
 		// clean up

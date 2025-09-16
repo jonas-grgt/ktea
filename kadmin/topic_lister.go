@@ -42,6 +42,7 @@ type ListedTopic struct {
 	Name           string
 	PartitionCount int
 	Replicas       int
+	Cleanup        string
 }
 
 func (t *ListedTopic) Partitions() []int {
@@ -77,10 +78,17 @@ func (ka *SaramaKafkaAdmin) doListTopics(
 
 	var topics []ListedTopic
 	for name, t := range listResult {
+
+		cleanupPolicy := "delete"
+		if policy, ok := t.ConfigEntries["cleanup.policy"]; ok {
+			cleanupPolicy = *policy
+		}
+
 		topics = append(topics, ListedTopic{
 			name,
 			int(t.NumPartitions),
 			int(t.ReplicationFactor),
+			cleanupPolicy,
 		})
 	}
 	topicsChan <- topics
