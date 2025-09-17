@@ -79,7 +79,7 @@ func (ka *SaramaKafkaAdmin) doListTopics(
 	var topics []ListedTopic
 	for name, t := range listResult {
 
-		cleanupPolicy := "delete"
+		cleanupPolicy := "unknown"
 		if policy, ok := t.ConfigEntries["cleanup.policy"]; ok {
 			cleanupPolicy = *policy
 		}
