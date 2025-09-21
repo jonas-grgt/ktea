@@ -23,28 +23,17 @@ type Model struct {
 	table              *table.Model
 	border             *border.Model
 	cmdBar             *ConsumptionCmdBar
-	consumerRecordChan chan kadmin.ConsumerRecord
-	emptyTopicChan     chan bool
 	cancelConsumption  context.CancelFunc
-	errChan            chan error
 	reader             kadmin.RecordReader
 	rows               []table.Row
 	records            []kadmin.ConsumerRecord
 	readDetails        kadmin.ReadDetails
 	consuming          bool
 	noRecordsAvailable bool
+	noRecordsFound     bool
 	topic              *kadmin.ListedTopic
 	origin             nav.Origin
 	navigator          tabs.TopicsTabNavigator
-}
-
-type ConsumerRecordReceived struct {
-	Record kadmin.ConsumerRecord
-}
-
-type ConsumptionEndedMsg struct{}
-
-type EmptyTopicMsg struct {
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -54,6 +43,9 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	if m.noRecordsAvailable {
 		views = append(views, styles.CenterText(ktx.WindowWidth, ktx.AvailableHeight).
 			Render("👀 Empty topic"))
+	} else if m.noRecordsFound {
+		views = append(views, styles.CenterText(ktx.WindowWidth, ktx.AvailableHeight).
+			Render("👀 No records found for the given criteria"))
 	} else if len(m.rows) > 0 {
 		m.table.SetColumns([]table.Column{
 			{Title: "Key", Width: int(float64(ktx.WindowWidth-9) * 0.5)},
@@ -97,7 +89,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		} else if msg.String() == "f2" {
 			m.cancelConsumption()
 			m.consuming = false
-			cmds = append(cmds, ui.PublishMsg(ConsumptionEndedMsg{}))
+			//cmds = append(cmds, ui.PublishMsg(ConsumptionEndedMsg{}))
 		} else if msg.String() == "enter" {
 			if len(m.records) > 0 {
 				selectedRow := m.records[len(m.records)-m.table.Cursor()-1]
@@ -112,57 +104,43 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.table = &t
 			cmds = append(cmds, cmd)
 		}
-	case EmptyTopicMsg:
+	case kadmin.EmptyTopicMsg:
 		m.noRecordsAvailable = true
 		m.consuming = false
-	case kadmin.ReadingStartedMsg:
+	case kadmin.NoRecordsFound:
+		m.noRecordsFound = true
+		m.consuming = false
+	case *kadmin.ReadingStartedMsg:
 		m.consuming = true
-		m.consumerRecordChan = msg.ConsumerRecord
-		m.emptyTopicChan = msg.EmptyTopic
-		m.errChan = msg.Err
-		cmds = append(cmds, m.waitForActivity())
-	case ConsumptionEndedMsg:
+		cmds = append(cmds, msg.AwaitRecord)
+	case kadmin.ConsumptionEndedMsg:
 		m.consuming = false
 		return nil
-	case ConsumerRecordReceived:
+	case kadmin.ConsumerRecordReceived:
 		var key string
-		if msg.Record.Key == "" {
-			key = "<null>"
-		} else {
-			key = msg.Record.Key
-		}
-		m.records = append(m.records, msg.Record)
-		m.rows = append(
-			[]table.Row{
-				{
-					key,
-					msg.Record.Timestamp.Format("2006-01-02 15:04:05"),
-					strconv.FormatInt(msg.Record.Partition, 10),
-					strconv.FormatInt(msg.Record.Offset, 10),
+		for _, rec := range msg.Record {
+			if rec.Key == "" {
+				key = "<null>"
+			} else {
+				key = rec.Key
+			}
+			m.records = append(m.records, rec)
+			m.rows = append(
+				[]table.Row{
+					{
+						key,
+						rec.Timestamp.Format("2006-01-02 15:04:05"),
+						strconv.FormatInt(rec.Partition, 10),
+						strconv.FormatInt(rec.Offset, 10),
+					},
 				},
-			},
-			m.rows...,
-		)
-		return m.waitForActivity()
+				m.rows...,
+			)
+		}
+		return msg.AwaitNextRecord
 	}
 
 	return tea.Batch(cmds...)
-}
-
-func (m *Model) waitForActivity() tea.Cmd {
-	return func() tea.Msg {
-		select {
-		case record, ok := <-m.consumerRecordChan:
-			if !ok {
-				return ConsumptionEndedMsg{}
-			}
-			return ConsumerRecordReceived{Record: record}
-		case <-m.emptyTopicChan:
-			return EmptyTopicMsg{}
-		case err := <-m.errChan:
-			return err
-		}
-	}
 }
 
 func (m *Model) Shortcuts() []statusbar.Shortcut {

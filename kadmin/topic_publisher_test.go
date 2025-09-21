@@ -43,7 +43,7 @@ func TestPublish(t *testing.T) {
 			PartitionToRead: []int{0},
 			StartPoint:      Beginning,
 			Limit:           1,
-		}).(ReadingStartedMsg)
+		}).(*ReadingStartedMsg)
 		assert.EventuallyWithT(t, func(c *assert.CollectT) {
 			assert.Equal(c, "{\"id\":\"123\"}", (<-rsm.ConsumerRecord).Payload.Value)
 		}, 2*time.Second, 10*time.Millisecond)
@@ -91,7 +91,7 @@ func TestPublish(t *testing.T) {
 			PartitionToRead: []int{0},
 			StartPoint:      0,
 			Limit:           1,
-		}).(ReadingStartedMsg)
+		}).(*ReadingStartedMsg)
 
 		var receivedRecords []ConsumerRecord
 		for {
@@ -155,7 +155,7 @@ func TestPublish(t *testing.T) {
 		rsm := ka.ReadRecords(context.Background(), ReadDetails{
 			TopicName:       topic,
 			PartitionToRead: []int{2},
-		}).(ReadingStartedMsg)
+		}).(*ReadingStartedMsg)
 		assert.EventuallyWithT(t, func(c *assert.CollectT) {
 			record := <-rsm.ConsumerRecord
 			assert.Equal(c, "{\"id\":\"123\"}", record.Payload.Value)

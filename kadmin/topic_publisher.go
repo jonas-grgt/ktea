@@ -4,6 +4,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/burdiyan/kafkautil"
 	tea "github.com/charmbracelet/bubbletea"
+	"time"
 )
 
 type Publisher interface {
@@ -16,6 +17,7 @@ type ProducerRecord struct {
 	Topic     string
 	Partition *int
 	Headers   map[string]string
+	Timestamp time.Time
 }
 
 type PublicationStartedMsg struct {
@@ -79,6 +81,7 @@ func (ka *SaramaKafkaAdmin) doPublishRecord(
 		Value:     sarama.ByteEncoder(p.Value),
 		Partition: partition,
 		Headers:   headers,
+		Timestamp: p.Timestamp,
 	})
 	if err != nil {
 		errChan <- err

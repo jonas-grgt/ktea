@@ -1,6 +1,7 @@
 package consume_form_page
 
 import (
+	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
@@ -12,6 +13,7 @@ import (
 	"ktea/ui/pages/nav"
 	"ktea/ui/tabs"
 	"strconv"
+	"time"
 )
 
 type selectionState int
@@ -27,20 +29,33 @@ type Model struct {
 	windowResized             bool
 	keyFilterSelectionState   selectionState
 	valueFilterSelectionState selectionState
+	startPointRelativeDate    selectionState
+	startPointAbsoluteDate    selectionState
 	ktx                       *kontext.ProgramKtx
 	availableHeight           int
 	topic                     *kadmin.ListedTopic
 	navigator                 tabs.TopicsTabNavigator
 }
 
+type startPoint int
+
+const (
+	beginning startPoint = iota
+	mostRecent
+	relativeDate
+	absoluteDate
+)
+
 type formValues struct {
-	startPoint      kadmin.StartPoint
-	limit           int
-	partitions      []int
-	keyFilter       kadmin.FilterType
-	keyFilterTerm   string
-	valueFilter     kadmin.FilterType
-	valueFilterTerm string
+	startFrom          startPoint
+	relativeStartPoint kadmin.StartPoint
+	absoluteStartPoint string
+	limit              int
+	partitions         []int
+	keyFilter          kadmin.FilterType
+	keyFilterTerm      string
+	valueFilter        kadmin.FilterType
+	valueFilterTerm    string
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -66,6 +81,26 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	form, cmd := m.form.Update(msg)
 	if f, ok := form.(*huh.Form); ok {
 		m.form = f
+	}
+
+	if m.formValues.startFrom == relativeDate && m.startPointRelativeDate == notSelected {
+		// if start point relative is selected and previously not selected
+		m.startPointRelativeDate = selected
+		m.form = m.newForm(m.topic.PartitionCount, m.ktx)
+	} else if m.formValues.startFrom != relativeDate && m.startPointRelativeDate == selected {
+		// if no start point relative is selected and previously selected
+		m.startPointRelativeDate = notSelected
+		m.form = m.newForm(m.topic.PartitionCount, m.ktx)
+	}
+
+	if m.formValues.startFrom == absoluteDate && m.startPointAbsoluteDate == notSelected {
+		// if start point absolute is selected and previously not selected
+		m.startPointAbsoluteDate = selected
+		m.form = m.newForm(m.topic.PartitionCount, m.ktx)
+	} else if m.formValues.startFrom != absoluteDate && m.startPointAbsoluteDate == selected {
+		// if no start point absolute is selected and previously selected
+		m.startPointAbsoluteDate = notSelected
+		m.form = m.newForm(m.topic.PartitionCount, m.ktx)
 	}
 
 	if m.formValues.keyFilter != kadmin.NoFilterType && m.keyFilterSelectionState == notSelected {
@@ -141,11 +176,26 @@ func (m *Model) submit(filter kadmin.Filter) tea.Cmd {
 		ReadDetails: kadmin.ReadDetails{
 			TopicName:       m.topic.Name,
 			PartitionToRead: partToConsume,
-			StartPoint:      m.formValues.startPoint,
+			StartPoint:      m.toStartPoint(),
 			Limit:           m.formValues.limit,
 			Filter:          &filter,
 		},
 	})
+}
+
+func (m *Model) toStartPoint() kadmin.StartPoint {
+	switch m.formValues.startFrom {
+	case beginning:
+		return kadmin.Beginning
+	case mostRecent:
+		return kadmin.MostRecent
+	case relativeDate:
+		return m.formValues.relativeStartPoint
+	case absoluteDate:
+		t, _ := time.Parse(time.RFC3339, m.formValues.absoluteStartPoint)
+		return kadmin.StartPoint(t.UnixMilli())
+	}
+	panic(fmt.Sprintf("unknown start point %v", m.formValues.startFrom))
 }
 
 func (m *Model) noPartitionsSelected() bool {
@@ -171,19 +221,82 @@ func (m *Model) newForm(partitions int, ktx *kontext.ProgramKtx) *huh.Form {
 	for i := 0; i < partitions; i++ {
 		partOptions = append(partOptions, huh.NewOption[int](strconv.Itoa(i), i))
 	}
-	optionsHeight := 13 // 12 fixed height of form minus partitions field + padding and margins
+	optionsHeight := 16 // 16 fixed height of form minus partitions field + padding and margins
+
+	if m.startPointRelativeDate == selected {
+		optionsHeight += 5
+	}
+
+	if m.startPointAbsoluteDate == selected {
+		optionsHeight += 4
+	}
+
 	if len(partOptions) < 13 {
 		optionsHeight = len(partOptions) + 2 // 2 for field title + padding
 	} else {
 		optionsHeight = m.availableHeight - optionsHeight
 	}
+
 	topicGroup := huh.NewGroup(
-		huh.NewSelect[kadmin.StartPoint]().
-			Value(&m.formValues.startPoint).
-			Title("Start form").
+		m.createTopicGroup(optionsHeight, ktx, partOptions)...)
+
+	filterGroup := m.createFilterGroup()
+	form := huh.NewForm(
+		topicGroup.WithWidth(ktx.WindowWidth/2),
+		filterGroup,
+	)
+	form.WithLayout(huh.LayoutColumns(2))
+	form.Init()
+	return form
+}
+
+func (m *Model) createTopicGroup(
+	optionsHeight int,
+	ktx *kontext.ProgramKtx,
+	partOptions []huh.Option[int],
+) []huh.Field {
+	var fields []huh.Field
+
+	fields = append(fields,
+		huh.NewSelect[startPoint]().
+			Value(&m.formValues.startFrom).
+			Title("Start from").
 			Options(
-				huh.NewOption("Beginning", kadmin.Beginning),
-				huh.NewOption("Most Recent", kadmin.MostRecent)),
+				huh.NewOption("Beginning", beginning),
+				huh.NewOption("Most Recent", mostRecent),
+				huh.NewOption("Relative Date", relativeDate),
+				huh.NewOption("Absolute Date", absoluteDate)),
+	)
+
+	if m.formValues.startFrom == relativeDate {
+		fields = append(
+			fields,
+			huh.NewSelect[kadmin.StartPoint]().
+				Value(&m.formValues.relativeStartPoint).
+				Title("Relatively Start from").
+				Options(
+					huh.NewOption("Today", kadmin.Today),
+					huh.NewOption("Yesterday", kadmin.Yesterday),
+					huh.NewOption("Week ago", kadmin.Last7Days)))
+	}
+
+	if m.formValues.startFrom == absoluteDate {
+		fields = append(
+			fields,
+			huh.NewInput().
+				Value(&m.formValues.absoluteStartPoint).
+				Description("format(RFC3339): 1986-01-16T23:20:50.52Z").
+				Validate(func(v string) error {
+					if _, e := time.Parse(time.RFC3339, v); e != nil {
+						return fmt.Errorf("invalid date time format")
+					}
+					return nil
+				}).
+				Title("Absolutely Start from"))
+	}
+
+	fields = append(
+		fields,
 		huh.NewMultiSelect[int]().
 			Value(&m.formValues.partitions).
 			Height(optionsHeight).
@@ -196,16 +309,8 @@ func (m *Model) newForm(partitions int, ktx *kontext.ProgramKtx) *huh.Form {
 			Options(
 				huh.NewOption("50", 50),
 				huh.NewOption("500", 500),
-				huh.NewOption("5000", 5000)),
-	)
-	filterGroup := m.createFilterGroup()
-	form := huh.NewForm(
-		topicGroup.WithWidth(ktx.WindowWidth/2),
-		filterGroup,
-	)
-	form.WithLayout(huh.LayoutColumns(2))
-	form.Init()
-	return form
+				huh.NewOption("5000", 5000)))
+	return fields
 }
 
 func (m *Model) createFilterGroup() *huh.Group {
@@ -288,14 +393,43 @@ func NewWithDetails(
 		navigator: navigator,
 		topic:     topic,
 		formValues: &formValues{
-			startPoint:      details.StartPoint,
-			limit:           details.Limit,
-			partitions:      partitionsToRead,
-			keyFilter:       details.Filter.KeyFilter,
-			keyFilterTerm:   details.Filter.KeySearchTerm,
-			valueFilter:     details.Filter.ValueFilter,
-			valueFilterTerm: details.Filter.ValueSearchTerm,
+			startFrom:          toFormStartPoint(details.StartPoint),
+			absoluteStartPoint: toAbsoluteStartPoint(details.StartPoint),
+			relativeStartPoint: details.StartPoint,
+			limit:              details.Limit,
+			partitions:         partitionsToRead,
+			keyFilter:          details.Filter.KeyFilter,
+			keyFilterTerm:      details.Filter.KeySearchTerm,
+			valueFilter:        details.Filter.ValueFilter,
+			valueFilterTerm:    details.Filter.ValueSearchTerm,
 		}}
+}
+
+func toAbsoluteStartPoint(sp kadmin.StartPoint) string {
+	switch sp {
+	case kadmin.Beginning, kadmin.MostRecent, kadmin.Today, kadmin.Yesterday, kadmin.Last7Days:
+		return ""
+	case kadmin.Live:
+		panic("live not supported in form")
+	default:
+		t := time.UnixMilli(int64(sp))
+		return t.Format(time.RFC3339)
+	}
+}
+
+func toFormStartPoint(sp kadmin.StartPoint) startPoint {
+	switch sp {
+	case kadmin.Beginning:
+		return beginning
+	case kadmin.MostRecent:
+		return mostRecent
+	case kadmin.Today, kadmin.Yesterday, kadmin.Last7Days:
+		return relativeDate
+	case kadmin.Live:
+		panic("live not supported in form")
+	default:
+		return absoluteDate
+	}
 }
 
 func New(

@@ -8,9 +8,11 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
+	statusbar "ktea/ui/components/statusbar"
 	"ktea/ui/pages/nav"
 	"ktea/ui/tabs"
 	"testing"
+	"time"
 )
 
 func TestConsumeForm_Navigation(t *testing.T) {
@@ -58,8 +60,8 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		ktx := &kontext.ProgramKtx{
 			Config:          nil,
 			WindowWidth:     100,
-			WindowHeight:    20,
-			AvailableHeight: 20,
+			WindowHeight:    23,
+			AvailableHeight: 23,
 		}
 		m := New(
 			&kadmin.ListedTopic{
@@ -139,6 +141,118 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			for i := 0; i < 10; i++ {
 				assert.NotContains(t, render, fmt.Sprintf("✓ %d", i))
 			}
+		})
+
+		t.Run("Start from Absolute date was selected", func(t *testing.T) {
+			now := time.Date(2024, 6, 1, 12, 34, 56, 0, time.UTC)
+			m := NewWithDetails(&kadmin.ReadDetails{
+				TopicName:       "topic1",
+				PartitionToRead: []int{3, 6},
+				StartPoint:      kadmin.StartPoint(now.UnixMilli()),
+				Filter:          &kadmin.Filter{},
+				Limit:           500,
+			}, &kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       3,
+			}, nil, tests.NewKontext())
+
+			// make sure form has been initialized
+			m.View(tests.NewKontext(), tests.Renderer)
+
+			render := m.View(tests.Kontext, tests.Renderer)
+
+			assert.Contains(t, render, "> Absolute Date")
+			assert.NotContains(t, render, "> Relative Date")
+			assert.NotContains(t, render, "> Most Recent")
+			assert.NotContains(t, render, "> Beginning")
+			assert.Contains(t, render, "> 2024-06-01T")
+		})
+
+		t.Run("Start from Relative ", func(t *testing.T) {
+			t.Run("Today", func(t *testing.T) {
+				m := NewWithDetails(&kadmin.ReadDetails{
+					TopicName:       "topic1",
+					PartitionToRead: []int{3, 6},
+					StartPoint:      kadmin.Today,
+					Filter:          &kadmin.Filter{},
+					Limit:           500,
+				}, &kadmin.ListedTopic{
+					Name:           "topic1",
+					PartitionCount: 10,
+					Replicas:       3,
+				}, nil, tests.NewKontext())
+
+				// make sure form has been initialized
+				m.View(tests.NewKontext(), tests.Renderer)
+
+				render := m.View(tests.Kontext, tests.Renderer)
+
+				assert.Contains(t, render, "> Relative Date")
+				assert.NotContains(t, render, "> Absolute Date")
+
+				assert.Contains(t, render, "> Today")
+				assert.NotContains(t, render, "> Yesterday")
+				assert.NotContains(t, render, "> Week ago")
+
+				assert.NotContains(t, render, "Absolutely Start form")
+			})
+
+			t.Run("Yesterday", func(t *testing.T) {
+				m := NewWithDetails(&kadmin.ReadDetails{
+					TopicName:       "topic1",
+					PartitionToRead: []int{3, 6},
+					StartPoint:      kadmin.Yesterday,
+					Filter:          &kadmin.Filter{},
+					Limit:           500,
+				}, &kadmin.ListedTopic{
+					Name:           "topic1",
+					PartitionCount: 10,
+					Replicas:       3,
+				}, nil, tests.NewKontext())
+
+				// make sure form has been initialized
+				m.View(tests.NewKontext(), tests.Renderer)
+
+				render := m.View(tests.Kontext, tests.Renderer)
+
+				assert.Contains(t, render, "> Relative Date")
+				assert.NotContains(t, render, "> Absolute Date")
+
+				assert.NotContains(t, render, "> Today")
+				assert.Contains(t, render, "> Yesterday")
+				assert.NotContains(t, render, "> Week ago")
+
+				assert.NotContains(t, render, "Absolutely Start form")
+			})
+
+			t.Run("Last 7 Days", func(t *testing.T) {
+				m := NewWithDetails(&kadmin.ReadDetails{
+					TopicName:       "topic1",
+					PartitionToRead: []int{3, 6},
+					StartPoint:      kadmin.Last7Days,
+					Filter:          &kadmin.Filter{},
+					Limit:           500,
+				}, &kadmin.ListedTopic{
+					Name:           "topic1",
+					PartitionCount: 10,
+					Replicas:       3,
+				}, nil, tests.NewKontext())
+
+				// make sure form has been initialized
+				m.View(tests.NewKontext(), tests.Renderer)
+
+				render := m.View(tests.Kontext, tests.Renderer)
+
+				assert.Contains(t, render, "> Relative Date")
+				assert.NotContains(t, render, "> Absolute Date")
+
+				assert.NotContains(t, render, "> Today")
+				assert.NotContains(t, render, "> Yesterday")
+				assert.Contains(t, render, "> Week ago")
+
+				assert.NotContains(t, render, "Absolutely Start form")
+			})
 		})
 
 	})
@@ -535,6 +649,194 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				},
 				Origin: nav.OriginConsumeFormPage,
 			}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
+		})
+	})
+
+	t.Run("invalidate invalid absolute start from date", func(t *testing.T) {
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
+		// make sure form has been initialized
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		// select start from absolute date
+		cmd := m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		// next field
+		m.Update(cmd())
+		tests.UpdateKeys(m, "2024-06- 01F 12:34:56Z")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+
+		render := m.View(tests.Kontext, tests.Renderer)
+
+		assert.Contains(t, render, "invalid date time format")
+	})
+
+	t.Run("validate valid absolute start from date", func(t *testing.T) {
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
+		// make sure form has been initialized
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		// select start from absolute date
+		cmd := m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		// next field
+		m.Update(cmd())
+		tests.UpdateKeys(m, "2024-06-01T12:34:56Z")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		// next field
+		m.Update(cmd())
+
+		render := m.View(tests.Kontext, tests.Renderer)
+
+		assert.NotContains(t, render, "invalid date time format")
+		assert.Contains(t, render, "┃ Partitions")
+	})
+
+	t.Run("shortcuts", func(t *testing.T) {
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
+
+		sc := m.Shortcuts()
+
+		assert.Equal(t, []statusbar.Shortcut{
+			{"Confirm", "enter"},
+			{"Next Field", "tab"},
+			{"Prev. Field", "s-tab"},
+			{"Select Partition", "space"},
+			{"Go Back", "esc"},
+		}, sc)
+	})
+
+	t.Run("title", func(t *testing.T) {
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
+
+		assert.Equal(t, "Consumption details", m.Title())
+	})
+
+	t.Run("selecting Relative Date displays Relative Start from options", func(t *testing.T) {
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
+		// make sure form has been initialized
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		render := m.View(&kontext.ProgramKtx{
+			Config:          nil,
+			WindowWidth:     100,
+			WindowHeight:    20,
+			AvailableHeight: 20,
+		}, tests.Renderer)
+
+		assert.NotContains(t, render, "Relatively Start from")
+
+		// select start from Relative Date
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+
+		render = m.View(&kontext.ProgramKtx{
+			Config:          nil,
+			WindowWidth:     100,
+			WindowHeight:    20,
+			AvailableHeight: 20,
+		}, tests.Renderer)
+
+		assert.Contains(t, render, "Relatively Start from")
+
+		t.Run("Deselecting hides it", func(t *testing.T) {
+			m.Update(tests.Key(tea.KeyDown))
+
+			render = m.View(&kontext.ProgramKtx{
+				Config:          nil,
+				WindowWidth:     100,
+				WindowHeight:    20,
+				AvailableHeight: 20,
+			}, tests.Renderer)
+
+			assert.NotContains(t, render, "Relatively Start from")
+		})
+	})
+
+	t.Run("selecting Absolute Date displays Absolute Date TextField", func(t *testing.T) {
+		m := New(
+			&kadmin.ListedTopic{
+				Name:           "topic1",
+				PartitionCount: 10,
+				Replicas:       1,
+			},
+			tabs.NewMockTopicsTabNavigator(),
+			tests.NewKontext())
+		// make sure form has been initialized
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		render := m.View(&kontext.ProgramKtx{
+			Config:          nil,
+			WindowWidth:     100,
+			WindowHeight:    20,
+			AvailableHeight: 20,
+		}, tests.Renderer)
+
+		assert.NotContains(t, render, "Absolutely Start from")
+
+		// select start from Relative Date
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+		m.Update(tests.Key(tea.KeyDown))
+
+		render = m.View(&kontext.ProgramKtx{
+			Config:          nil,
+			WindowWidth:     100,
+			WindowHeight:    20,
+			AvailableHeight: 20,
+		}, tests.Renderer)
+
+		assert.Contains(t, render, "Absolutely Start from")
+
+		t.Run("Deselecting hides it", func(t *testing.T) {
+			m.Update(tests.Key(tea.KeyUp))
+
+			render = m.View(&kontext.ProgramKtx{
+				Config:          nil,
+				WindowWidth:     100,
+				WindowHeight:    20,
+				AvailableHeight: 20,
+			}, tests.Renderer)
+
+			assert.NotContains(t, render, "Absolutely Start from")
 		})
 	})
 }
