@@ -59,11 +59,15 @@ func NewConsumptionCmdbar() *ConsumptionCmdBar {
 	c := func(msg nav.LoadCachedConsumptionPageMsg, m *notifier.Model) (bool, tea.Cmd) {
 		return true, m.SpinWithLoadingMsg("Consuming")
 	}
-	consumptionEndedNotifier := func(msg ConsumptionEndedMsg, m *notifier.Model) (bool, tea.Cmd) {
+	consumptionEndedNotifier := func(msg kadmin.ConsumptionEndedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		m.Idle()
 		return false, nil
 	}
-	emptyTopicMsgHandler := func(_ EmptyTopicMsg, m *notifier.Model) (bool, tea.Cmd) {
+	emptyTopicMsgHandler := func(_ kadmin.EmptyTopicMsg, m *notifier.Model) (bool, tea.Cmd) {
+		m.Idle()
+		return false, nil
+	}
+	noRecordFoundMsgHandler := func(_ kadmin.NoRecordsFound, m *notifier.Model) (bool, tea.Cmd) {
 		m.Idle()
 		return false, nil
 	}
@@ -71,6 +75,7 @@ func NewConsumptionCmdbar() *ConsumptionCmdBar {
 	cmdbar.WithMsgHandler(notifierCmdBar, readingStartedNotifier)
 	cmdbar.WithMsgHandler(notifierCmdBar, consumptionEndedNotifier)
 	cmdbar.WithMsgHandler(notifierCmdBar, emptyTopicMsgHandler)
+	cmdbar.WithMsgHandler(notifierCmdBar, noRecordFoundMsgHandler)
 	cmdbar.WithMsgHandler(notifierCmdBar, c)
 	return &ConsumptionCmdBar{
 		notifierWidget: notifierCmdBar,

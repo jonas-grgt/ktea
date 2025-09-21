@@ -7,6 +7,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 	"github.com/linkedin/goavro/v2"
+	"golang.org/x/exp/rand"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/sradmin"
@@ -350,24 +351,7 @@ func main() {
 	for _, gd := range genData {
 		go func() {
 			defer wg.Done()
-			if !topicExists(ka, gd.topic) {
-				createTopic(ka, gd.topic)
-			}
-
-			if !subjectExists(sa, gd.subject) {
-				for _, s := range gd.schema {
-					registerSchema(sa, gd.subject, s)
-				}
-			}
-
-			schemaInfo := getLatestSchema(sa, gd.subject)
-
-			for i := 0; i < 1000; i++ {
-				id := uuid.New().String()
-				event := gd.eventGenFunc(id)
-				publish(ka, gd.topic, id, event, schemaInfo)
-			}
-			fmt.Printf("Published 1000 events to topic %s with subject %s\n", gd.topic, gd.subject)
+			generateData(ka, gd, sa, 1000)
 		}()
 	}
 
@@ -397,6 +381,27 @@ func main() {
 		}
 	}
 
+}
+
+func generateData(ka kadmin.Kadmin, gd generationData, sa sradmin.Client, count int) {
+	if !topicExists(ka, gd.topic) {
+		createTopic(ka, gd.topic)
+	}
+
+	if !subjectExists(sa, gd.subject) {
+		for _, s := range gd.schema {
+			registerSchema(sa, gd.subject, s)
+		}
+	}
+
+	schemaInfo := getLatestSchema(sa, gd.subject)
+
+	for i := 0; i < count; i++ {
+		id := uuid.New().String()
+		event := gd.eventGenFunc(id)
+		publish(ka, gd.topic, id, event, schemaInfo)
+	}
+	fmt.Printf("Published 1000 events to topic %s with subject %s\n", gd.topic, gd.subject)
 }
 
 type handler struct {
@@ -515,9 +520,13 @@ func getAdmins() (kadmin.Kadmin, sradmin.Client) {
 }
 
 func createTopic(ka kadmin.Kadmin, topic string) {
+	partitions := 1
+	if (rand.Intn(1) % 2) == 0 {
+		partitions = rand.Intn(10) + 1
+	}
 	tm := ka.CreateTopic(kadmin.TopicCreationDetails{
 		Name:              topic,
-		NumPartitions:     1,
+		NumPartitions:     partitions,
 		ReplicationFactor: 1,
 	}).(kadmin.TopicCreationStartedMsg)
 

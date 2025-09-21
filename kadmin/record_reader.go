@@ -36,13 +36,37 @@ const (
 	NoFilterType         FilterType = "none"
 )
 
-type StartPoint int
+type StartPoint int64
 
 const (
-	Beginning  StartPoint = 0
-	MostRecent StartPoint = 1
-	Live       StartPoint = 2
+	Beginning StartPoint = iota
+	MostRecent
+	Today
+	Yesterday
+	Last7Days
+	Live
 )
+
+func (p *StartPoint) time() int64 {
+	switch *p {
+	case Beginning, MostRecent, Live:
+		return sarama.OffsetOldest
+	case Today:
+		t := time.Now()
+		startOfDay := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		return startOfDay.UnixMilli()
+	case Yesterday:
+		t := time.Now().AddDate(0, 0, -1)
+		startOfDay := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		return startOfDay.UnixMilli()
+	case Last7Days:
+		t := time.Now().AddDate(0, 0, -7)
+		startOfDay := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		return startOfDay.UnixMilli()
+	}
+
+	return int64(*p)
+}
 
 type RecordReader interface {
 	ReadRecords(ctx context.Context, rd ReadDetails) tea.Msg
@@ -51,9 +75,114 @@ type RecordReader interface {
 type ReadingStartedMsg struct {
 	ConsumerRecord chan ConsumerRecord
 	EmptyTopic     chan bool
+	// NoRecordsFound indicates that there are no records in any of the selected partitions
+	// for the given filter criteria.
+	NoRecordsFound chan bool
 	Err            chan error
 	CancelFunc     context.CancelFunc
 }
+
+func (m *ReadingStartedMsg) AwaitRecord() tea.Msg {
+	select {
+	case record, ok := <-m.ConsumerRecord:
+		if !ok {
+			return ConsumptionEndedMsg{}
+		}
+
+		return ConsumerRecordReceived{
+			Record:         []ConsumerRecord{record},
+			consumerRecord: m.ConsumerRecord,
+			emptyTopic:     m.EmptyTopic,
+			noRecordsFound: m.NoRecordsFound,
+			err:            m.Err,
+			cancelFunc:     m.CancelFunc,
+		}
+	case empty := <-m.EmptyTopic:
+		if empty {
+			return EmptyTopicMsg{}
+		}
+		return nil
+	case noRecords := <-m.NoRecordsFound:
+		if noRecords {
+			return NoRecordsFound{
+				consumerRecord: m.ConsumerRecord,
+				emptyTopic:     m.EmptyTopic,
+				noRecordsFound: m.NoRecordsFound,
+				err:            m.Err,
+				cancelFunc:     m.CancelFunc,
+			}
+		}
+		return nil
+	case err := <-m.Err:
+		return err
+	}
+}
+
+func (m *ReadingStartedMsg) shutdown() {
+	m.CancelFunc()
+	close(m.ConsumerRecord)
+	close(m.Err)
+	close(m.EmptyTopic)
+	close(m.NoRecordsFound)
+}
+
+type ConsumerRecordReceived struct {
+	Record         []ConsumerRecord
+	consumerRecord chan ConsumerRecord
+	emptyTopic     chan bool
+	noRecordsFound chan bool
+	err            chan error
+	cancelFunc     context.CancelFunc
+}
+
+func (m *ConsumerRecordReceived) AwaitNextRecord() tea.Msg {
+	log.Debug("awaiting next record")
+	select {
+	case record, ok := <-m.consumerRecord:
+		if !ok {
+			return ConsumptionEndedMsg{}
+		}
+
+		records := []ConsumerRecord{record}
+		timeout := time.After(50 * time.Millisecond)
+		for {
+			select {
+			case r := <-m.consumerRecord:
+				records = append(records, r)
+			case <-timeout:
+				return ConsumerRecordReceived{
+					Record:         records,
+					consumerRecord: m.consumerRecord,
+					emptyTopic:     m.emptyTopic,
+					noRecordsFound: m.noRecordsFound,
+					err:            m.err,
+					cancelFunc:     m.cancelFunc,
+				}
+			}
+		}
+
+	case emptyTopic := <-m.emptyTopic:
+		if emptyTopic {
+			return EmptyTopicMsg{}
+		}
+		return nil
+	case err := <-m.err:
+		return err
+	}
+}
+
+type EmptyTopicMsg struct {
+}
+
+type NoRecordsFound struct {
+	consumerRecord chan ConsumerRecord
+	emptyTopic     chan bool
+	noRecordsFound chan bool
+	err            chan error
+	cancelFunc     context.CancelFunc
+}
+
+type ConsumptionEndedMsg struct{}
 
 type Filter struct {
 	KeyFilter       FilterType
@@ -142,21 +271,22 @@ type ConsumerRecord struct {
 }
 
 type offsets struct {
-	oldest int64
+	start int64
 	// most recent available, unused, offset
-	firstAvailable int64
+	end int64
 }
 
 func (o *offsets) newest() int64 {
-	return o.firstAvailable - 1
+	return o.end - 1
 }
 
 func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea.Msg {
 	ctx, cancelFunc := context.WithCancel(ctx)
-	startedMsg := ReadingStartedMsg{
+	startedMsg := &ReadingStartedMsg{
 		ConsumerRecord: make(chan ConsumerRecord, len(rd.PartitionToRead)),
-		Err:            make(chan error),
-		EmptyTopic:     make(chan bool),
+		Err:            make(chan error, 1),
+		EmptyTopic:     make(chan bool, 1),
+		NoRecordsFound: make(chan bool, 1),
 		CancelFunc:     cancelFunc,
 	}
 
@@ -167,23 +297,21 @@ func (ka *SaramaKafkaAdmin) ReadRecords(ctx context.Context, rd ReadDetails) tea
 func (ka *SaramaKafkaAdmin) doReadRecords(
 	ctx context.Context,
 	rd ReadDetails,
-	startedMsg ReadingStartedMsg,
+	startedMsg *ReadingStartedMsg,
 	cancelFunc context.CancelFunc,
 ) {
 	client, err := sarama.NewConsumerFromClient(ka.client)
 	if err != nil {
-		close(startedMsg.ConsumerRecord)
-		close(startedMsg.Err)
+		startedMsg.shutdown()
 	}
 
 	var (
-		msgCount  atomic.Int64
-		closeOnce sync.Once
-		wg        sync.WaitGroup
-		offsets   map[int]offsets
+		msgCount atomic.Int64
+		wg       sync.WaitGroup
+		offsets  map[int]offsets
 	)
 
-	offsets, err = ka.fetchOffsets(rd.PartitionToRead, rd.TopicName)
+	offsets, err = ka.fetchOffsets(rd.PartitionToRead, rd.TopicName, rd.StartPoint)
 	if err != nil {
 		startedMsg.Err <- err
 		close(startedMsg.ConsumerRecord)
@@ -191,12 +319,18 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 		cancelFunc()
 	}
 
+	if noRecordsFound(offsets) {
+		cancelFunc()
+		startedMsg.NoRecordsFound <- true
+		return
+	}
+
 	wg.Add(len(rd.PartitionToRead))
 
 	emptyTopic := true
 	for _, partition := range rd.PartitionToRead {
 		// if there is no data in the partition, we don't need to read it unless live consumption is requested
-		if offsets[partition].firstAvailable != offsets[partition].oldest || rd.StartPoint == Live {
+		if offsets[partition].end != offsets[partition].start || rd.StartPoint == Live {
 			emptyTopic = false
 			go func(partition int) {
 				defer wg.Done()
@@ -252,20 +386,18 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 							Timestamp: msg.Timestamp,
 						}
 
-						var shouldClose bool
-
 						if msgCount.Add(1) >= int64(rd.Limit) {
-							shouldClose = true
+							select {
+							case startedMsg.ConsumerRecord <- consumerRecord:
+							case <-ctx.Done():
+							}
+							// Now that the last message is sent (or we're exiting), return.
+							return
 						}
 
 						select {
 						case startedMsg.ConsumerRecord <- consumerRecord:
 						case <-ctx.Done():
-							return
-						}
-
-						if shouldClose {
-							cancelFunc() // Cancel the context to stop other goroutines
 							return
 						}
 
@@ -279,17 +411,24 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 	}
 
 	if emptyTopic {
-		cancelFunc()
 		startedMsg.EmptyTopic <- true
 	}
 
 	go func() {
 		wg.Wait()
-		closeOnce.Do(func() {
-			close(startedMsg.ConsumerRecord)
-			close(startedMsg.Err)
-		})
+		time.Sleep(50 * time.Millisecond)
+		startedMsg.shutdown()
 	}()
+}
+
+func noRecordsFound(offsets map[int]offsets) bool {
+	for _, off := range offsets {
+		// -1 indicates that no records exist for the requested offsets
+		if off.start != -1 {
+			return false
+		}
+	}
+	return true
 }
 
 func (ka *SaramaKafkaAdmin) matchesFilter(key, value string, filterDetails *Filter) bool {
@@ -327,7 +466,7 @@ func (ka *SaramaKafkaAdmin) determineReadingOffsets(
 
 	if rd.StartPoint == Live {
 		return readingOffsets{
-			start: offsets.firstAvailable,
+			start: offsets.end,
 			end:   -1,
 		}
 	}
@@ -364,8 +503,8 @@ func (ka *SaramaKafkaAdmin) determineMostRecentOffsets(
 ) (int64, int64) {
 	startOffset = offsets.newest() - numberOfRecordsPerPart
 	endOffset = offsets.newest()
-	if startOffset < 0 || startOffset < offsets.oldest {
-		startOffset = offsets.oldest
+	if startOffset < 0 || startOffset < offsets.start {
+		startOffset = offsets.start
 	}
 	return startOffset, endOffset
 }
@@ -376,8 +515,8 @@ func (ka *SaramaKafkaAdmin) determineOffsetsFromBeginning(
 	numberOfRecordsPerPart int64,
 	endOffset int64,
 ) (int64, int64) {
-	startOffset = offsets.oldest
-	if offsets.oldest+numberOfRecordsPerPart < offsets.newest() {
+	startOffset = offsets.start
+	if offsets.start+numberOfRecordsPerPart < offsets.newest() {
 		endOffset = startOffset + numberOfRecordsPerPart - 1
 	} else {
 		endOffset = offsets.newest()
@@ -388,6 +527,7 @@ func (ka *SaramaKafkaAdmin) determineOffsetsFromBeginning(
 func (ka *SaramaKafkaAdmin) fetchOffsets(
 	partitions []int,
 	topicName string,
+	startPoint StartPoint,
 ) (map[int]offsets, error) {
 	offsetsByPartition := make(map[int]offsets)
 	var wg sync.WaitGroup
@@ -402,7 +542,17 @@ func (ka *SaramaKafkaAdmin) fetchOffsets(
 		go func(partition int) {
 			defer wg.Done()
 
-			firstAvailableOffset, err := ka.client.GetOffset(
+			startOffset, err := ka.client.GetOffset(
+				topicName,
+				int32(partition),
+				startPoint.time(),
+			)
+			if err != nil {
+				errorsChan <- err
+				return
+			}
+
+			endOffset, err := ka.client.GetOffset(
 				topicName,
 				int32(partition),
 				sarama.OffsetNewest,
@@ -412,20 +562,10 @@ func (ka *SaramaKafkaAdmin) fetchOffsets(
 				return
 			}
 
-			oldestOffset, err := ka.client.GetOffset(
-				topicName,
-				int32(partition),
-				sarama.OffsetOldest,
-			)
-			if err != nil {
-				errorsChan <- err
-				return
-			}
-
 			mu.Lock()
 			offsetsByPartition[partition] = offsets{
-				oldestOffset,
-				firstAvailableOffset,
+				startOffset,
+				endOffset,
 			}
 			mu.Unlock()
 		}(partition)

@@ -31,7 +31,7 @@ func TestReadRecords(t *testing.T) {
 			StartPoint:      Beginning,
 			Limit:           50,
 			Filter:          nil,
-		}).(ReadingStartedMsg)
+		}).(*ReadingStartedMsg)
 
 		// then
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -87,7 +87,7 @@ func TestReadRecords(t *testing.T) {
 				StartPoint:      Beginning,
 				Limit:           50,
 				Filter:          nil,
-			}).(ReadingStartedMsg)
+			}).(*ReadingStartedMsg)
 
 			var receivedRecords []int
 			for {
@@ -153,7 +153,7 @@ func TestReadRecords(t *testing.T) {
 				PartitionToRead: []int{0, 1, 2, 3},
 				StartPoint:      Beginning,
 				Limit:           40,
-			}).(ReadingStartedMsg)
+			}).(*ReadingStartedMsg)
 
 			var receivedRecords []int
 			for {
@@ -218,7 +218,7 @@ func TestReadRecords(t *testing.T) {
 				PartitionToRead: []int{0},
 				StartPoint:      MostRecent,
 				Limit:           50,
-			}).(ReadingStartedMsg)
+			}).(*ReadingStartedMsg)
 
 			var receivedRecords []int
 			for {
@@ -280,7 +280,7 @@ func TestReadRecords(t *testing.T) {
 				PartitionToRead: []int{0},
 				StartPoint:      MostRecent,
 				Limit:           500,
-			}).(ReadingStartedMsg)
+			}).(*ReadingStartedMsg)
 
 			var receivedRecords []int
 			for {
@@ -301,6 +301,136 @@ func TestReadRecords(t *testing.T) {
 
 			// clean up
 			ka.DeleteTopic(topic)
+		})
+	})
+
+	t.Run("Read today's records", func(t *testing.T) {
+		t.Run("when there are records from previous days", func(t *testing.T) {
+			topic := topicName()
+			// given
+			msg := ka.CreateTopic(TopicCreationDetails{
+				Name:              topic,
+				NumPartitions:     1,
+				ReplicationFactor: 1,
+			}).(TopicCreationStartedMsg)
+
+			switch msg.AwaitCompletion().(type) {
+			case TopicCreatedMsg:
+			case TopicCreationErrMsg:
+				t.Fatal("Unable to create topic", msg.Err)
+			}
+
+			// when
+			assert.EventuallyWithT(t, func(c *assert.CollectT) {
+				for i := 0; i < 55; i++ {
+					now := time.Now()
+					endOfToday := time.Date(
+						now.Year(),
+						now.Month(),
+						now.Day(),
+						24,
+						59,
+						59,
+						59,
+						now.Location(),
+					)
+					psm := ka.PublishRecord(&ProducerRecord{
+						Topic:     topic,
+						Key:       strconv.Itoa(i),
+						Value:     []byte("{\"id\":\"123\"}"),
+						Timestamp: endOfToday.Add(time.Duration(-55+i) * time.Hour),
+					})
+
+					select {
+					case err := <-psm.Err:
+						t.Fatal(c, "Unable to publish", err)
+					case p := <-psm.Published:
+						assert.True(c, p)
+					}
+				}
+			}, 10*time.Second, 10*time.Millisecond)
+
+			// then
+			rsm := ka.ReadRecords(context.Background(), ReadDetails{
+				TopicName:       topic,
+				PartitionToRead: []int{0},
+				StartPoint:      Today,
+				Limit:           500,
+			}).(*ReadingStartedMsg)
+
+			var receivedRecords []int
+			for {
+				select {
+				case r, ok := <-rsm.ConsumerRecord:
+					if !ok {
+						goto assertRecords
+					}
+					key, _ := strconv.Atoi(r.Key)
+					receivedRecords = append(receivedRecords, key)
+				}
+			}
+
+		assertRecords:
+			{
+				assert.Len(t, receivedRecords, 24)
+			}
+
+			// clean up
+			ka.DeleteTopic(topic)
+		})
+
+		t.Run("when there are no records from previous days", func(t *testing.T) {
+			topic := topicName()
+			// given
+			msg := ka.CreateTopic(TopicCreationDetails{
+				Name:              topic,
+				NumPartitions:     1,
+				ReplicationFactor: 1,
+			}).(TopicCreationStartedMsg)
+
+			switch msg.AwaitCompletion().(type) {
+			case TopicCreatedMsg:
+			case TopicCreationErrMsg:
+				t.Fatal("Unable to create topic", msg.Err)
+			}
+
+			// when
+			assert.EventuallyWithT(t, func(c *assert.CollectT) {
+				for i := 0; i < 55; i++ {
+					twentyFourHoursAgo := time.Now().Add(-25 * time.Hour)
+					psm := ka.PublishRecord(&ProducerRecord{
+						Topic:     topic,
+						Key:       strconv.Itoa(i),
+						Value:     []byte("{\"id\":\"123\"}"),
+						Timestamp: twentyFourHoursAgo.Add(time.Duration(-i) * time.Hour),
+					})
+
+					select {
+					case err := <-psm.Err:
+						t.Fatal(c, "Unable to publish", err)
+					case p := <-psm.Published:
+						assert.True(c, p)
+					}
+				}
+			}, 10*time.Second, 10*time.Millisecond)
+
+			// then
+			rsm := ka.ReadRecords(context.Background(), ReadDetails{
+				TopicName:       topic,
+				PartitionToRead: []int{0},
+				StartPoint:      Today,
+				Limit:           500,
+			}).(*ReadingStartedMsg)
+
+			select {
+			case <-rsm.NoRecordsFound:
+			case <-time.After(5 * time.Second):
+				t.Fatal("timed out waiting for NoRecordsFound signal")
+			}
+
+			// clean up
+			ka.DeleteTopic(topic)
+
 		})
 	})
 
@@ -343,7 +473,7 @@ func TestReadRecords(t *testing.T) {
 			PartitionToRead: []int{0},
 			StartPoint:      Live,
 			Limit:           100,
-		}).(ReadingStartedMsg)
+		}).(*ReadingStartedMsg)
 
 		go func() {
 			assert.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -434,7 +564,7 @@ func TestReadRecords(t *testing.T) {
 						KeySearchTerm: "1",
 						KeyFilter:     ContainsFilterType,
 					},
-				}).(ReadingStartedMsg)
+				}).(*ReadingStartedMsg)
 
 				var receivedRecords []int
 				for {
@@ -504,7 +634,7 @@ func TestReadRecords(t *testing.T) {
 					KeySearchTerm: "1",
 					KeyFilter:     StartsWithFilterType,
 				},
-			}).(ReadingStartedMsg)
+			}).(*ReadingStartedMsg)
 
 			var receivedRecords []int
 			for {
@@ -556,8 +686,8 @@ func TestDetermineStartingOffset(t *testing.T) {
 				Limit:           50,
 			},
 			offsets: offsets{
-				oldest:         1,
-				firstAvailable: 291,
+				start: 1,
+				end:   291,
 			},
 
 			want: want{
@@ -574,8 +704,8 @@ func TestDetermineStartingOffset(t *testing.T) {
 				Limit:           50,
 			},
 			offsets: offsets{
-				oldest:         1,
-				firstAvailable: 291,
+				start: 1,
+				end:   291,
 			},
 
 			want: want{
@@ -592,8 +722,8 @@ func TestDetermineStartingOffset(t *testing.T) {
 				Limit:           50,
 			},
 			offsets: offsets{
-				oldest:         55,
-				firstAvailable: 76,
+				start: 55,
+				end:   76,
 			},
 			want: want{
 				start: 55,
@@ -609,8 +739,8 @@ func TestDetermineStartingOffset(t *testing.T) {
 				Limit:           50,
 			},
 			offsets: offsets{
-				oldest:         10,
-				firstAvailable: 12,
+				start: 10,
+				end:   12,
 			},
 
 			want: want{
@@ -627,8 +757,8 @@ func TestDetermineStartingOffset(t *testing.T) {
 				Limit:           50,
 			},
 			offsets: offsets{
-				oldest:         1,
-				firstAvailable: 291,
+				start: 1,
+				end:   291,
 			},
 
 			want: want{
@@ -645,8 +775,8 @@ func TestDetermineStartingOffset(t *testing.T) {
 				Limit:           50,
 			},
 			offsets: offsets{
-				oldest:         278,
-				firstAvailable: 291,
+				start: 278,
+				end:   291,
 			},
 
 			want: want{

@@ -20,7 +20,7 @@ func TestConsumptionPage(t *testing.T) {
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
-		m.Update(EmptyTopicMsg{})
+		m.Update(kadmin.EmptyTopicMsg{})
 
 		render := m.View(tests.NewKontext(), tests.Renderer)
 
