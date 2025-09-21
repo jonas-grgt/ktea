@@ -10,11 +10,13 @@ import (
 )
 
 func TestKtea(t *testing.T) {
+
+	disableNerdFonts := true
+
 	t.Run("No clusters configured", func(t *testing.T) {
 		t.Run("Shows create cluster page", func(t *testing.T) {
-			model := NewModel(kadmin.NewMockKadminInstantiator(), config.NewInMemoryConfigIO(&config.Config{}))
+			model := NewModel(&disableNerdFonts, kadmin.NewMockKadminInstantiator(), config.NewInMemoryConfigIO(&config.Config{}))
 			model.ktx = &kontext.ProgramKtx{
-				Config:          &config.Config{},
 				WindowWidth:     200,
 				WindowHeight:    200,
 				AvailableHeight: 200,
@@ -49,7 +51,6 @@ func TestKtea(t *testing.T) {
 							},
 							SASLConfig: nil,
 						},
-
 						{
 							Name:             "tst",
 							Color:            "#808080",
@@ -61,7 +62,7 @@ func TestKtea(t *testing.T) {
 					},
 				},
 			)
-			model := NewModel(kadmin.NewMockKadminInstantiator(), io)
+			model := NewModel(&disableNerdFonts, kadmin.NewMockKadminInstantiator(), io)
 			model.Update(config.LoadedMsg{Config: config.New(io)})
 
 			model.Update(tea.WindowSizeMsg{

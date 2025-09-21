@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kcadmin"
-	"ktea/kontext"
 	"ktea/tests"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/tabs"
@@ -13,19 +12,13 @@ import (
 )
 
 func TestUpsertKcModel(t *testing.T) {
-	var ktx = kontext.ProgramKtx{
-		WindowWidth:     100,
-		WindowHeight:    100,
-		AvailableHeight: 100,
-		Config: &config.Config{
-			Clusters: []config.Cluster{},
-		},
-	}
+
+	ktx := tests.NewKontext()
 
 	t.Run("Immediately show form when no clusters registered", func(t *testing.T) {
 		m := NewUpsertKcModel(
 			tabs.NewMockClustersTabNavigator(),
-			&ktx,
+			ktx,
 			nil,
 			[]config.KafkaConnectConfig{},
 			kcadmin.NewMockConnChecker(),
@@ -33,7 +26,7 @@ func TestUpsertKcModel(t *testing.T) {
 			mockKafkaConnectRegisterer,
 		)
 
-		render := m.View(&ktx, tests.Renderer)
+		render := m.View(ktx, tests.Renderer)
 
 		assert.Contains(t, render, "Kafka Connect Name")
 		assert.Contains(t, render, "Kafka Connect URL")
@@ -84,7 +77,7 @@ func TestUpsertKcModel(t *testing.T) {
 	t.Run("Set username and password to nil when left empty", func(t *testing.T) {
 		m := NewUpsertKcModel(
 			tabs.NewMockClustersTabNavigator(),
-			&ktx,
+			ktx,
 			nil,
 			[]config.KafkaConnectConfig{},
 			kcadmin.NewMockConnChecker(),
@@ -127,7 +120,7 @@ func TestUpsertKcModel(t *testing.T) {
 		password := "doe"
 		m := NewUpsertKcModel(
 			tabs.NewMockClustersTabNavigator(),
-			&ktx,
+			ktx,
 			nil,
 			[]config.KafkaConnectConfig{
 				{
@@ -142,7 +135,7 @@ func TestUpsertKcModel(t *testing.T) {
 			mockKafkaConnectRegisterer,
 		)
 
-		render := m.View(&ktx, tests.Renderer)
+		render := m.View(ktx, tests.Renderer)
 
 		assert.NotContains(t, render, "Kafka Connect URL")
 		assert.NotContains(t, render, "Kafka Connect Username")

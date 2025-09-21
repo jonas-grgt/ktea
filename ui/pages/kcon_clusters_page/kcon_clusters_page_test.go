@@ -36,12 +36,11 @@ func TestKConsPage(t *testing.T) {
 		}
 		page, _ := New(&cluster, kcon_page.LoadKConPageMock)
 
-		ktx := tests.Kontext
-		ktx.Config = &config.Config{
+		ktx := tests.NewKontext(tests.WithConfig(&config.Config{
 			Clusters: []config.Cluster{
 				cluster,
 			},
-		}
+		}))
 
 		render := page.View(ktx, tests.Renderer)
 
@@ -68,10 +67,11 @@ func TestKConsPage(t *testing.T) {
 		}
 		page, _ := New(&cluster, kcon_page.LoadKConPageMock)
 
-		ktx := tests.Kontext
-		ktx.Config = &config.Config{
-			Clusters: []config.Cluster{cluster},
-		}
+		ktx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				cluster,
+			},
+		}))
 
 		page.View(ktx, tests.Renderer)
 		cmd := page.Update(tests.Key(tea.KeyEnter))

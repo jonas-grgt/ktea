@@ -14,7 +14,7 @@ type ContextOption func(ktx *kontext.ProgramKtx)
 
 func WithConfig(config *config.Config) ContextOption {
 	return func(ktx *kontext.ProgramKtx) {
-		ktx.Config = config
+		ktx.RegisterConfig(config)
 	}
 }
 
@@ -26,11 +26,11 @@ func WithWindowWidth(width int) ContextOption {
 
 func NewKontext(options ...ContextOption) *kontext.ProgramKtx {
 	model := &kontext.ProgramKtx{
-		Config:          nil,
 		WindowWidth:     100,
 		WindowHeight:    100,
 		AvailableHeight: 100,
 	}
+	model.RegisterConfig(&config.Config{})
 	for _, option := range options {
 		option(model)
 	}

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kadmin"
-	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
 	"ktea/tests"
@@ -17,13 +16,13 @@ import (
 
 var shortcuts []statusbar.Shortcut
 
-var ktx = kontext.ProgramKtx{
-	WindowWidth:  100,
-	WindowHeight: 100,
-	Config: &config.Config{
-		Clusters: []config.Cluster{},
-	},
-}
+var ktx = tests.NewKontext(
+	tests.WithConfig(
+		&config.Config{
+			Clusters: []config.Cluster{},
+		},
+	),
+)
 
 func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 	t.Run("Display info message when no clusters", func(t *testing.T) {
@@ -33,12 +32,12 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 
 		// then
-		render := createEnvPage.View(&ktx, tests.Renderer)
+		render := createEnvPage.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "No clusters configured. Please create your first cluster!")
 	})
 
@@ -48,23 +47,24 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 
-		render := createEnvPage.View(&kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
+		var ktx = tests.NewKontext(
+			tests.WithConfig(
+				&config.Config{
+					Clusters: []config.Cluster{
+						{
+							Name:             "PRD",
+							BootstrapServers: []string{"localhost:9092"},
+							SASLConfig:       nil,
+						},
 					},
 				},
-			},
-		}, tests.Renderer)
+			),
+		)
+		render := createEnvPage.View(ktx, tests.Renderer)
 		assert.NotContains(t, render, "No clusters configured. Please create your first cluster!")
 	})
 }
@@ -77,7 +77,7 @@ func TestTabs(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 		// and: a cluster is registered
@@ -88,7 +88,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF5))
 
 		// then: schema registry tab is visible
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "Schema Registry URL")
 		assert.Contains(t, render, "Schema Registry Username")
 		assert.Contains(t, render, "Schema Registry Password")
@@ -101,7 +101,7 @@ func TestTabs(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 		// and: a cluster is registered
@@ -112,7 +112,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF6))
 
 		// then: kafka connect tab is visible
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "Kafka Connect URL")
 		assert.Contains(t, render, "Kafka Connect Username")
 		assert.Contains(t, render, "Kafka Connect Password")
@@ -125,7 +125,7 @@ func TestTabs(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 		// and: a cluster is registered
@@ -149,12 +149,12 @@ func TestTabs(t *testing.T) {
 
 		// when
 		page.Update(tests.Key(tea.KeyF5))
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "Schema Registry URL")
 		page.Update(tests.Key(tea.KeyF4))
 
 		// then: previously entered details are visible
-		render = page.View(&ktx, tests.Renderer)
+		render = page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, "localhost:9092")
 	})
@@ -166,7 +166,7 @@ func TestTabs(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 
@@ -174,7 +174,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF5))
 
 		// then
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "create a cluster before adding a schema registry")
 	})
 }
@@ -187,7 +187,7 @@ func TestValidation(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 
@@ -195,39 +195,38 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "name cannot be empty")
 	})
 
 	t.Run("Name must be unique", func(t *testing.T) {
 		// given
+		ktx := tests.NewKontext(
+			tests.WithConfig(&config.Config{
+				Clusters: []config.Cluster{
+					{
+						Name:             "prd",
+						Color:            "#808080",
+						Active:           true,
+						BootstrapServers: nil,
+						SASLConfig:       nil,
+					},
+					{
+						Name:             "tst",
+						Color:            "#F0F0F0",
+						Active:           false,
+						BootstrapServers: nil,
+						SASLConfig:       nil,
+					},
+				},
+			}),
+		)
 		page := NewCreateClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&kontext.ProgramKtx{
-				WindowWidth:  100,
-				WindowHeight: 100,
-				Config: &config.Config{
-					Clusters: []config.Cluster{
-						{
-							Name:             "prd",
-							Color:            "#808080",
-							Active:           true,
-							BootstrapServers: nil,
-							SASLConfig:       nil,
-						},
-						{
-							Name:             "tst",
-							Color:            "#F0F0F0",
-							Active:           false,
-							BootstrapServers: nil,
-							SASLConfig:       nil,
-						},
-					},
-				},
-			},
+			ktx,
 			shortcuts,
 		)
 
@@ -236,7 +235,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "cluster prd already exists, name most be unique")
 	})
 
@@ -247,7 +246,7 @@ func TestValidation(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 		// and: enter name
@@ -262,7 +261,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "host cannot be empty")
 	})
 }
@@ -275,19 +274,15 @@ func TestCreateCluster(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&kontext.ProgramKtx{
-				WindowWidth:  100,
-				WindowHeight: 100,
-				Config: &config.Config{
-					Clusters: []config.Cluster{
-						{
-							Name:             "PRD",
-							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
-						},
+			tests.NewKontext(tests.WithConfig(&config.Config{
+				Clusters: []config.Cluster{
+					{
+						Name:             "PRD",
+						BootstrapServers: []string{"localhost:9092"},
+						SASLConfig:       nil,
 					},
 				},
-			},
+			})),
 			shortcuts,
 		)
 		// and: enter name
@@ -330,25 +325,21 @@ func TestClusterForm(t *testing.T) {
 
 	t.Run("Selecting SASL auth method displays username and password fields", func(t *testing.T) {
 		// given
-		programKtx := kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "PRD",
+					BootstrapServers: []string{"localhost:9092"},
+					SASLConfig:       nil,
 				},
 			},
-		}
+		}))
 		page := NewCreateClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&programKtx,
+			programKtx,
 			shortcuts,
 		)
 		// and: enter name
@@ -374,7 +365,7 @@ func TestClusterForm(t *testing.T) {
 		page.Update(tests.Key(tea.KeyDown))
 
 		// then
-		render := page.View(&programKtx, tests.Renderer)
+		render := page.View(programKtx, tests.Renderer)
 		assert.Contains(t, render, "SASL_PLAINTEXT")
 		assert.Contains(t, render, "Username")
 		assert.Contains(t, render, "Password")
@@ -382,25 +373,21 @@ func TestClusterForm(t *testing.T) {
 
 	t.Run("After selecting SASL_PLAINTEXT auth method and going back to select none username and password fields are not visible anymore", func(t *testing.T) {
 		// given
-		programKtx := kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "PRD",
+					BootstrapServers: []string{"localhost:9092"},
+					SASLConfig:       nil,
 				},
 			},
-		}
+		}))
 		createEnvPage := NewCreateClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&programKtx,
+			programKtx,
 			shortcuts,
 		)
 		// and: enter name
@@ -428,32 +415,28 @@ func TestClusterForm(t *testing.T) {
 		cmd = createEnvPage.Update(tests.Key(tea.KeyUp))
 
 		// then
-		render := createEnvPage.View(&programKtx, tests.Renderer)
+		render := createEnvPage.View(programKtx, tests.Renderer)
 		assert.NotContains(t, render, "Username")
 		assert.NotContains(t, render, "Password")
 	})
 
 	t.Run("Selecting SASL_PLAINTEXT auth method and filling all SASL fields creates cluster", func(t *testing.T) {
 		// given
-		programKtx := kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "PRD",
+					BootstrapServers: []string{"localhost:9092"},
+					SASLConfig:       nil,
 				},
 			},
-		}
+		}))
 		page := NewCreateClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&programKtx,
+			programKtx,
 			shortcuts,
 		)
 		// and: enter name
@@ -516,25 +499,21 @@ func TestClusterForm(t *testing.T) {
 
 	t.Run("Enabling SSL", func(t *testing.T) {
 		// given
-		programKtx := kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "PRD",
+					BootstrapServers: []string{"localhost:9092"},
+					SASLConfig:       nil,
 				},
 			},
-		}
+		}))
 		page := NewCreateClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&programKtx,
+			programKtx,
 			shortcuts,
 		)
 		// and: enter name
@@ -595,25 +574,21 @@ func TestClusterForm(t *testing.T) {
 
 	t.Run("C-r resets form", func(t *testing.T) {
 		// given
-		programKtx := kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "PRD",
+					BootstrapServers: []string{"localhost:9092"},
+					SASLConfig:       nil,
 				},
 			},
-		}
+		}))
 		page := NewCreateClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&programKtx,
+			programKtx,
 			shortcuts,
 		)
 		// and: enter name
@@ -651,7 +626,7 @@ func TestClusterForm(t *testing.T) {
 		tests.UpdateKeys(page, "password")
 		cmd = page.Update(tests.Key(tea.KeyEnter))
 
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, ">  blue")
 		assert.Contains(t, render, "localhost:9092")
@@ -663,7 +638,7 @@ func TestClusterForm(t *testing.T) {
 		page.Update(tests.Key(tea.KeyCtrlR))
 
 		// then
-		render = page.View(&ktx, tests.Renderer)
+		render = page.View(ktx, tests.Renderer)
 		assert.NotContains(t, render, "TST")
 		assert.NotContains(t, render, ">  blue")
 		assert.Contains(t, render, ">  green")
@@ -680,7 +655,7 @@ func TestClusterForm(t *testing.T) {
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&ktx,
+			ktx,
 			shortcuts,
 		)
 
@@ -688,7 +663,7 @@ func TestClusterForm(t *testing.T) {
 		createEnvPage.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := createEnvPage.View(&ktx, tests.Renderer)
+		render := createEnvPage.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 
@@ -698,34 +673,31 @@ func TestEditClusterForm(t *testing.T) {
 
 	t.Run("Sets title", func(t *testing.T) {
 		// given
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "prd",
+					Color:            "#808080",
+					Active:           true,
+					BootstrapServers: []string{":19092"},
+					SASLConfig:       nil,
+				},
+				{
+					Name:             "tst",
+					Color:            "#F0F0F0",
+					Active:           false,
+					BootstrapServers: nil,
+					SASLConfig:       nil,
+				},
+			},
+		}))
 		page := NewEditClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
 			nil,
-			&kontext.ProgramKtx{
-				WindowWidth:  100,
-				WindowHeight: 100,
-				Config: &config.Config{
-					Clusters: []config.Cluster{
-						{
-							Name:             "prd",
-							Color:            "#808080",
-							Active:           true,
-							BootstrapServers: []string{":19092"},
-							SASLConfig:       nil,
-						},
-						{
-							Name:             "tst",
-							Color:            "#F0F0F0",
-							Active:           false,
-							BootstrapServers: nil,
-							SASLConfig:       nil,
-						},
-					},
-				},
-			},
+			programKtx,
 			config.Cluster{
 				Name:             "prd",
 				Color:            styles.ColorGreen,
@@ -747,34 +719,31 @@ func TestEditClusterForm(t *testing.T) {
 
 	t.Run("Checks connection upon updating", func(t *testing.T) {
 		// given
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "prd",
+					Color:            "#808080",
+					Active:           true,
+					BootstrapServers: []string{":19092"},
+					SASLConfig:       nil,
+				},
+				{
+					Name:             "tst",
+					Color:            "#F0F0F0",
+					Active:           false,
+					BootstrapServers: nil,
+					SASLConfig:       nil,
+				},
+			},
+		}))
 		page := NewEditClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
 			nil,
-			&kontext.ProgramKtx{
-				WindowWidth:  100,
-				WindowHeight: 100,
-				Config: &config.Config{
-					Clusters: []config.Cluster{
-						{
-							Name:             "prd",
-							Color:            "#808080",
-							Active:           true,
-							BootstrapServers: []string{":19092"},
-							SASLConfig:       nil,
-						},
-						{
-							Name:             "tst",
-							Color:            "#F0F0F0",
-							Active:           false,
-							BootstrapServers: nil,
-							SASLConfig:       nil,
-						},
-					},
-				},
-			},
+			programKtx,
 			config.Cluster{
 				Name:             "prd",
 				Color:            "#808080",
@@ -819,29 +788,24 @@ func TestEditClusterForm(t *testing.T) {
 
 	t.Run("After editing, display notification when checking connectivity", func(t *testing.T) {
 		// given
-		programKtx := &kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "prd",
-						Color:            "#808080",
-						Active:           true,
-						BootstrapServers: []string{":19092"},
-						SASLConfig:       nil,
-					},
-					{
-						Name:             "tst",
-						Color:            "#F0F0F0",
-						Active:           false,
-						BootstrapServers: nil,
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "prd",
+					Color:            "#808080",
+					Active:           true,
+					BootstrapServers: []string{":19092"},
+					SASLConfig:       nil,
+				},
+				{
+					Name:             "tst",
+					Color:            "#F0F0F0",
+					Active:           false,
+					BootstrapServers: nil,
+					SASLConfig:       nil,
 				},
 			},
-		}
-
+		}))
 		page := NewEditClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
@@ -870,29 +834,24 @@ func TestEditClusterForm(t *testing.T) {
 
 	t.Run("Edit when there was no initial schema registry created", func(t *testing.T) {
 		// given
-		programKtx := &kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "prd",
-						Color:            "#808080",
-						Active:           true,
-						BootstrapServers: []string{":19092"},
-						SASLConfig:       nil,
-					},
-					{
-						Name:             "tst",
-						Color:            "#F0F0F0",
-						Active:           false,
-						BootstrapServers: nil,
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "prd",
+					Color:            "#808080",
+					Active:           true,
+					BootstrapServers: []string{":19092"},
+					SASLConfig:       nil,
+				},
+				{
+					Name:             "tst",
+					Color:            "#F0F0F0",
+					Active:           false,
+					BootstrapServers: nil,
+					SASLConfig:       nil,
 				},
 			},
-		}
-
+		}))
 		page := NewEditClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
@@ -938,29 +897,24 @@ func TestEditClusterForm(t *testing.T) {
 
 	t.Run("Display notification when connection has failed", func(t *testing.T) {
 		// given
-		programKtx := &kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "prd",
-						Color:            "#808080",
-						Active:           true,
-						BootstrapServers: []string{":19092"},
-						SASLConfig:       nil,
-					},
-					{
-						Name:             "tst",
-						Color:            "#F0F0F0",
-						Active:           false,
-						BootstrapServers: nil,
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "prd",
+					Color:            "#808080",
+					Active:           true,
+					BootstrapServers: []string{":19092"},
+					SASLConfig:       nil,
+				},
+				{
+					Name:             "tst",
+					Color:            "#F0F0F0",
+					Active:           false,
+					BootstrapServers: nil,
+					SASLConfig:       nil,
 				},
 			},
-		}
-
+		}))
 		page := NewEditClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
@@ -989,29 +943,24 @@ func TestEditClusterForm(t *testing.T) {
 
 	t.Run("Display notification when cluster has been updated", func(t *testing.T) {
 		// given
-		programKtx := &kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "prd",
-						Color:            "#808080",
-						Active:           true,
-						BootstrapServers: []string{":19092"},
-						SASLConfig:       nil,
-					},
-					{
-						Name:             "tst",
-						Color:            "#F0F0F0",
-						Active:           false,
-						BootstrapServers: nil,
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "prd",
+					Color:            "#808080",
+					Active:           true,
+					BootstrapServers: []string{":19092"},
+					SASLConfig:       nil,
+				},
+				{
+					Name:             "tst",
+					Color:            "#F0F0F0",
+					Active:           false,
+					BootstrapServers: nil,
+					SASLConfig:       nil,
 				},
 			},
-		}
-
+		}))
 		page := NewEditClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
@@ -1051,25 +1000,22 @@ func TestEditClusterForm(t *testing.T) {
 
 func TestCreateSchemaRegistry(t *testing.T) {
 	// given
-	programKtx := kontext.ProgramKtx{
-		WindowWidth:  100,
-		WindowHeight: 100,
-		Config: &config.Config{
-			Clusters: []config.Cluster{
-				{
-					Name:             "PRD",
-					BootstrapServers: []string{"localhost:9092"},
-					SASLConfig:       nil,
-				},
+
+	programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+		Clusters: []config.Cluster{
+			{
+				Name:             "PRD",
+				BootstrapServers: []string{"localhost:9092"},
+				SASLConfig:       nil,
 			},
 		},
-	}
+	}))
 	page := NewCreateClusterPage(
 		tabs.NewMockClustersTabNavigator(),
 		kadmin.MockConnChecker,
 		sradmin.MockConnChecker,
 		config.MockClusterRegisterer{},
-		&programKtx,
+		programKtx,
 		shortcuts,
 	)
 
@@ -1153,7 +1099,7 @@ func TestCreateSchemaRegistry(t *testing.T) {
 	t.Run("Display error notification when connection cannot be made", func(t *testing.T) {
 		page.Update(sradmin.ConnCheckErrMsg{Err: fmt.Errorf("cannot connect")})
 
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 
 		assert.Contains(t, render, "unable to reach the schema registry")
 	})
@@ -1162,25 +1108,21 @@ func TestCreateSchemaRegistry(t *testing.T) {
 func TestSchemaRegistryForm(t *testing.T) {
 	t.Run("C-r resets form", func(t *testing.T) {
 		// given
-		programKtx := kontext.ProgramKtx{
-			WindowWidth:  100,
-			WindowHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
-					},
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "PRD",
+					BootstrapServers: []string{"localhost:9092"},
+					SASLConfig:       nil,
 				},
 			},
-		}
+		}))
 		page := NewCreateClusterPage(
 			tabs.NewMockClustersTabNavigator(),
 			kadmin.MockConnChecker,
 			sradmin.MockConnChecker,
 			config.MockClusterRegisterer{},
-			&programKtx,
+			programKtx,
 			shortcuts,
 		)
 		// and: enter name
@@ -1218,7 +1160,7 @@ func TestSchemaRegistryForm(t *testing.T) {
 		tests.UpdateKeys(page, "password")
 		cmd = page.Update(tests.Key(tea.KeyEnter))
 
-		render := page.View(&ktx, tests.Renderer)
+		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, ">  blue")
 		assert.Contains(t, render, "localhost:9092")
@@ -1230,7 +1172,7 @@ func TestSchemaRegistryForm(t *testing.T) {
 		page.Update(tests.Key(tea.KeyCtrlR))
 
 		// then
-		render = page.View(&ktx, tests.Renderer)
+		render = page.View(ktx, tests.Renderer)
 		assert.NotContains(t, render, "TST")
 		assert.NotContains(t, render, ">  blue")
 		assert.Contains(t, render, ">  green")

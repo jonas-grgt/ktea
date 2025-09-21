@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kadmin"
-	"ktea/kontext"
 	"ktea/tests"
 	"ktea/ui/components/statusbar"
 	"strings"
@@ -54,20 +53,16 @@ func TestGroupsTab(t *testing.T) {
 			},
 		})
 
-		render := ansi.Strip(groupsTab.View(&kontext.ProgramKtx{
-			WindowWidth:     100,
-			WindowHeight:    100,
-			AvailableHeight: 100,
-			Config: &config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "PRD",
-						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
-					},
+		ktx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "PRD",
+					BootstrapServers: []string{"localhost:9092"},
+					SASLConfig:       nil,
 				},
 			},
-		}, tests.Renderer))
+		}))
+		render := ansi.Strip(groupsTab.View(ktx, tests.Renderer))
 
 		assert.Contains(t, render, "Group1")
 		assert.Contains(t, render, "Group2")
@@ -92,20 +87,16 @@ func TestGroupsTab(t *testing.T) {
 				},
 			})
 
-			render = ansi.Strip(groupsTab.View(&kontext.ProgramKtx{
-				WindowWidth:     100,
-				WindowHeight:    100,
-				AvailableHeight: 100,
-				Config: &config.Config{
-					Clusters: []config.Cluster{
-						{
-							Name:             "PRD",
-							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
-						},
+			ktx := tests.NewKontext(tests.WithConfig(&config.Config{
+				Clusters: []config.Cluster{
+					{
+						Name:             "PRD",
+						BootstrapServers: []string{"localhost:9092"},
+						SASLConfig:       nil,
 					},
 				},
-			}, tests.Renderer))
+			}))
+			render = ansi.Strip(groupsTab.View(ktx, tests.Renderer))
 
 			g1Count := strings.Count(render, "Group1")
 			g2Count := strings.Count(render, "Group2")

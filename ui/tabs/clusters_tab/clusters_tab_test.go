@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"ktea/config"
 	"ktea/kadmin"
-	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
 	"ktea/tests"
@@ -17,23 +16,13 @@ import (
 )
 
 func TestClustersTab(t *testing.T) {
-	var ktx = kontext.ProgramKtx{
-		Config: &config.Config{
-			Clusters: []config.Cluster{},
-		},
-		WindowWidth:  100,
-		WindowHeight: 100,
-	}
+	ktx := tests.NewKontext()
 	t.Run("When no cluster exists, open create new form", func(t *testing.T) {
 		// given
-		clustersTab, _ := New(&kontext.ProgramKtx{
-			Config:       &config.Config{},
-			WindowWidth:  200,
-			WindowHeight: 200,
-		}, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
+		clustersTab, _ := New(ktx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 
 		// when
-		render := clustersTab.View(&ktx, tests.Renderer)
+		render := clustersTab.View(ktx, tests.Renderer)
 
 		// then
 		assert.Contains(t, render, "┃ Name")
@@ -42,21 +31,17 @@ func TestClustersTab(t *testing.T) {
 	t.Run("List clusters page", func(t *testing.T) {
 		t.Run("opens when at least one env exists", func(t *testing.T) {
 			// given
-			programKtx := &kontext.ProgramKtx{
-				Config: &config.Config{
-					Clusters: []config.Cluster{
-						{
-							Name:             "prd",
-							Color:            "#808080",
-							Active:           true,
-							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
-						},
+			programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+				Clusters: []config.Cluster{
+					{
+						Name:             "prd",
+						Color:            "#808080",
+						Active:           true,
+						BootstrapServers: []string{"localhost:9092"},
+						SASLConfig:       nil,
 					},
 				},
-				WindowWidth:  100,
-				WindowHeight: 100,
-			}
+			}))
 			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 
 			// when
@@ -68,8 +53,9 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("indicates active cluster in list", func(t *testing.T) {
 			// given
-			programKtx := &kontext.ProgramKtx{
-				Config: &config.Config{
+
+			programKtx := tests.NewKontext(tests.WithConfig(
+				&config.Config{
 					Clusters: []config.Cluster{
 						{
 							Name:             "prd",
@@ -93,11 +79,7 @@ func TestClustersTab(t *testing.T) {
 							SASLConfig:       nil,
 						},
 					},
-				},
-				WindowWidth:     100,
-				WindowHeight:    100,
-				AvailableHeight: 100,
-			}
+				}))
 			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 
 			// when
@@ -113,37 +95,36 @@ func TestClustersTab(t *testing.T) {
 
 		t.Run("enter starts a connectivity check for the selected cluster", func(t *testing.T) {
 			// given
-			programKtx := &kontext.ProgramKtx{
-				Config: &config.Config{
-					ConfigIO: &config.InMemoryConfigIO{},
-					Clusters: []config.Cluster{
-						{
-							Name:             "prd",
-							Color:            styles.ColorRed,
-							Active:           true,
-							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
-						},
-						{
-							Name:             "tst",
-							Color:            styles.ColorGreen,
-							Active:           false,
-							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
-						},
-						{
-							Name:             "uat",
-							Color:            styles.ColorBlue,
-							Active:           false,
-							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
+			programKtx := tests.NewKontext(
+				tests.WithConfig(
+					&config.Config{
+						ConfigIO: &config.InMemoryConfigIO{},
+						Clusters: []config.Cluster{
+							{
+								Name:             "prd",
+								Color:            styles.ColorRed,
+								Active:           true,
+								BootstrapServers: []string{"localhost:9092"},
+								SASLConfig:       nil,
+							},
+							{
+								Name:             "tst",
+								Color:            styles.ColorGreen,
+								Active:           false,
+								BootstrapServers: []string{"localhost:9092"},
+								SASLConfig:       nil,
+							},
+							{
+								Name:             "uat",
+								Color:            styles.ColorBlue,
+								Active:           false,
+								BootstrapServers: []string{"localhost:9092"},
+								SASLConfig:       nil,
+							},
 						},
 					},
-				},
-				WindowWidth:     100,
-				WindowHeight:    100,
-				AvailableHeight: 100,
-			}
+				),
+			)
 			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
 			clustersTab.View(programKtx, tests.Renderer)
@@ -188,7 +169,7 @@ func TestClustersTab(t *testing.T) {
 			})
 
 			t.Run("and activated is indicated", func(t *testing.T) {
-				programKtx.Config.SwitchCluster("tst")
+				programKtx.Config().SwitchCluster("tst")
 				clustersTab.Update(clusters_page.ClusterSwitchedMsg{
 					Cluster: &config.Cluster{
 						Name: "tst",
@@ -230,12 +211,7 @@ func TestClustersTab(t *testing.T) {
 			Host:       "localhost:9093",
 			AuthMethod: config.NoneAuthMethod,
 		})
-		programKtx := &kontext.ProgramKtx{
-			Config:          cfg,
-			WindowWidth:     100,
-			WindowHeight:    100,
-			AvailableHeight: 100,
-		}
+		programKtx := tests.NewKontext(tests.WithConfig(cfg))
 
 		t.Run("/ raises search prompt", func(t *testing.T) {
 			// given
@@ -325,12 +301,7 @@ func TestClustersTab(t *testing.T) {
 				Host:       "localhost:9093",
 				AuthMethod: config.NoneAuthMethod,
 			})
-			programKtx := &kontext.ProgramKtx{
-				Config:          cfg,
-				WindowWidth:     100,
-				WindowHeight:    100,
-				AvailableHeight: 100,
-			}
+			programKtx := tests.NewKontext(tests.WithConfig(cfg))
 			// and
 			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 			// and table has been initialized
@@ -375,11 +346,7 @@ func TestClustersTab(t *testing.T) {
 			Host:       "localhost:9093",
 			AuthMethod: config.NoneAuthMethod,
 		})
-		programKtx := &kontext.ProgramKtx{
-			Config:       cfg,
-			WindowWidth:  100,
-			WindowHeight: 100,
-		}
+		programKtx := tests.NewKontext(tests.WithConfig(cfg))
 
 		t.Run("c-e opens edit page", func(t *testing.T) {
 			// given
@@ -424,14 +391,9 @@ func TestClustersTab(t *testing.T) {
 
 	t.Run("esc does not go back when there are no clusters", func(t *testing.T) {
 		// given
-		programKtx := &kontext.ProgramKtx{
-			Config: &config.Config{
-				Clusters: []config.Cluster{},
-			},
-			WindowWidth:     100,
-			WindowHeight:    100,
-			AvailableHeight: 100,
-		}
+		programKtx := tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{},
+		}))
 		var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, statusbar.New())
 		clustersTab.View(programKtx, tests.Renderer)
 

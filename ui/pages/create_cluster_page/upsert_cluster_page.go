@@ -80,7 +80,7 @@ type clusterValues struct {
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	var views []string
-	if !ktx.Config.HasClusters() {
+	if !ktx.Config().HasClusters() {
 		builder := strings.Builder{}
 		builder.WriteString("\n")
 		builder.WriteString(lipgloss.NewStyle().PaddingLeft(1).Render("No clusters configured. Please create your first cluster!"))
@@ -362,12 +362,12 @@ func (m *Model) createCForm() *huh.Form {
 			}
 			if m.preEditName != nil {
 				// When updating.
-				if m.ktx.Config.FindClusterByName(v) != nil && v != *m.preEditName {
+				if m.ktx.Config().FindClusterByName(v) != nil && v != *m.preEditName {
 					return errors.New("cluster " + v + " already exists, name most be unique")
 				}
 			} else {
 				// When creating a new cluster
-				if m.ktx.Config.FindClusterByName(v) != nil {
+				if m.ktx.Config().FindClusterByName(v) != nil {
 					return errors.New("cluster " + v + " already exists, name most be unique")
 				}
 			}

@@ -24,7 +24,7 @@ type Model struct {
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 
 	var rows []table.Row
-	for _, cluster := range ktx.Config.ActiveCluster().KafkaConnectClusters {
+	for _, cluster := range ktx.Config().ActiveCluster().KafkaConnectClusters {
 		rows = append(rows, table.Row{cluster.Name})
 	}
 

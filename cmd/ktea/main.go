@@ -163,8 +163,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.clustersTabCtrl.Update(msg)
 		}
 	case config.LoadedMsg:
-		m.ktx.Config = msg.Config
-		if m.ktx.Config.HasClusters() {
+		m.ktx.RegisterConfig(msg.Config)
+		if m.ktx.Config().HasClusters() {
 			cmd := m.boostrapUI(msg.Config.ActiveCluster())
 			cmds = append(cmds, cmd)
 
@@ -210,7 +210,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case cgroupsTabLbl:
 				m.tabCtrl = m.cgroupsTabCtrl
 			case schemaRegTabLbl:
-				if m.ktx.Config.ActiveCluster().HasSchemaRegistry() {
+				if m.ktx.Config().ActiveCluster().HasSchemaRegistry() {
 					m.tabCtrl = m.schemaRegistryTabCtrl
 					break
 				}
@@ -270,7 +270,7 @@ func (m *Model) recreateAdminClients(cluster *config.Cluster) error {
 	}
 
 	if cluster.HasSchemaRegistry() {
-		m.sra = sradmin.New(m.ktx.Config.ActiveCluster().SchemaRegistry)
+		m.sra = sradmin.New(m.ktx.Config().ActiveCluster().SchemaRegistry)
 		m.ka.SetSra(m.sra)
 	}
 
@@ -305,10 +305,10 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 		cmds = append(cmds, cmd)
 		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, m.statusbar)
 		cmds = append(cmds, cmd)
-		m.kconTabCtrl, cmd = kcon_tab.New(m.ktx.Config.ActiveCluster(), m.statusbar)
+		m.kconTabCtrl, cmd = kcon_tab.New(m.ktx.Config().ActiveCluster(), m.statusbar)
 		cmds = append(cmds, cmd)
 
-		if m.ktx.Config.ActiveCluster().HasSchemaRegistry() {
+		if m.ktx.Config().ActiveCluster().HasSchemaRegistry() {
 			m.schemaRegistryTabCtrl, cmd = sr_tab.New(m.sra, m.ktx, m.statusbar)
 			cmds = append(cmds, cmd)
 		}
@@ -319,28 +319,49 @@ func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 	}
 }
 
-func NewModel(kai kadmin.Instantiator, configIO config.IO) *Model {
+func NewModel(
+	disableNerdFonts *bool,
+	kai kadmin.Instantiator,
+	configIO config.IO,
+) *Model {
 	return &Model{
 		kaInstantiator: kai,
-		ktx:            kontext.New(),
+		ktx:            kontext.New(disableNerdFonts),
 		configIO:       configIO,
 	}
 }
 
 func main() {
-	var debug bool
-	flag.BoolVar(&debug, "debug", false, "enable debug")
+	var (
+		debugParam      bool
+		plainFontsParam bool
+	)
+	flag.BoolVar(&debugParam, "debug", false, "enable debug")
+	flag.BoolVar(&plainFontsParam, "plain-fonts", false, "disable NerdFonts (if you see weird icons)")
 	flag.Parse()
+
+	plainFontParamSet := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "plain-fonts" {
+			plainFontParamSet = true
+		}
+	})
+
+	var disableNerdFonts *bool
+	if plainFontParamSet {
+		disableNerdFonts = &plainFontsParam
+	}
 
 	p := tea.NewProgram(
 		NewModel(
+			disableNerdFonts,
 			kadmin.SaramaInstantiator(),
 			config.NewDefaultIO(),
 		),
 		tea.WithAltScreen(),
 	)
 
-	if debug {
+	if debugParam {
 		var fileErr error
 		debugFile, fileErr := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if fileErr == nil {

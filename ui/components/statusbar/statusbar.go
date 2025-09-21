@@ -29,13 +29,22 @@ type Shortcut struct {
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	var activeCluster string
-	if ktx.Config.HasClusters() {
+	if ktx.Config().HasClusters() {
 		activeCluster = styles.Statusbar.
-			Cluster(ktx.Config.ActiveCluster().Color).
-			Render(ktx.Config.ActiveCluster().Name)
-		clusterColor := ktx.Config.ActiveCluster().Color
-		clusterRight := renderRune("\uE0B0", clusterColor, styles.ColorPink)
-		clusterLeft := renderRune("\uE0B6", clusterColor, "")
+			Cluster(ktx.Config().ActiveCluster().Color).
+			Render(ktx.Config().ActiveCluster().Name)
+		clusterColor := ktx.Config().ActiveCluster().Color
+
+		rightSeparator := "\uE0B0"
+		if ktx.Config().PlainFonts {
+			rightSeparator = ""
+		}
+		leftSeparator := "\uE0B6"
+		if ktx.Config().PlainFonts {
+			leftSeparator = ""
+		}
+		clusterRight := renderRune(rightSeparator, clusterColor, styles.ColorPink)
+		clusterLeft := renderRune(leftSeparator, clusterColor, "")
 
 		activeCluster = clusterLeft + activeCluster + clusterRight
 	}
@@ -110,9 +119,18 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		shortCuts = ""
 	}
 
-	indicator += renderRune("\uE0B4", styles.ColorPink, styles.ColorMidGrey)
+	endSeparator := "\uE0B4"
+	if ktx.Config().PlainFonts {
+		endSeparator = ""
+	}
+
+	indicator += renderRune(endSeparator, styles.ColorPink, styles.ColorMidGrey)
 
 	leftover := ktx.WindowWidth - lg.Width(activeCluster) - lg.Width(indicator)
+
+	if !ktx.Config().PlainFonts {
+		leftover--
+	}
 
 	barView := lg.NewStyle().
 		MarginTop(1).
@@ -120,8 +138,8 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		Render(lg.JoinHorizontal(lg.Top,
 			activeCluster,
 			indicator,
-			styles.Statusbar.Spacer.Width(leftover-1).Render(""),
-			renderText("\uE0B4", styles.ColorMidGrey),
+			styles.Statusbar.Spacer.Width(leftover).Render(""),
+			renderText(endSeparator, styles.ColorMidGrey),
 		))
 
 	if shortCuts == "" {
