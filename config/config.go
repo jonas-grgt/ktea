@@ -56,8 +56,9 @@ func (c *Cluster) HasKafkaConnect() bool {
 }
 
 type Config struct {
-	Clusters []Cluster `yaml:"clusters"`
-	ConfigIO IO        `yaml:"-"`
+	Clusters   []Cluster `yaml:"clusters"`
+	ConfigIO   IO        `yaml:"-"`
+	PlainFonts bool      `yaml:"plain-fonts"`
 }
 
 func (c *Config) HasClusters() bool {

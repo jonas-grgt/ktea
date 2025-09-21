@@ -46,6 +46,31 @@ All tables can be navigated using vi like bindings:
 
 All configuration is stored in `~/.config/ktea/config.conf`
 
+All cluster configuration can be managed through the TUI even the initial one.
+
+Example configuration file:
+
+```yaml
+plain-fonts: true # when nerd-fonts are not available set to true
+clusters:
+    - name: local
+      color: '#00FF00'
+      active: false
+      servers:
+        - localhost:9092
+      sasl: null
+      schema-registry:
+        url: http://localhost:8081
+        username: ""
+        password: ""
+      ssl-enabled: false
+      kafka-connect-clusters:
+        - name: PRD
+          url: http://localhost:8083
+          username: admin
+          password: secret
+```
+
 ### Cluster Management
 
 Multiple clusters can be added.

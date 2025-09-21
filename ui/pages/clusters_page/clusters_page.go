@@ -64,7 +64,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case kadmin.ConnCheckSucceededMsg:
 		cmds = append(cmds, func() tea.Msg {
 			kadmin.MaybeIntroduceLatency()
-			activeCluster := m.ktx.Config.SwitchCluster(*m.SelectedCluster())
+			activeCluster := m.ktx.Config().SwitchCluster(*m.SelectedCluster())
 			m.rows = m.createRows()
 			return ClusterSwitchedMsg{activeCluster}
 		})
@@ -73,7 +73,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		case "enter":
 			if !m.cmdBar.IsFocussed() {
 				cmds = append(cmds, func() tea.Msg {
-					cluster := m.ktx.Config.FindClusterByName(*m.SelectedCluster())
+					cluster := m.ktx.Config().FindClusterByName(*m.SelectedCluster())
 					return m.connChecker(cluster)
 				})
 			}
@@ -119,7 +119,7 @@ func (m *Model) SelectedCluster() *string {
 
 func (m *Model) createRows() []table.Row {
 	var rows []table.Row
-	for _, c := range m.ktx.Config.Clusters {
+	for _, c := range m.ktx.Config().Clusters {
 		if m.cmdBar.GetSearchTerm() != "" {
 			if !strings.Contains(strings.ToUpper(c.Name), strings.ToUpper(m.cmdBar.GetSearchTerm())) {
 				continue
@@ -154,7 +154,7 @@ func New(
 	deleteFunc := func(subject string) tea.Cmd {
 		return func() tea.Msg {
 			selectedCluster := *model.SelectedCluster()
-			model.ktx.Config.DeleteCluster(selectedCluster)
+			model.ktx.Config().DeleteCluster(selectedCluster)
 			return config.ClusterDeletedMsg{Name: selectedCluster}
 		}
 	}
@@ -167,7 +167,7 @@ func New(
 	}
 
 	validateFunc := func(clusterName string) (bool, tea.Cmd) {
-		if ktx.Config.ActiveCluster().Name == clusterName {
+		if ktx.Config().ActiveCluster().Name == clusterName {
 			return false, func() tea.Msg {
 				return ActiveClusterDeleteErrMsg{}
 			}
@@ -228,7 +228,7 @@ func New(
 	model.border = border.New(
 		border.WithInnerPaddingTop(),
 		border.WithTitleFn(func() string {
-			return border.KeyValueTitle("Total Clusters", fmt.Sprintf(" %d/%d", len(model.rows), len(model.ktx.Config.Clusters)), model.tableFocussed)
+			return border.KeyValueTitle("Total Clusters", fmt.Sprintf(" %d/%d", len(model.rows), len(model.ktx.Config().Clusters)), model.tableFocussed)
 		}))
 	model.rows = model.createRows()
 	return &model, nil

@@ -62,7 +62,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					m,
 					m.kConnChecker,
 					m.srConnChecker,
-					m.ktx.Config,
+					m.ktx.Config(),
 					m.ktx,
 					[]statusbar.Shortcut{
 						{"Confirm", "enter"},
@@ -76,13 +76,13 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+e":
 			if clustersPage, ok := m.active.(*clusters_page.Model); ok {
 				clusterName := clustersPage.SelectedCluster()
-				selectedCluster := m.ktx.Config.FindClusterByName(*clusterName)
+				selectedCluster := m.ktx.Config().FindClusterByName(*clusterName)
 				m.active = create_cluster_page.NewEditClusterPage(
 					m,
 					m.kConnChecker,
 					m.srConnChecker,
-					m.ktx.Config,
-					m.ktx.Config,
+					m.ktx.Config(),
+					m.ktx.Config(),
 					m.ktx,
 					*selectedCluster,
 					create_cluster_page.WithTitle(fmt.Sprintf("Clusters / %s / Edit", selectedCluster.Name)),
@@ -115,7 +115,7 @@ func New(
 	m.kConnChecker = kConnChecker
 	m.srConnChecker = srConnChecker
 	m.ktx = ktx
-	m.config = ktx.Config
+	m.config = ktx.Config()
 	m.statusbar = stsBar
 	if m.config.HasClusters() {
 		var listPage, c = clusters_page.New(ktx, m.kConnChecker)
@@ -127,7 +127,7 @@ func New(
 			&m,
 			m.kConnChecker,
 			m.srConnChecker,
-			m.ktx.Config,
+			m.ktx.Config(),
 			m.ktx,
 			[]statusbar.Shortcut{
 				{"Confirm", "enter"},

@@ -407,7 +407,7 @@ func New(
 		metaInfo:       metaInfo,
 		clipWriter:     clipWriter,
 		notifierCmdbar: notifierCmdBar,
-		config:         ktx.Config,
+		config:         ktx.Config(),
 		state:          recordView,
 		border:         b,
 	}

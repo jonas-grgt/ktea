@@ -8,7 +8,7 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
-	statusbar "ktea/ui/components/statusbar"
+	"ktea/ui/components/statusbar"
 	"ktea/ui/pages/nav"
 	"ktea/ui/tabs"
 	"testing"
@@ -58,7 +58,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 
 	t.Run("renders subset of partitions when there is not enough height", func(t *testing.T) {
 		ktx := &kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    23,
 			AvailableHeight: 23,
@@ -411,7 +410,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 
 		render := m.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
@@ -424,7 +422,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			m.Update(tests.Key(tea.KeyUp))
 
 			render := m.View(&kontext.ProgramKtx{
-				Config:          nil,
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
@@ -575,7 +572,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 
 		render := m.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
@@ -603,7 +599,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			m.Update(tests.Key(tea.KeyUp))
 
 			render := m.View(&kontext.ProgramKtx{
-				Config:          nil,
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
@@ -756,7 +751,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.View(tests.NewKontext(), tests.Renderer)
 
 		render := m.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
@@ -769,7 +763,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 
 		render = m.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
@@ -781,7 +774,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			m.Update(tests.Key(tea.KeyDown))
 
 			render = m.View(&kontext.ProgramKtx{
-				Config:          nil,
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
@@ -804,7 +796,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.View(tests.NewKontext(), tests.Renderer)
 
 		render := m.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
@@ -818,7 +809,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 
 		render = m.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
@@ -830,7 +820,6 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			m.Update(tests.Key(tea.KeyUp))
 
 			render = m.View(&kontext.ProgramKtx{
-				Config:          nil,
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,

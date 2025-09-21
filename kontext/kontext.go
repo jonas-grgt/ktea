@@ -5,10 +5,15 @@ import (
 )
 
 type ProgramKtx struct {
-	Config          *config.Config
+	config *config.Config
+	cmdLineFlags
 	WindowWidth     int
 	WindowHeight    int
 	AvailableHeight int
+}
+
+type cmdLineFlags struct {
+	disableNerdFonts *bool
 }
 
 func (k *ProgramKtx) HeightUsed(height int) {
@@ -24,8 +29,23 @@ func (k *ProgramKtx) AvailableTableHeight() int {
 	return k.AvailableHeight - 3
 }
 
-func New() *ProgramKtx {
-	return &ProgramKtx{}
+func (k *ProgramKtx) Config() *config.Config {
+	return k.config
+}
+
+func (k *ProgramKtx) RegisterConfig(c *config.Config) {
+	k.config = c
+	if k.disableNerdFonts != nil {
+		k.config.PlainFonts = *k.disableNerdFonts
+	}
+}
+
+func New(disableNerdFonts *bool) *ProgramKtx {
+	return &ProgramKtx{
+		cmdLineFlags: cmdLineFlags{
+			disableNerdFonts: disableNerdFonts,
+		},
+	}
 }
 
 func WithNewAvailableDimensions(ktx *ProgramKtx) *ProgramKtx {

@@ -100,4 +100,21 @@ func TestStatusbar(t *testing.T) {
 		assert.Contains(t, render, "dev")
 		assert.NotContains(t, render, "prd")
 	})
+
+	t.Run("plain fonts", func(t *testing.T) {
+		sb := statusbar.New()
+		sb.SetProvider(TestProvider{})
+
+		render := sb.View(tests.NewKontext(
+			tests.WithWindowWidth(30),
+			tests.WithConfig(&config.Config{
+				PlainFonts: true,
+				Clusters:   []config.Cluster{},
+				ConfigIO:   nil,
+			})), tests.Renderer)
+
+		assert.NotContains(t, render, "\uE0B4")
+		assert.NotContains(t, render, "\uE0B0")
+		assert.NotContains(t, render, "\uE0B6")
+	})
 }

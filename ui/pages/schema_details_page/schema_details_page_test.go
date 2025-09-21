@@ -216,7 +216,6 @@ func TestSchemaDetailsPage(t *testing.T) {
 		})
 
 		render := ansi.Strip(page.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    25,
 			AvailableHeight: 8,
@@ -230,7 +229,6 @@ func TestSchemaDetailsPage(t *testing.T) {
 		page.Update(tests.Key(tea.KeyDown))
 
 		render = ansi.Strip(page.View(&kontext.ProgramKtx{
-			Config:          nil,
 			WindowWidth:     100,
 			WindowHeight:    30,
 			AvailableHeight: 9,
