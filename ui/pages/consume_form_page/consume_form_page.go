@@ -213,7 +213,7 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 }
 
 func (m *Model) Title() string {
-	return "Consumption details"
+	return fmt.Sprintf("Consume from %s", m.topic.Name)
 }
 
 func (m *Model) newForm(partitions int, ktx *kontext.ProgramKtx) *huh.Form {

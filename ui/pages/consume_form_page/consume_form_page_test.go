@@ -725,7 +725,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		}, sc)
 	})
 
-	t.Run("title", func(t *testing.T) {
+	t.Run("title contains topic name", func(t *testing.T) {
 		m := New(
 			&kadmin.ListedTopic{
 				Name:           "topic1",
@@ -735,7 +735,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			tabs.NewMockTopicsTabNavigator(),
 			tests.NewKontext())
 
-		assert.Equal(t, "Consumption details", m.Title())
+		assert.Equal(t, "Consume from topic1", m.Title())
 	})
 
 	t.Run("selecting Relative Date displays Relative Start from options", func(t *testing.T) {
