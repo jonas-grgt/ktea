@@ -149,7 +149,7 @@ func (m *SortByCmdBar) nextElem() {
 }
 
 func (m *SortByCmdBar) SortedBy() SortLabel {
-	return m.sorts[m.selectedIdx]
+	return m.sorts[m.activeIdx]
 }
 
 func (m *SortByCmdBar) PrefixSortIcon(title string) string {

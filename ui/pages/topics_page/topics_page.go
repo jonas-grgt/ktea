@@ -56,8 +56,8 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetColumns([]table.Column{
 		{m.sortByCmdBar.PrefixSortIcon("Name"), int(float64(ktx.WindowWidth-7) * 0.6)},
-		{m.sortByCmdBar.PrefixSortIcon("Partitions"), int(float64(ktx.WindowWidth-7) * 0.3)},
-		{m.sortByCmdBar.PrefixSortIcon("Replicas"), int(float64(ktx.WindowWidth-7) * 0.1)},
+		{m.sortByCmdBar.PrefixSortIcon("Partitions"), int(float64(ktx.WindowWidth-7) * 0.2)},
+		{m.sortByCmdBar.PrefixSortIcon("Replicas"), int(float64(ktx.WindowWidth-7) * 0.2)},
 	})
 	m.table.SetRows(m.rows)
 	m.table.SetHeight(ktx.AvailableHeight - 2)
