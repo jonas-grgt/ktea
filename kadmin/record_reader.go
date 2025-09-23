@@ -90,7 +90,7 @@ func (m *ReadingStartedMsg) AwaitRecord() tea.Msg {
 		}
 
 		return ConsumerRecordReceived{
-			Record:         []ConsumerRecord{record},
+			Records:        []ConsumerRecord{record},
 			consumerRecord: m.ConsumerRecord,
 			emptyTopic:     m.EmptyTopic,
 			noRecordsFound: m.NoRecordsFound,
@@ -127,7 +127,7 @@ func (m *ReadingStartedMsg) shutdown() {
 }
 
 type ConsumerRecordReceived struct {
-	Record         []ConsumerRecord
+	Records        []ConsumerRecord
 	consumerRecord chan ConsumerRecord
 	emptyTopic     chan bool
 	noRecordsFound chan bool
@@ -151,7 +151,7 @@ func (m *ConsumerRecordReceived) AwaitNextRecord() tea.Msg {
 				records = append(records, r)
 			case <-timeout:
 				return ConsumerRecordReceived{
-					Record:         records,
+					Records:        records,
 					consumerRecord: m.consumerRecord,
 					emptyTopic:     m.emptyTopic,
 					noRecordsFound: m.noRecordsFound,

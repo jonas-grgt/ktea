@@ -158,14 +158,27 @@ func (m *SortByCmdBar) PrefixSortIcon(title string) string {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color(styles.ColorPink)).
 			Bold(true).
-			Render(sb.Direction.String()) + " " + title
+			Render(sb.Direction.String()) + " " + lipgloss.NewStyle().Bold(true).Render(title)
 	}
-	return title
+	return lipgloss.NewStyle().Bold(true).Render(title)
 }
 
 func WithSortSelectedCallback(callback SortSelectedCallback) SortByCmdBarOption {
 	return func(bar *SortByCmdBar) {
 		bar.sortSelectedCallback = callback
+	}
+}
+
+func WithInitialSortColumn(column string, direction Direction) SortByCmdBarOption {
+	return func(bar *SortByCmdBar) {
+		for i, sort := range bar.sorts {
+			if sort.Label == column {
+				bar.selectedIdx = i
+				bar.activeIdx = i
+				bar.sorts[i].Direction = direction
+				return
+			}
+		}
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/tests"
-	"ktea/ui/pages/nav"
 	"ktea/ui/tabs"
 	"strings"
 	"testing"
@@ -334,7 +333,7 @@ func TestTopicsPage(t *testing.T) {
 
 		assert.Equal(
 			t,
-			nav.ConsumeFormPageDetails{
+			tabs.ConsumeFormPageDetails{
 				Topic: &kadmin.ListedTopic{
 					Name:           "b-topic1",
 					PartitionCount: 1,
@@ -384,8 +383,8 @@ func TestTopicsPage(t *testing.T) {
 
 		assert.Equal(
 			t,
-			nav.ConsumePageDetails{
-				Origin: nav.OriginTopicsPage,
+			tabs.ConsumePageDetails{
+				Origin: tabs.OriginTopicsPage,
 				ReadDetails: kadmin.ReadDetails{
 					TopicName:       "b-topic1",
 					PartitionToRead: []int{0},
