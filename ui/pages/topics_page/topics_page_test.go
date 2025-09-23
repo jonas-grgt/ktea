@@ -407,4 +407,32 @@ func TestTopicsPage(t *testing.T) {
 			msgs[0].(tabs.ToConsumePageCalledMsg).Details,
 		)
 	})
+
+	t.Run("hidden internal topics", func(t *testing.T) {
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		_ = page.Update(kadmin.TopicsListedMsg{
+			Topics: []kadmin.ListedTopic{
+				{Name: "__consumer_offsets", PartitionCount: 50, Replicas: 3},
+				{Name: "__schema_registry", PartitionCount: 1, Replicas: 1},
+				{Name: "a-topics", PartitionCount: 5, Replicas: 3},
+				{Name: "b-topics", PartitionCount: 3, Replicas: 2},
+				{Name: "c-topics", PartitionCount: 1, Replicas: 1},
+			},
+		})
+
+		page.View(tests.NewKontext(), tests.Renderer)
+		assert.Equal(t, 2, page.hiddenInternalTopicsCount)
+
+		page.Update(tests.Key(tea.KeyF4))
+		page.View(tests.NewKontext(), tests.Renderer)
+		assert.Equal(t, 0, page.hiddenInternalTopicsCount)
+
+		page.Update(tests.Key(tea.KeyF4))
+		page.View(tests.NewKontext(), tests.Renderer)
+		assert.Equal(t, 2, page.hiddenInternalTopicsCount)
+	})
 }
