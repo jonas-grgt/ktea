@@ -10,6 +10,9 @@ type Renderer struct {
 }
 
 func (r *Renderer) Render(view string) string {
+	if view == "" {
+		return view
+	}
 	height := lipgloss.Height(view)
 	r.ktx.HeightUsed(height)
 	return view

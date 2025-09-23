@@ -59,11 +59,16 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	cmdBarView := m.tcb.View(ktx, renderer)
 	views = append(views, cmdBarView)
 
+	available := ktx.WindowWidth
+	nameCol := int(float64(available) * 0.6)
+	partCol := int(float64(available) * 0.1)
+	repCol := int(float64(available) * 0.1)
+	cleanCol := available - nameCol - partCol - repCol - 10
 	m.table.SetColumns([]table.Column{
-		{m.sortByCmdBar.PrefixSortIcon("Name"), int(float64(ktx.WindowWidth-9) * 0.5)},
-		{m.sortByCmdBar.PrefixSortIcon("Partitions"), int(float64(ktx.WindowWidth-9) * 0.3)},
-		{m.sortByCmdBar.PrefixSortIcon("Replicas"), int(float64(ktx.WindowWidth-9) * 0.1)},
-		{m.sortByCmdBar.PrefixSortIcon("Cleanup"), int(float64(ktx.WindowWidth-9) * 0.1)},
+		{m.sortByCmdBar.PrefixSortIcon("Name"), nameCol},
+		{m.sortByCmdBar.PrefixSortIcon("Partitions"), partCol},
+		{m.sortByCmdBar.PrefixSortIcon("Replicas"), repCol},
+		{m.sortByCmdBar.PrefixSortIcon("Cleanup"), cleanCol},
 	})
 	m.table.SetRows(m.rows)
 	m.table.SetWidth(ktx.WindowWidth - 2)
@@ -122,7 +127,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			// only accept enter when the table is focussed
 			if !m.tcb.IsFocussed() {
 				if m.SelectedTopic() != nil {
-					return m.navigator.ToConsumeFormPage(nav.ConsumeFormPageDetails{
+					return m.navigator.ToConsumeFormPage(tabs.ConsumeFormPageDetails{
 						Topic: m.SelectedTopic(),
 					})
 				}
@@ -131,8 +136,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			// only accept enter when the table is focussed
 			if !m.tcb.IsFocussed() {
 				if m.SelectedTopic() != nil {
-					return m.navigator.ToConsumePage(nav.ConsumePageDetails{
-						Origin:      nav.OriginTopicsPage,
+					return m.navigator.ToConsumePage(tabs.ConsumePageDetails{
+						Origin:      tabs.OriginTopicsPage,
 						Topic:       m.SelectedTopic(),
 						ReadDetails: kadmin.NewDefaultReadDetails(m.SelectedTopic()),
 					})

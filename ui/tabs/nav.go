@@ -2,15 +2,41 @@ package tabs
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"ktea/ui/pages/nav"
+	"ktea/kadmin"
 )
 
 type TopicsTabNavigator interface {
-	ToConsumeFormPage(d nav.ConsumeFormPageDetails) tea.Cmd
+	ToConsumeFormPage(ConsumeFormPageDetails) tea.Cmd
 
-	ToConsumePage(msg nav.ConsumePageDetails) tea.Cmd
+	ToConsumePage(ConsumePageDetails) tea.Cmd
 
 	ToTopicsPage() tea.Cmd
+
+	ToRecordDetailsPage(LoadRecordDetailPageMsg) tea.Cmd
+}
+
+type ConsumeFormPageDetails struct {
+	Topic *kadmin.ListedTopic
+	// ReadDetails is used to pre-fill the consume form with the provided - previous - details.
+	ReadDetails *kadmin.ReadDetails
+}
+
+type Origin int
+
+const (
+	OriginTopicsPage Origin = iota
+	OriginConsumeFormPage
+)
+
+type ConsumePageDetails struct {
+	Origin      Origin
+	ReadDetails kadmin.ReadDetails
+	Topic       *kadmin.ListedTopic
+}
+
+type LoadRecordDetailPageMsg struct {
+	Record    *kadmin.ConsumerRecord
+	TopicName string
 }
 
 type ClustersTabNavigator interface {

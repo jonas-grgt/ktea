@@ -19,6 +19,7 @@ import (
 	"ktea/ui/pages/publish_page"
 	"ktea/ui/pages/record_details_page"
 	"ktea/ui/pages/topics_page"
+	"ktea/ui/tabs"
 	"reflect"
 )
 
@@ -64,10 +65,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 		m.active = m.topicsPage
 
-	case nav.LoadRecordDetailPageMsg:
-		m.active = record_details_page.New(msg.Record, msg.TopicName, clipper.New(), m.ktx)
-		m.recordDetailsPage = m.active
-
 	case nav.LoadTopicConfigPageMsg:
 		page, cmd := configs_page.New(m.ka, m.ka, m.topicsPage.SelectedTopicName())
 		cmds = append(cmds, cmd)
@@ -96,7 +93,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.ka,
 			readDetails,
 			msg.Topic,
-			0,
+			tabs.OriginTopicsPage,
 			m,
 		)
 		m.consumptionPage = m.active
@@ -119,7 +116,7 @@ func (m *Model) ToTopicsPage() tea.Cmd {
 	return nil
 }
 
-func (m *Model) ToConsumePage(msg nav.ConsumePageDetails) tea.Cmd {
+func (m *Model) ToConsumePage(msg tabs.ConsumePageDetails) tea.Cmd {
 	var cmd tea.Cmd
 	m.active, cmd = consume_page.New(
 		m.ka,
@@ -132,7 +129,7 @@ func (m *Model) ToConsumePage(msg nav.ConsumePageDetails) tea.Cmd {
 	return cmd
 }
 
-func (m *Model) ToConsumeFormPage(d nav.ConsumeFormPageDetails) tea.Cmd {
+func (m *Model) ToConsumeFormPage(d tabs.ConsumeFormPageDetails) tea.Cmd {
 	if d.ReadDetails != nil {
 		m.active = consume_form_page.NewWithDetails(
 			d.ReadDetails,
@@ -147,6 +144,12 @@ func (m *Model) ToConsumeFormPage(d nav.ConsumeFormPageDetails) tea.Cmd {
 			m.ktx,
 		)
 	}
+	return nil
+}
+
+func (m *Model) ToRecordDetailsPage(msg tabs.LoadRecordDetailPageMsg) tea.Cmd {
+	m.active = record_details_page.New(msg.Record, msg.TopicName, clipper.New(), m.ktx)
+	m.recordDetailsPage = m.active
 	return nil
 }
 

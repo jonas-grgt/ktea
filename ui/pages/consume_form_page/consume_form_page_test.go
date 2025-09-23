@@ -300,7 +300,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 
 		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
 
-		assert.Equal(t, nav.ConsumePageDetails{
+		assert.Equal(t, tabs.ConsumePageDetails{
 			ReadDetails: kadmin.ReadDetails{
 				TopicName: "topic1",
 				Filter: &kadmin.Filter{
@@ -316,7 +316,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				PartitionCount: 10,
 				Replicas:       1,
 			},
-			Origin: nav.OriginConsumeFormPage,
+			Origin: tabs.OriginConsumeFormPage,
 		}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 	})
 
@@ -357,7 +357,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 
 		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
 
-		assert.Equal(t, nav.ConsumePageDetails{
+		assert.Equal(t, tabs.ConsumePageDetails{
 			ReadDetails: kadmin.ReadDetails{
 				TopicName: "topic1",
 				Filter: &kadmin.Filter{
@@ -373,7 +373,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				PartitionCount: 10,
 				Replicas:       1,
 			},
-			Origin: nav.OriginConsumeFormPage,
+			Origin: tabs.OriginConsumeFormPage,
 		}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 	})
 
@@ -449,7 +449,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 
 			assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
 
-			assert.Equal(t, nav.ConsumePageDetails{
+			assert.Equal(t, tabs.ConsumePageDetails{
 				ReadDetails: kadmin.ReadDetails{
 					TopicName: "topic1",
 					Filter: &kadmin.Filter{
@@ -465,7 +465,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 					PartitionCount: 10,
 					Replicas:       1,
 				},
-				Origin: nav.OriginConsumeFormPage,
+				Origin: tabs.OriginConsumeFormPage,
 			}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 		})
 	})
@@ -514,7 +514,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 
 		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
 
-		assert.EqualValues(t, nav.ConsumePageDetails{
+		assert.EqualValues(t, tabs.ConsumePageDetails{
 			ReadDetails: kadmin.ReadDetails{
 				TopicName: "topic1",
 				Filter: &kadmin.Filter{
@@ -531,7 +531,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				PartitionCount: 10,
 				Replicas:       1,
 			},
-			Origin: nav.OriginConsumeFormPage,
+			Origin: tabs.OriginConsumeFormPage,
 		}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 	})
 
@@ -626,7 +626,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 
 			assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
 
-			assert.Equal(t, nav.ConsumePageDetails{
+			assert.Equal(t, tabs.ConsumePageDetails{
 				ReadDetails: kadmin.ReadDetails{
 					TopicName: "topic1",
 					Filter: &kadmin.Filter{
@@ -642,7 +642,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 					PartitionCount: 10,
 					Replicas:       1,
 				},
-				Origin: nav.OriginConsumeFormPage,
+				Origin: tabs.OriginConsumeFormPage,
 			}, msgs[0].(tabs.ToConsumePageCalledMsg).Details)
 		})
 	})

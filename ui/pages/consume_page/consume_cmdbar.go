@@ -14,11 +14,12 @@ import (
 type ConsumptionCmdBar struct {
 	notifierWidget cmdbar.CmdBar
 	active         cmdbar.CmdBar
+	sortByCBar     *cmdbar.SortByCmdBar
 }
 
 func (c *ConsumptionCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	if c.active != nil {
-		return renderer.Render(c.active.View(ktx, renderer))
+		return c.active.View(ktx, renderer)
 	}
 	return renderer.Render("")
 }
@@ -36,13 +37,28 @@ func (c *ConsumptionCmdBar) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	switch msg := msg.(type) {
-	case kadmin.ReadingStartedMsg:
+	case tea.KeyMsg:
+		active, _, cmd := c.sortByCBar.Update(msg)
+		if !active {
+			c.active = nil
+		} else {
+			c.active = c.sortByCBar
+		}
+		return cmd
+	}
+
+	switch msg := msg.(type) {
+	case *kadmin.ReadingStartedMsg:
 		c.active = c.notifierWidget
 		_, _, cmd := c.active.Update(msg)
 		return cmd
 	}
 
 	return nil
+}
+
+func (c *ConsumptionCmdBar) IsFocussed() bool {
+	return c.active != nil
 }
 
 func (c *ConsumptionCmdBar) Shortcuts() []statusbar.Shortcut {
@@ -53,7 +69,7 @@ func (c *ConsumptionCmdBar) Shortcuts() []statusbar.Shortcut {
 }
 
 func NewConsumptionCmdbar() *ConsumptionCmdBar {
-	readingStartedNotifier := func(msg kadmin.ReadingStartedMsg, m *notifier.Model) (bool, tea.Cmd) {
+	readingStartedNotifier := func(msg *kadmin.ReadingStartedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		return true, m.SpinWithLoadingMsg("Consuming")
 	}
 	c := func(msg nav.LoadCachedConsumptionPageMsg, m *notifier.Model) (bool, tea.Cmd) {
@@ -77,7 +93,31 @@ func NewConsumptionCmdbar() *ConsumptionCmdBar {
 	cmdbar.WithMsgHandler(notifierCmdBar, emptyTopicMsgHandler)
 	cmdbar.WithMsgHandler(notifierCmdBar, noRecordFoundMsgHandler)
 	cmdbar.WithMsgHandler(notifierCmdBar, c)
+
+	sortByCmdBar := cmdbar.NewSortByCmdBar(
+		[]cmdbar.SortLabel{
+			{
+				Label:     "Key",
+				Direction: cmdbar.Asc,
+			},
+			{
+				Label:     "Timestamp",
+				Direction: cmdbar.Desc,
+			},
+			{
+				Label:     "Partition",
+				Direction: cmdbar.Desc,
+			},
+			{
+				Label:     "Offset",
+				Direction: cmdbar.Desc,
+			},
+		},
+		cmdbar.WithInitialSortColumn("Timestamp", cmdbar.Desc),
+	)
+
 	return &ConsumptionCmdBar{
 		notifierWidget: notifierCmdBar,
+		sortByCBar:     sortByCmdBar,
 	}
 }

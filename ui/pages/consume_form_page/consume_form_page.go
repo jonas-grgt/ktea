@@ -170,8 +170,8 @@ func (m *Model) submit(filter kadmin.Filter) tea.Cmd {
 		partToConsume = m.formValues.partitions
 	}
 
-	return m.navigator.ToConsumePage(nav.ConsumePageDetails{
-		Origin: nav.OriginConsumeFormPage,
+	return m.navigator.ToConsumePage(tabs.ConsumePageDetails{
+		Origin: tabs.OriginConsumeFormPage,
 		Topic:  m.topic,
 		ReadDetails: kadmin.ReadDetails{
 			TopicName:       m.topic.Name,
