@@ -290,7 +290,6 @@ func init() {
 			MarginBottom(0).
 			MarginLeft(2).
 			Height(1).
-			Foreground(lipgloss.Color(ColorRed)).
 			Bold(true)
 
 	}
