@@ -191,7 +191,7 @@ func (m *Model) createRows() []table.Row {
 	m.hiddenInternalTopicsCount = 0
 	var rows []table.Row
 	for _, topic := range m.topics {
-		if !m.showInternalTopics && strings.HasPrefix(topic.Name, "__") {
+		if !m.showInternalTopics && strings.HasPrefix(topic.Name, "_") {
 			m.hiddenInternalTopicsCount += 1
 			continue
 		}
