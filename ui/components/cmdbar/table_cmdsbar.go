@@ -90,7 +90,7 @@ func (m *TableCmdsBar[T]) handleSlash(msg tea.Msg) (tea.Msg, tea.Cmd) {
 		m.activeCBar = m.searchCBar
 		m.deleteCBar.active = false
 		if m.sortByCBar != nil {
-			m.sortByCBar.active = false
+			m.sortByCBar.Active = false
 		}
 	} else {
 		m.activeCBar = nil
@@ -104,8 +104,8 @@ func (m *TableCmdsBar[T]) handleF3(msg tea.Msg, pmsg tea.Msg, cmd tea.Cmd) (tea.
 		m.activeCBar = nil
 	} else {
 		m.activeCBar = m.sortByCBar
-		m.searchCBar.state = hidden
-		m.deleteCBar.active = false
+		m.searchCBar.Hide()
+		m.deleteCBar.Hide()
 	}
 	return pmsg, cmd
 }
@@ -117,7 +117,7 @@ func (m *TableCmdsBar[T]) handleF2(selection *T, msg tea.Msg) (tea.Msg, tea.Cmd)
 		m.deleteCBar.Delete(*selection)
 		m.searchCBar.state = hidden
 		if m.sortByCBar != nil {
-			m.sortByCBar.active = false
+			m.sortByCBar.Active = false
 		}
 	} else {
 		m.activeCBar = nil
@@ -151,7 +151,7 @@ func (m *TableCmdsBar[T]) ResetSearch() {
 func (m *TableCmdsBar[T]) Hide() {
 	m.searchCBar.state = hidden
 	m.deleteCBar.Hide()
-	m.sortByCBar.active = false
+	m.sortByCBar.Active = false
 	m.activeCBar = nil
 }
 

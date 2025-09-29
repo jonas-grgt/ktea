@@ -90,10 +90,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 
 	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
 
-	cmds := make([]tea.Cmd, 2)
-
-	var cmd tea.Cmd
-	cmds = append(cmds, cmd)
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -166,6 +163,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		)
 	}
 
+	var cmd tea.Cmd
 	name := m.SelectedTopicName()
 	msg, cmd = m.tcb.Update(msg, &name)
 	m.tableFocussed = !m.tcb.IsFocussed()
@@ -307,7 +305,7 @@ func New(
 		{"Configs", "C-o"},
 		{"Delete", "F2"},
 		{"Sort", "F3"},
-		{"Internal Topics", "F4"},
+		{"Toggle Internal Topics", "F4"},
 		{"Refresh", "F5"},
 	}
 

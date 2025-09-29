@@ -14,6 +14,7 @@ import (
 	"ktea/ui/tabs"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -71,9 +72,6 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 
-	cmd := m.cmdBar.Update(msg)
-	cmds = append(cmds, cmd)
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "esc" {
@@ -104,10 +102,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 						})
 				}
 			}
-		} else {
-			t, cmd := m.table.Update(msg)
-			m.table = &t
-			cmds = append(cmds, cmd)
 		}
 	case kadmin.EmptyTopicMsg:
 		m.noRecordsAvailable = true
@@ -120,32 +114,64 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		cmds = append(cmds, msg.AwaitRecord)
 	case kadmin.ConsumptionEndedMsg:
 		m.consuming = false
-		return nil
 	case kadmin.ConsumerRecordReceived:
+		m.records = append(m.records, msg.Records...)
+		cmds = append(cmds, msg.AwaitNextRecord)
+	}
+
+	cmd := m.cmdBar.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.rows = m.createRows()
+
+	// make sure table navigation is off when the cmdbar is focussed
+	if !m.cmdBar.IsFocussed() {
+		t, cmd := m.table.Update(msg)
+		m.table = &t
+		cmds = append(cmds, cmd)
+	}
+
+	return tea.Batch(cmds...)
+}
+
+func (m *Model) createRows() []table.Row {
+	var rows []table.Row
+	for _, rec := range m.records {
+
 		var key string
-		for _, rec := range msg.Records {
-			if rec.Key == "" {
-				key = "<null>"
-			} else {
-				key = rec.Key
-			}
-			m.records = append(m.records, rec)
-			m.rows = append(
-				[]table.Row{
-					{
+		if rec.Key == "" {
+			key = "<null>"
+		} else {
+			key = rec.Key
+		}
+
+		if m.cmdBar.GetSearchTerm() != "" {
+			if strings.Contains(strings.ToLower(rec.Key), strings.ToLower(m.cmdBar.GetSearchTerm())) ||
+				strings.Contains(strings.ToLower(rec.Payload.Value), strings.ToLower(m.cmdBar.GetSearchTerm())) {
+				rows = append(
+					rows,
+					table.Row{
 						key,
 						rec.Timestamp.Format("2006-01-02 15:04:05"),
 						strconv.FormatInt(rec.Partition, 10),
 						strconv.FormatInt(rec.Offset, 10),
 					},
+				)
+			}
+		} else {
+			rows = append(
+				rows,
+				table.Row{
+					key,
+					rec.Timestamp.Format("2006-01-02 15:04:05"),
+					strconv.FormatInt(rec.Partition, 10),
+					strconv.FormatInt(rec.Offset, 10),
 				},
-				m.rows...,
 			)
 		}
-		return msg.AwaitNextRecord
 	}
 
-	sort.SliceStable(m.rows, func(i, j int) bool {
+	sort.SliceStable(rows, func(i, j int) bool {
 		var col int
 		switch m.cmdBar.sortByCBar.SortedBy().Label {
 		case "Key":
@@ -161,12 +187,12 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 
 		if m.cmdBar.sortByCBar.SortedBy().Direction == cmdbar.Asc {
-			return m.rows[i][col] < m.rows[j][col]
+			return rows[i][col] < rows[j][col]
 		}
-		return m.rows[i][col] > m.rows[j][col]
+		return rows[i][col] > rows[j][col]
 	})
 
-	return tea.Batch(cmds...)
+	return rows
 }
 
 func (m *Model) Shortcuts() []statusbar.Shortcut {
@@ -179,6 +205,12 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 	} else if m.noRecordsAvailable || m.noRecordsFound {
 		return []statusbar.Shortcut{
 			{"Go Back", "esc"},
+		}
+	} else if m.cmdBar.IsSorting() {
+		return []statusbar.Shortcut{
+			{"Cancel Sorting", "F3"},
+			{"Select Sorting Column", "←/→/h/l"},
+			{"Apply Sorting Column", "enter"},
 		}
 	} else {
 		return []statusbar.Shortcut{

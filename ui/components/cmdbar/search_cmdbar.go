@@ -145,6 +145,10 @@ func (s *SearchCmdBar) Reset() {
 	s.searchInput = newSearchInput(s.placeholder)
 }
 
+func (s *SearchCmdBar) Hide() {
+	s.state = hidden
+}
+
 func newSearchInput(placeholder string) *huh.Input {
 	searchInput := huh.NewInput()
 	searchInput.Init()
