@@ -652,6 +652,47 @@ func TestConsumptionPage(t *testing.T) {
 		assert.Less(t, t4Idx, t5Idx)
 	})
 
+	t.Run("Sorting toggles shortcuts", func(t *testing.T) {
+		m, _ := New(
+			kadmin.NewMockKadmin(),
+			kadmin.ReadDetails{},
+			&kadmin.ListedTopic{},
+			tabs.OriginTopicsPage,
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		var records []kadmin.ConsumerRecord
+		now := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+		for i := 0; i < 10; i++ {
+			records = append(records, kadmin.ConsumerRecord{
+				Key:       fmt.Sprintf("key-%d", i),
+				Payload:   serdes.DesData{},
+				Err:       nil,
+				Partition: int64(i),
+				Offset:    int64(i),
+				Headers:   nil,
+				Timestamp: now.Add(time.Duration(i) * time.Second),
+			})
+		}
+		m.Update(kadmin.ConsumerRecordReceived{
+			Records: records,
+		})
+
+		assert.Equal(t, []statusbar.Shortcut{
+			{"View Record", "enter"},
+			{"Sort", "F3"},
+			{"Go Back", "esc"},
+		}, m.Shortcuts())
+
+		m.Update(tests.Key(tea.KeyF3))
+
+		assert.Equal(t, []statusbar.Shortcut{
+			{"Cancel Sorting", "F3"},
+			{"Select Sorting Column", "←/→/h/l"},
+			{"Apply Sorting Column", "enter"},
+		}, m.Shortcuts())
+	})
+
 	t.Run("Enter load consume details page", func(t *testing.T) {
 		m, _ := New(
 			kadmin.NewMockKadmin(),
@@ -702,5 +743,50 @@ func TestConsumptionPage(t *testing.T) {
 			},
 			TopicName: "topic1",
 		}, msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg)
+	})
+
+	t.Run("Search by key", func(t *testing.T) {
+		m, _ := New(
+			kadmin.NewMockKadmin(),
+			kadmin.ReadDetails{
+				TopicName: "topic1",
+			},
+			&kadmin.ListedTopic{},
+			tabs.OriginTopicsPage,
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		var records []kadmin.ConsumerRecord
+		now := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+		for i := 0; i < 50; i++ {
+			records = append(records, kadmin.ConsumerRecord{
+				Key:       fmt.Sprintf("key-%d", i),
+				Payload:   serdes.DesData{},
+				Err:       nil,
+				Partition: int64(i),
+				Offset:    int64(i),
+				Headers:   nil,
+				Timestamp: now.Add(time.Duration(i) * time.Second),
+			})
+		}
+		m.Update(kadmin.ConsumerRecordReceived{
+			Records: records,
+		})
+
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		m.Update(tests.Key('/'))
+		m.Update(tests.Key('0'))
+
+		render := m.View(tests.NewKontext(), tests.Renderer)
+
+		assert.Contains(t, render, "key-0")
+		for i := 1; i < 10; i++ {
+			assert.NotContains(t, render, fmt.Sprintf("key-%d ", i))
+		}
+		assert.Contains(t, render, "key-10")
+		assert.Contains(t, render, "key-20")
+		assert.Contains(t, render, "key-30")
+		assert.Contains(t, render, "key-40")
 	})
 }
