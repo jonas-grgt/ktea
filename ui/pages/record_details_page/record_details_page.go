@@ -392,9 +392,11 @@ func New(
 			{Title: "Schema", TabLabel: "record"},
 		}
 	}
+
+	borderTitle := record.PayloadType()
 	b := border.New(
 		border.WithTabs(tabs...),
-		border.WithTitle("AVRO Record"))
+		border.WithTitle(borderTitle))
 
 	return &Model{
 		record:         record,

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/json"
+	"encoding/xml"
 	"github.com/charmbracelet/log"
 	"ktea/serdes"
 	"strconv"
@@ -268,6 +270,37 @@ type ConsumerRecord struct {
 	Offset    int64
 	Headers   []Header
 	Timestamp time.Time
+}
+
+func (record *ConsumerRecord) PayloadType() string {
+	// schema is not empty, so it's Avro
+	if record.Payload.Schema != "" {
+		return "Avro"
+	}
+
+	// value is empty, so it's plain text'
+	value := strings.TrimSpace(record.Payload.Value)
+	if value == "" {
+		return "Plain Text"
+	}
+
+	// value is a valid json, so it's a json'
+	if json.Valid([]byte(value)) {
+		return "Plain Json"
+	}
+
+	// value is a valid xml, so it's a xml'
+	if isValidXML([]byte(value)) {
+		return "Plain XML"
+	}
+
+	// default value is plain text
+	return "Plain Text"
+}
+
+func isValidXML(data []byte) bool {
+	err := xml.Unmarshal(data, new(interface{}))
+	return err == nil
 }
 
 type offsets struct {
