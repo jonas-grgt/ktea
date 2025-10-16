@@ -396,7 +396,7 @@ func New(
 	borderTitle := record.PayloadType()
 	b := border.New(
 		border.WithTabs(tabs...),
-		border.WithTitle(borderTitle))
+		border.WithTitle("[ "+borderTitle+" ]"))
 
 	return &Model{
 		record:         record,
