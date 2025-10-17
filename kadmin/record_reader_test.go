@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"
+	"ktea/serdes"
 	"strconv"
 	"testing"
 	"time"
@@ -796,4 +797,94 @@ func TestDetermineStartingOffset(t *testing.T) {
 			assert.Equal(t, test.want.end, offset.end, "unexpected end")
 		})
 	}
+}
+
+func TestConsumerRecordPayloadType(t *testing.T) {
+	t.Run("returns Avro when schema is present", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: `{"type": "record", "name": "Test"}`,
+				Value:  `{"field": "value"}`,
+			},
+		}
+
+		assert.Equal(t, "Avro", record.PayloadType())
+	})
+
+	t.Run("returns Plain Text when value is empty", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: "",
+				Value:  "",
+			},
+		}
+
+		assert.Equal(t, "Plain Text", record.PayloadType())
+	})
+
+	t.Run("returns Plain Text when value is whitespace only", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: "",
+				Value:  "   \n\t  ",
+			},
+		}
+
+		assert.Equal(t, "Plain Text", record.PayloadType())
+	})
+
+	t.Run("returns Plain Json when value is valid JSON", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: "",
+				Value:  `{"name": "John", "age": 30}`,
+			},
+		}
+
+		assert.Equal(t, "Plain Json", record.PayloadType())
+	})
+
+	t.Run("returns Plain XML when value is valid XML", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: "",
+				Value:  `<root><name>John</name><age>30</age></root>`,
+			},
+		}
+
+		assert.Equal(t, "Plain XML", record.PayloadType())
+	})
+
+	t.Run("returns Plain Text for invalid JSON and XML", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: "",
+				Value:  "This is just plain text",
+			},
+		}
+
+		assert.Equal(t, "Plain Text", record.PayloadType())
+	})
+
+	t.Run("returns Plain Text for malformed JSON", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: "",
+				Value:  `{"name": "John", "age":`,
+			},
+		}
+
+		assert.Equal(t, "Plain Text", record.PayloadType())
+	})
+
+	t.Run("returns Plain Text for malformed XML", func(t *testing.T) {
+		record := &ConsumerRecord{
+			Payload: serdes.DesData{
+				Schema: "",
+				Value:  `<root><name>John</name>`,
+			},
+		}
+
+		assert.Equal(t, "Plain Text", record.PayloadType())
+	})
 }
