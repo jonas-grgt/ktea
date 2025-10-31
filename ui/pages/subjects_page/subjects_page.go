@@ -389,13 +389,13 @@ func New(srClient sradmin.Client) (*Model, tea.Cmd) {
 		return true, m.AutoHideCmd("subjects-page")
 	}
 
-	cmdbar.WithMsgHandler(notifierCmdBar, subjectListingStartedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, subjectsListedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, subjectDeletionStartedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, subjectListingErrorMsg)
-	cmdbar.WithMsgHandler(notifierCmdBar, subjectDeletedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, subjectDeletionErrorNotifier)
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(notifierCmdBar, subjectListingStartedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, subjectsListedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, subjectDeletionStartedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, subjectListingErrorMsg)
+	cmdbar.BindNotificationHandler(notifierCmdBar, subjectDeletedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, subjectDeletionErrorNotifier)
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg ui.RegainedFocusMsg,

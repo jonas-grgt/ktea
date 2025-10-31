@@ -17,10 +17,10 @@ import (
 type NotificationHandler[T any] func(T, *notifier.Model) (bool, tea.Cmd)
 
 type NotifierCmdBar struct {
-	active            bool
-	Notifier          *notifier.Model
-	msgByNotification map[reflect.Type]NotificationHandler[any]
-	tag               string
+	active                   bool
+	Notifier                 *notifier.Model
+	msgByNotificationHandler map[reflect.Type]NotificationHandler[any]
+	tag                      string
 }
 
 func (n *NotifierCmdBar) IsFocussed() bool {
@@ -56,7 +56,7 @@ func (n *NotifierCmdBar) Update(msg tea.Msg) (bool, tea.Msg, tea.Cmd) {
 	}
 
 	msgType := reflect.TypeOf(msg)
-	if notification, ok := n.msgByNotification[msgType]; ok {
+	if notification, ok := n.msgByNotificationHandler[msgType]; ok {
 		active, cmd := notification(msg, n.Notifier)
 		n.active = active
 		return n.active, nil, cmd
@@ -64,10 +64,13 @@ func (n *NotifierCmdBar) Update(msg tea.Msg) (bool, tea.Msg, tea.Cmd) {
 	return n.active, msg, nil
 }
 
-// TODO rename
-func WithMsgHandler[T any](bar *NotifierCmdBar, notification NotificationHandler[T]) *NotifierCmdBar {
+// BindNotificationHandler binds a NotificationHandler for a specific message type T to the NotifierCmdBar
+func BindNotificationHandler[T any](
+	bar *NotifierCmdBar,
+	notificationHandler NotificationHandler[T],
+) *NotifierCmdBar {
 	msgType := reflect.TypeOf((*T)(nil)).Elem()
-	bar.msgByNotification[msgType] = WrapNotification(notification)
+	bar.msgByNotificationHandler[msgType] = WrapNotification(notificationHandler)
 	return bar
 }
 
@@ -83,8 +86,8 @@ func WrapNotification[T any](n NotificationHandler[T]) NotificationHandler[any] 
 
 func NewNotifierCmdBar(tag string) *NotifierCmdBar {
 	return &NotifierCmdBar{
-		tag:               tag,
-		msgByNotification: make(map[reflect.Type]NotificationHandler[any]),
-		Notifier:          notifier.New(),
+		tag:                      tag,
+		msgByNotificationHandler: make(map[reflect.Type]NotificationHandler[any]),
+		Notifier:                 notifier.New(),
 	}
 }

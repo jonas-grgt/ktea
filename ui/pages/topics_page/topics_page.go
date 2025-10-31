@@ -327,7 +327,7 @@ func New(
 
 	notifierCmdBar := cmdbar.NewNotifierCmdBar(name)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.TopicListingStartedMsg,
@@ -338,7 +338,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg ui.RegainedFocusMsg,
@@ -352,7 +352,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.TopicsListedMsg,
@@ -363,7 +363,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.TopicListedErrorMsg,
@@ -374,7 +374,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.TopicDeletedMsg,
@@ -385,7 +385,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.TopicDeletionStartedMsg,
@@ -396,7 +396,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.TopicDeletionErrorMsg,

@@ -237,7 +237,7 @@ func New(
 
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("cgroups-page")
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.ConsumerGroupListingStartedMsg,
@@ -248,7 +248,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg ui.RegainedFocusMsg,
@@ -262,7 +262,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.ConsumerGroupsListedMsg,
@@ -273,7 +273,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.CGroupDeletionStartedMsg,
@@ -284,7 +284,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.CGroupDeletedMsg,
@@ -295,7 +295,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.CGroupDeletionErrMsg,

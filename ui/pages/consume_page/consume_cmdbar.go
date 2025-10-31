@@ -118,11 +118,11 @@ func NewConsumptionCmdbar() *ConsumptionCmdBar {
 		return false, nil
 	}
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("consumption-bar")
-	cmdbar.WithMsgHandler(notifierCmdBar, readingStartedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, consumptionEndedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, emptyTopicMsgHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, noRecordFoundMsgHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, c)
+	cmdbar.BindNotificationHandler(notifierCmdBar, readingStartedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, consumptionEndedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, emptyTopicMsgHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, noRecordFoundMsgHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, c)
 
 	sortByCmdBar := cmdbar.NewSortByCmdBar(
 		[]cmdbar.SortLabel{

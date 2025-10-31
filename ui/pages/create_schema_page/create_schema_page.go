@@ -158,19 +158,19 @@ func New(schemaCreator sradmin.SchemaCreator, ktx *kontext.ProgramKtx) (*Model, 
 	model.schemaCreator = schemaCreator
 	model.state = entering
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("create-schema-page")
-	cmdbar.WithMsgHandler(notifierCmdBar, func(msg sradmin.SchemaCreationStartedMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(notifierCmdBar, func(msg sradmin.SchemaCreationStartedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		cmd := m.SpinWithLoadingMsg("Creating Schema")
 		return true, cmd
 	})
-	cmdbar.WithMsgHandler(notifierCmdBar, func(msg sradmin.SchemaCreatedMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(notifierCmdBar, func(msg sradmin.SchemaCreatedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		m.ShowSuccessMsg("Schema created")
 		return true, nil
 	})
-	cmdbar.WithMsgHandler(notifierCmdBar, func(msg notifier.HideNotificationMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(notifierCmdBar, func(msg notifier.HideNotificationMsg, m *notifier.Model) (bool, tea.Cmd) {
 		m.Idle()
 		return true, nil
 	})
-	cmdbar.WithMsgHandler(notifierCmdBar, func(msg sradmin.SchemaCreationErrMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(notifierCmdBar, func(msg sradmin.SchemaCreationErrMsg, m *notifier.Model) (bool, tea.Cmd) {
 		m.ShowErrorMsg("Schema creation failed", msg.Err)
 		return true, nil
 	})

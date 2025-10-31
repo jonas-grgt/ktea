@@ -466,13 +466,13 @@ func (m *Model) createSrForm() *huh.Form {
 
 func (m *Model) createNotifierCmdBar() {
 	m.notifierCmdBar = cmdbar.NewNotifierCmdBar(notifierCmdbarTag)
-	cmdbar.WithMsgHandler(m.notifierCmdBar, func(msg kadmin.ConnCheckStartedMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg kadmin.ConnCheckStartedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		return true, m.SpinWithLoadingMsg("Testing cluster connectivity")
 	})
-	cmdbar.WithMsgHandler(m.notifierCmdBar, func(msg kadmin.ConnCheckSucceededMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg kadmin.ConnCheckSucceededMsg, m *notifier.Model) (bool, tea.Cmd) {
 		return true, m.SpinWithLoadingMsg("Connection success creating cluster")
 	})
-	cmdbar.WithMsgHandler(m.notifierCmdBar, func(msg kadmin.ConnCheckErrMsg, nm *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg kadmin.ConnCheckErrMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		m.cForm = m.createCForm()
 		m.form = m.cForm
 		m.state = none
@@ -482,7 +482,7 @@ func (m *Model) createNotifierCmdBar() {
 		}
 		return true, nm.ShowErrorMsg(nMsg, msg.Err)
 	})
-	cmdbar.WithMsgHandler(m.notifierCmdBar, func(msg config.ClusterRegisteredMsg, nm *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg config.ClusterRegisteredMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		if m.form == m.srForm {
 			nm.ShowSuccessMsg("Schema registry registered! <ESC> to go back.")
 		} else if m.form == m.cForm {
@@ -496,7 +496,7 @@ func (m *Model) createNotifierCmdBar() {
 		}
 		return true, nm.AutoHideCmd(notifierCmdbarTag)
 	})
-	cmdbar.WithMsgHandler(m.notifierCmdBar, func(msg sradmin.ConnCheckErrMsg, nm *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg sradmin.ConnCheckErrMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		m.srForm = m.createSrForm()
 		m.form = m.srForm
 		m.state = none

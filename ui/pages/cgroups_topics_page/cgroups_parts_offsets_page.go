@@ -245,7 +245,7 @@ func New(lister kadmin.OffsetLister, group string) (*Model, tea.Cmd) {
 
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("cgroup")
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.OffsetListingStartedMsg,
@@ -256,7 +256,7 @@ func New(lister kadmin.OffsetLister, group string) (*Model, tea.Cmd) {
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kadmin.OffsetListedMsg,

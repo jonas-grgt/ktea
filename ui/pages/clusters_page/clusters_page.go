@@ -208,13 +208,13 @@ func New(
 		return true, m.AutoHideCmd("clusters-page")
 	}
 
-	cmdbar.WithMsgHandler(notifierCmdBar, clusterDeletedHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, activeClusterDeleteErrMsgHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, connCheckStartedHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, connCheckErrHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, connErrHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, connCheckSucceededHandler)
-	cmdbar.WithMsgHandler(notifierCmdBar, clusterSwitchedHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, clusterDeletedHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, activeClusterDeleteErrMsgHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, connCheckStartedHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, connCheckErrHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, connErrHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, connCheckSucceededHandler)
+	cmdbar.BindNotificationHandler(notifierCmdBar, clusterSwitchedHandler)
 
 	model.ktx = ktx
 	t := ktable.NewDefaultTable()

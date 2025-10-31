@@ -355,7 +355,7 @@ func New(
 	m.sortByCmdBar = sortByCmdBar
 
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("kcons-page")
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kcadmin.ConnectorListingStartedMsg,
@@ -366,7 +366,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kcadmin.ConnectorsListedMsg,
@@ -377,7 +377,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kcadmin.ConnectorListingErrMsg,
@@ -389,7 +389,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kcadmin.ConnectorDeletionStartedMsg,
@@ -400,7 +400,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kcadmin.ConnectorDeletedMsg,
@@ -411,7 +411,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kcadmin.ConnectorDeletionErrMsg,
@@ -422,7 +422,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg ui.RegainedFocusMsg,
@@ -439,7 +439,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg kcadmin.PauseRequestedMsg,
@@ -450,7 +450,7 @@ func New(
 		},
 	)
 
-	cmdbar.WithMsgHandler(
+	cmdbar.BindNotificationHandler(
 		notifierCmdBar,
 		func(
 			msg ConnectorStateAlreadyChanging,

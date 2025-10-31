@@ -90,15 +90,15 @@ func NewCmdBar(deleteFunc cmdbar.DeleteFn[int], schemaDeletedNotifier cmdbar.Not
 	}
 
 	notifierCmdBar := cmdbar.NewNotifierCmdBar("schema-details-cmd-bar")
-	cmdbar.WithMsgHandler(notifierCmdBar, schemaListingStartedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, schemaDeletionStartedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, schemaDeletedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, schemaListedNotifier)
-	cmdbar.WithMsgHandler(notifierCmdBar, func(msg SchemaCopiedMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(notifierCmdBar, schemaListingStartedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, schemaDeletionStartedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, schemaDeletedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, schemaListedNotifier)
+	cmdbar.BindNotificationHandler(notifierCmdBar, func(msg SchemaCopiedMsg, m *notifier.Model) (bool, tea.Cmd) {
 		m.ShowSuccessMsg("Schema copied")
 		return true, m.AutoHideCmd("schema-details-cmd-bar")
 	})
-	cmdbar.WithMsgHandler(notifierCmdBar, func(msg CopyErrorMsg, m *notifier.Model) (bool, tea.Cmd) {
+	cmdbar.BindNotificationHandler(notifierCmdBar, func(msg CopyErrorMsg, m *notifier.Model) (bool, tea.Cmd) {
 		m.ShowErrorMsg("Copy failed", msg.Err)
 		return true, m.AutoHideCmd("schema-details-cmd-bar")
 	})
