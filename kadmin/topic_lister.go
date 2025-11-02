@@ -2,6 +2,7 @@ package kadmin
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"sync"
 )
 
 const UnknownRecordCount = -1
@@ -76,21 +77,33 @@ func (ka *SaramaKafkaAdmin) doListTopics(
 		return
 	}
 
-	var topics []ListedTopic
-	for name, t := range listResult {
+	var (
+		topics []ListedTopic
+		wg     = sync.WaitGroup{}
+	)
+	for topic, t := range listResult {
 
-		cleanupPolicy := "unknown"
-		if policy, ok := t.ConfigEntries["cleanup.policy"]; ok {
-			cleanupPolicy = *policy
-		}
+		wg.Add(1)
+		go func() {
+			msg := ka.ListConfigs(topic).(TopicConfigListingStartedMsg)
+			configs := msg.AwaitCompletion().(TopicConfigsListedMsg)
 
-		topics = append(topics, ListedTopic{
-			name,
-			int(t.NumPartitions),
-			int(t.ReplicationFactor),
-			cleanupPolicy,
-		})
+			cleanupPolicy := "unknown"
+			if policy, ok := configs.Configs["cleanup.policy"]; ok {
+				cleanupPolicy = policy
+			}
+
+			topics = append(topics, ListedTopic{
+				topic,
+				int(t.NumPartitions),
+				int(t.ReplicationFactor),
+				cleanupPolicy,
+			})
+		}()
 	}
+
+	wg.Wait()
+
 	topicsChan <- topics
 	close(topicsChan)
 }
