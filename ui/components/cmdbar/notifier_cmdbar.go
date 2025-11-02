@@ -24,7 +24,7 @@ type NotifierCmdBar struct {
 }
 
 func (n *NotifierCmdBar) IsFocussed() bool {
-	return n.active
+	return n.active && n.Notifier.HasPriority()
 }
 
 func (n *NotifierCmdBar) Shortcuts() []statusbar.Shortcut {
