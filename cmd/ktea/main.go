@@ -131,6 +131,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.schemaRegistryTabCtrl != nil {
 			cmd := m.schemaRegistryTabCtrl.Update(msg)
 			cmds = append(cmds, cmd)
+			return m, tea.Batch(cmds...)
 		}
 	case kcadmin.ConnectorListingStartedMsg,
 		kcadmin.ConnectorsListedMsg,
