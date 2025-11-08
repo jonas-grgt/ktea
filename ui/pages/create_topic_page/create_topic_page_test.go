@@ -3,13 +3,14 @@ package create_topic_page
 import (
 	"errors"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
 	"ktea/ui/pages/nav"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
 )
 
 func batchUpdate(m *Model, cmd tea.Cmd) {
@@ -184,6 +185,66 @@ func TestCreateTopic(t *testing.T) {
 		m.Update(cmd())
 		// cleanup policy
 		m.Update(tests.Key(tea.KeyDown))
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		m.Update(cmd())
+		// config
+		tests.UpdateKeys(m, "delete.retention.ms=1029394")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		// next field
+		cmd = m.Update(cmd())
+		// next group
+		m.Update(cmd())
+
+		// actual submit
+		msgs := tests.Submit(m)
+
+		var capturedDetails CapturedTopicCreationDetails
+		for _, msg := range msgs {
+			switch m := msg.(type) {
+			case CapturedTopicCreationDetails:
+				capturedDetails = m
+			}
+		}
+
+		assert.NotNil(t, capturedDetails)
+		assert.Equal(t, CapturedTopicCreationDetails{
+			TopicCreationDetails: kadmin.TopicCreationDetails{
+				"topicA",
+				2,
+				map[string]string{
+					"cleanup.policy":      "compact",
+					"delete.retention.ms": "1029394",
+				},
+				int16(3),
+			},
+		}, capturedDetails)
+	})
+
+	t.Run("create delete,compact topic", func(t *testing.T) {
+		mockCreator := MockTopicCreator{
+			CreateTopicFunc: func(details kadmin.TopicCreationDetails) tea.Msg {
+				if details.Name == "" {
+					return errors.New("topic name cannot be empty")
+				}
+				return CapturedTopicCreationDetails{details}
+			},
+		}
+		m := New(&mockCreator)
+
+		// topic name
+		tests.UpdateKeys(m, "topicA")
+		cmd := m.Update(tests.Key(tea.KeyEnter))
+		m.Update(cmd())
+		// partition count
+		tests.UpdateKeys(m, "2")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		m.Update(cmd())
+		// replication factor
+		tests.UpdateKeys(m, "3")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		m.Update(cmd())
+		// cleanup policy
+		m.Update(tests.Key(tea.KeyDown))
 		m.Update(tests.Key(tea.KeyDown))
 		cmd = m.Update(tests.Key(tea.KeyEnter))
 		m.Update(cmd())
@@ -212,13 +273,14 @@ func TestCreateTopic(t *testing.T) {
 				"topicA",
 				2,
 				map[string]string{
-					"cleanup.policy":      "delete-compact",
+					"cleanup.policy":      "delete,compact",
 					"delete.retention.ms": "1029394",
 				},
 				int16(3),
 			},
 		}, capturedDetails)
 	})
+
 }
 
 func TestCreateTopic_Validation(t *testing.T) {

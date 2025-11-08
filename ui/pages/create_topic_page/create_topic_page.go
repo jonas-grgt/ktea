@@ -3,10 +3,6 @@ package create_topic_page
 import (
 	"errors"
 	"fmt"
-	bsp "github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -18,6 +14,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	bsp "github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type formState int
@@ -209,9 +210,9 @@ func (m *Model) initForm(fs formState) {
 		Title("Cleanup Policy").
 		Value(&m.formValues.cleanupPolicy).
 		Options(
-			huh.NewOption("Retention (delete)", "delete"),
-			huh.NewOption("Compaction (compact)", "compact"),
-			huh.NewOption("Retention + Compaction", "delete-compact"))
+			huh.NewOption("delete", "delete"),
+			huh.NewOption("compact", "compact"),
+			huh.NewOption("delete,compact", "delete,compact"))
 
 	configInput := huh.NewInput().
 		Description("Enter custom topic configurations in the format config=value. Leave blank to create the topic.").
