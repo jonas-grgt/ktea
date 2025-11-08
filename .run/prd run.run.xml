@@ -8,6 +8,7 @@
     <package value="ktea" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/ktea/main.go" />
+    <pty_enabled value="true" />
     <method v="2" />
   </configuration>
 </component>
