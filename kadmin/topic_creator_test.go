@@ -1,8 +1,9 @@
 package kadmin
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateTopic(t *testing.T) {
@@ -38,7 +39,7 @@ func TestCreateTopic(t *testing.T) {
 			return
 		}
 
-		assert.Contains(t, topics, ListedTopic{topic, 2, 1, "unknown"})
+		assert.Contains(t, topics, ListedTopic{topic, 2, 1, "delete"})
 
 		// and
 		var configs map[string]string
