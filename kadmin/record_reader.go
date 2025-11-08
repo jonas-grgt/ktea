@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
-	"github.com/charmbracelet/log"
 	"ktea/serdes"
 	"strconv"
 	"strings"
@@ -14,6 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 	"unicode/utf8"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/IBM/sarama"
 	tea "github.com/charmbracelet/bubbletea"
@@ -358,17 +359,30 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 		return
 	}
 
-	wg.Add(len(rd.PartitionToRead))
-
 	emptyTopic := true
+
+	log.Debug("Starting to read records",
+		"partition", rd.PartitionToRead,
+		"offsets", offsets)
+
 	for _, partition := range rd.PartitionToRead {
 		// if there is no data in the partition, we don't need to read it unless live consumption is requested
 		if offsets[partition].end != offsets[partition].start || rd.StartPoint == Live {
+
+			wg.Add(1)
+
 			emptyTopic = false
 			go func(partition int) {
 				defer wg.Done()
 
 				readingOffsets := ka.determineReadingOffsets(rd, offsets[partition])
+				log.Debug("Reading offsets determined",
+					"topic", rd.TopicName,
+					"partition", partition,
+					"start", readingOffsets.start,
+					"end", readingOffsets.end,
+				)
+
 				consumer, err := client.ConsumePartition(
 					rd.TopicName,
 					int32(partition),
@@ -509,10 +523,8 @@ func (ka *SaramaKafkaAdmin) determineReadingOffsets(
 	numberOfRecordsPerPart := int64(float64(int64(rd.Limit)) / float64(len(rd.PartitionToRead)))
 	if rd.StartPoint == Beginning {
 		startOffset, endOffset = ka.determineOffsetsFromBeginning(
-			startOffset,
 			offsets,
 			numberOfRecordsPerPart,
-			endOffset,
 		)
 	} else {
 		startOffset, endOffset = ka.determineMostRecentOffsets(
@@ -543,13 +555,15 @@ func (ka *SaramaKafkaAdmin) determineMostRecentOffsets(
 }
 
 func (ka *SaramaKafkaAdmin) determineOffsetsFromBeginning(
-	startOffset int64,
 	offsets offsets,
 	numberOfRecordsPerPart int64,
-	endOffset int64,
 ) (int64, int64) {
+	var (
+		startOffset int64
+		endOffset   int64
+	)
 	startOffset = offsets.start
-	if offsets.start+numberOfRecordsPerPart < offsets.newest() {
+	if (offsets.start + numberOfRecordsPerPart) < offsets.newest() {
 		endOffset = startOffset + numberOfRecordsPerPart - 1
 	} else {
 		endOffset = offsets.newest()
@@ -569,7 +583,7 @@ func (ka *SaramaKafkaAdmin) fetchOffsets(
 
 	for _, partition := range partitions {
 
-		log.Debug("fetching offsets", "topic", topicName, "partition", partition)
+		log.Debug("Fetching offsets", "topic", topicName, "partition", partition)
 
 		wg.Add(1)
 		go func(partition int) {
@@ -584,6 +598,12 @@ func (ka *SaramaKafkaAdmin) fetchOffsets(
 				errorsChan <- err
 				return
 			}
+			log.Debug(
+				"Fetched start offset",
+				"topic", topicName,
+				"partition", partition,
+				"startOffset", startOffset,
+			)
 
 			endOffset, err := ka.client.GetOffset(
 				topicName,
@@ -594,6 +614,10 @@ func (ka *SaramaKafkaAdmin) fetchOffsets(
 				errorsChan <- err
 				return
 			}
+			log.Debug("Fetched end offset",
+				"topic", topicName,
+				"partition", partition,
+				"endOffset", endOffset)
 
 			mu.Lock()
 			offsetsByPartition[partition] = offsets{
