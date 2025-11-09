@@ -22,7 +22,7 @@ type DesData struct {
 var ErrNoSchemaRegistry = errors.New("no schema registry configured")
 
 func (d *GoAvroDeserializer) Deserialize(data []byte) (DesData, error) {
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		return DesData{}, nil
 	}
 

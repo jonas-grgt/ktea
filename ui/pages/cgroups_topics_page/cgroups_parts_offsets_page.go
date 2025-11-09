@@ -183,7 +183,7 @@ func (m *Model) recreateOffsetRows() {
 }
 
 func (m *Model) recreateTopicRows() {
-	if m.offsets == nil || len(m.offsets) == 0 {
+	if len(m.offsets) == 0 {
 		return
 	}
 

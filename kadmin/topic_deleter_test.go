@@ -42,10 +42,11 @@ func TestDeleteTopic(t *testing.T) {
 				select {
 				case topics = <-listTopicsMsg.Topics:
 				case err := <-listTopicsMsg.Err:
-					t.Error(t, "Failed to list topics", err)
+					assert.Fail(c, "Failed to list topics", err.Error())
+					return
 				}
-				assert.Contains(c, topics, ListedTopic{topic1, 2, 1, "unknown"})
-				assert.NotContains(c, topics, ListedTopic{topic2, 2, 1, "unknown"})
+				assert.Contains(c, topics, ListedTopic{topic1, 2, 1, "delete"})
+				assert.NotContains(c, topics, ListedTopic{topic2, 1, 1, "delete"})
 			}, 2*time.Second, 10*time.Millisecond)
 			// clean up
 			ka.DeleteTopic(topic1)
