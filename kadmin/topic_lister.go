@@ -86,9 +86,7 @@ func (ka *SaramaKafkaAdmin) doListTopics(
 	)
 
 	for topic, t := range listResult {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			msg := ka.ListConfigs(topic).(TopicConfigListingStartedMsg)
 
 			var configs map[string]string
@@ -114,7 +112,7 @@ func (ka *SaramaKafkaAdmin) doListTopics(
 				cleanupPolicy,
 			})
 			mu.Unlock()
-		}()
+		})
 	}
 
 	wg.Wait()

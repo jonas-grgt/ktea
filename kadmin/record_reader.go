@@ -365,16 +365,14 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 		"partition", rd.PartitionToRead,
 		"offsets", offsets)
 
-	for _, partition := range rd.PartitionToRead {
+	for _, p := range rd.PartitionToRead {
 		// if there is no data in the partition, we don't need to read it unless live consumption is requested
+		partition := p
 		if offsets[partition].end != offsets[partition].start || rd.StartPoint == Live {
 
-			wg.Add(1)
-
 			emptyTopic = false
-			go func(partition int) {
-				defer wg.Done()
 
+			wg.Go(func() {
 				readingOffsets := ka.determineReadingOffsets(rd, offsets[partition])
 				log.Debug("Reading offsets determined",
 					"topic", rd.TopicName,
@@ -453,7 +451,7 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 						}
 					}
 				}
-			}(partition)
+			})
 		}
 	}
 
@@ -581,14 +579,13 @@ func (ka *SaramaKafkaAdmin) fetchOffsets(
 	var mu sync.Mutex
 	errorsChan := make(chan error, len(partitions))
 
-	for _, partition := range partitions {
+	for _, p := range partitions {
+
+		partition := p
 
 		log.Debug("Fetching offsets", "topic", topicName, "partition", partition)
 
-		wg.Add(1)
-		go func(partition int) {
-			defer wg.Done()
-
+		wg.Go(func() {
 			startOffset, err := ka.client.GetOffset(
 				topicName,
 				int32(partition),
@@ -625,7 +622,7 @@ func (ka *SaramaKafkaAdmin) fetchOffsets(
 				endOffset,
 			}
 			mu.Unlock()
-		}(partition)
+		})
 	}
 
 	wg.Wait()

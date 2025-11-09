@@ -1,9 +1,10 @@
 package sradmin
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"strconv"
 	"sync"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Schema struct {
@@ -45,11 +46,10 @@ func (s *DefaultSrClient) ListVersions(subject string, versions []int) tea.Msg {
 	schemaChan := make(chan Schema, len(versions))
 	var wg sync.WaitGroup
 
-	wg.Add(len(versions))
 	for _, version := range versions {
-		go func(version int) {
-			defer wg.Done()
-			schema, err := s.client.GetSchemaByVersion(subject, version)
+		v := version
+		wg.Go(func() {
+			schema, err := s.client.GetSchemaByVersion(subject, v)
 			if err == nil {
 				schemaChan <- Schema{
 					Id:      strconv.Itoa(schema.ID()),
@@ -59,10 +59,10 @@ func (s *DefaultSrClient) ListVersions(subject string, versions []int) tea.Msg {
 			} else {
 				schemaChan <- Schema{
 					Err:     err,
-					Version: version,
+					Version: v,
 				}
 			}
-		}(version)
+		})
 	}
 
 	go func() {

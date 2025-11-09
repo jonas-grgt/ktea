@@ -2,10 +2,11 @@ package sradmin
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 	"slices"
 	"sync"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 )
 
 type SubjectsListedMsg struct {
@@ -86,29 +87,27 @@ func (s *DefaultSrClient) doListSubject(
 
 	for i, subj := range subjects {
 		// Version can only be fetched if the subject is not deleted
+		name := subj.Name
+		idx := i
 		if !subj.Deleted {
-			wg.Add(1)
-			go func(i int, name string) {
-				defer wg.Done()
+			wg.Go(func() {
 				versions, err := s.client.GetSchemaVersions(name)
 				if err != nil {
 					errs <- fmt.Errorf("get versions %s: %w", name, err)
 					return
 				}
-				versionResults[i] = versions
-			}(i, subj.Name)
+				versionResults[idx] = versions
+			})
 		}
 
-		wg.Add(1)
-		go func(i int, name string) {
-			defer wg.Done()
+		wg.Go(func() {
 			comp, err := s.client.GetCompatibilityLevel(name, true)
 			if err != nil {
 				errs <- fmt.Errorf("get compatibility %s: %w", name, err)
 				return
 			}
-			compResults[i] = comp.String()
-		}(i, subj.Name)
+			compResults[idx] = comp.String()
+		})
 	}
 
 	wg.Wait()
