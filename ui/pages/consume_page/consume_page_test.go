@@ -2,8 +2,6 @@ package consume_page
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/serdes"
 	"ktea/tests"
@@ -12,6 +10,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConsumptionPage(t *testing.T) {
@@ -723,9 +724,6 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.View(tests.NewKontext(), tests.Renderer)
 
-		m.Update(tests.Key(tea.KeyDown))
-		m.Update(tests.Key(tea.KeyDown))
-		m.Update(tests.Key(tea.KeyDown))
 		cmd := m.Update(tests.Key(tea.KeyEnter))
 
 		msgs := tests.ExecuteBatchCmd(cmd)
@@ -733,13 +731,37 @@ func TestConsumptionPage(t *testing.T) {
 		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msgs[0])
 		assert.Equal(t, tabs.LoadRecordDetailPageMsg{
 			Record: &kadmin.ConsumerRecord{
-				Key:       "key-6",
+				Key:       "key-9",
 				Payload:   serdes.DesData{},
 				Err:       nil,
-				Partition: int64(6),
-				Offset:    int64(6),
+				Partition: int64(9),
+				Offset:    int64(9),
 				Headers:   nil,
-				Timestamp: now.Add(time.Duration(6) * time.Second),
+				Timestamp: now.Add(time.Duration(9) * time.Second),
+			},
+			TopicName: "topic1",
+		}, msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg)
+
+		m.Update(tests.Key(tea.KeyF3))
+		m.Update(tests.Key(tea.KeyLeft))
+		m.Update(tests.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyEnter))
+		m.Update(tests.Key(tea.KeyF3))
+
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+
+		msgs = tests.ExecuteBatchCmd(cmd)
+		assert.Len(t, msgs, 1)
+		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msgs[0])
+		assert.Equal(t, tabs.LoadRecordDetailPageMsg{
+			Record: &kadmin.ConsumerRecord{
+				Key:       "key-9",
+				Payload:   serdes.DesData{},
+				Err:       nil,
+				Partition: int64(9),
+				Offset:    int64(9),
+				Headers:   nil,
+				Timestamp: now.Add(time.Duration(9) * time.Second),
 			},
 			TopicName: "topic1",
 		}, msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg)
