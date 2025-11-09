@@ -2,7 +2,6 @@ package cgroups_topics_page
 
 import (
 	"fmt"
-	"github.com/charmbracelet/log"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -17,6 +16,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -183,7 +184,7 @@ func (m *Model) recreateOffsetRows() {
 }
 
 func (m *Model) recreateTopicRows() {
-	if m.offsets == nil || len(m.offsets) == 0 {
+	if len(m.offsets) == 0 {
 		return
 	}
 
