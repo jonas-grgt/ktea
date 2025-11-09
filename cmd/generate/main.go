@@ -4,10 +4,6 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"github.com/IBM/sarama"
-	"github.com/google/uuid"
-	"github.com/linkedin/goavro/v2"
-	"golang.org/x/exp/rand"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/sradmin"
@@ -15,6 +11,11 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/IBM/sarama"
+	"github.com/google/uuid"
+	"github.com/linkedin/goavro/v2"
+	"golang.org/x/exp/rand"
 )
 
 type eventGenFunc func(id string) interface{}
@@ -346,13 +347,11 @@ func main() {
 	ka, sa := getAdmins()
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(genData))
 
 	for _, gd := range genData {
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			generateData(ka, gd, sa, 1000)
-		}()
+		})
 	}
 
 	wg.Wait()
