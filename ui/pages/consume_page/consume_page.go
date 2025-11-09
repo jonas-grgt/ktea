@@ -93,11 +93,12 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		} else if msg.String() == "enter" {
 			if !m.cmdBar.IsFocussed() {
 				if len(m.records) > 0 {
-					selectedRow := m.records[len(m.records)-m.table.Cursor()-1]
+					selectedRow := m.rows[m.table.Cursor()]
+					selectedRecord := m.recordForRow(selectedRow)
 					m.consuming = false
 					return m.navigator.ToRecordDetailsPage(
 						tabs.LoadRecordDetailPageMsg{
-							Record:    &selectedRow,
+							Record:    &selectedRecord,
 							TopicName: m.readDetails.TopicName,
 						})
 				}
@@ -132,6 +133,15 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	return tea.Batch(cmds...)
+}
+
+func (m *Model) recordForRow(row table.Row) kadmin.ConsumerRecord {
+	for _, rec := range m.records {
+		if rec.Key == row[0] {
+			return rec
+		}
+	}
+	panic(fmt.Sprintf("Record not found for row: %v", row))
 }
 
 func (m *Model) createRows() []table.Row {
