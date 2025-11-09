@@ -476,7 +476,7 @@ func (m *Model) createNotifierCmdBar() {
 		m.cForm = m.createCForm()
 		m.form = m.cForm
 		m.state = none
-		nMsg := "Cluster not crated"
+		nMsg := "Cluster not created"
 		if m.inEditingMode() {
 			nMsg = "Cluster not updated"
 		}
