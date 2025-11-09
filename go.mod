@@ -1,8 +1,6 @@
 module ktea
 
-go 1.23.8
-
-toolchain go1.24.1
+go 1.25.4
 
 replace github.com/charmbracelet/huh v0.6.0 => github.com/jonas-grgt/huh v0.0.0-20250128201054-5def46fb981f
 
