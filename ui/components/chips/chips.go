@@ -2,13 +2,12 @@ package chips
 
 import (
 	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
 	"strings"
-
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {

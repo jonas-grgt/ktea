@@ -5,10 +5,9 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"ktea/sradmin"
-
 	"github.com/linkedin/goavro/v2"
 	"github.com/pkg/errors"
+	"ktea/sradmin"
 )
 
 type GoAvroDeserializer struct {
