@@ -2,7 +2,6 @@ package cgroups_topics_page
 
 import (
 	"fmt"
-	"github.com/charmbracelet/log"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -18,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/log"
+
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	lg "github.com/charmbracelet/lipgloss"
@@ -29,6 +30,7 @@ type tableFocus int
 type state int
 
 const (
+	na          string     = "N/A"
 	topicFocus  tableFocus = 0
 	offsetFocus tableFocus = 1
 
@@ -38,13 +40,16 @@ const (
 )
 
 type Model struct {
+	lister            kadmin.OffsetLister
 	tableFocus        tableFocus
 	topicsTable       table.Model
 	offsetsTable      table.Model
+	totalTable        table.Model
 	offsetsBorder     *border.Model
 	topicsBorder      *border.Model
 	topicsRows        []table.Row
 	offsetRows        []table.Row
+	totalLag          int64
 	groupName         string
 	topicByPartOffset map[string][]partOffset
 	cmdBar            *CGroupCmdbar[string]
@@ -63,17 +68,24 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	cmdBarView := m.cmdBar.View(ktx, renderer)
 
 	halfWidth := int(float64(ktx.WindowWidth / 2))
-	m.topicsTable.SetHeight(ktx.AvailableHeight - 4)
-	m.topicsTable.SetWidth(halfWidth - 2)
+	m.topicsTable.SetHeight(ktx.AvailableTableHeight())
+	m.topicsTable.SetWidth(int(float64(halfWidth)))
 	m.topicsTable.SetColumns([]table.Column{
-		{"Topic Name", int(float64(halfWidth - 4))},
+		{Title: "Topic Name", Width: int(float64(halfWidth - 2))},
 	})
 	m.topicsTable.SetRows(m.topicsRows)
 
-	m.offsetsTable.SetHeight(ktx.AvailableHeight - 4)
+	partitionColumnWidth := int(float64(halfWidth-4) * 0.22)
+	offsetColumnWidth := int(float64(halfWidth-4) * 0.24)
+	hwmColumnWidth := int(float64(halfWidth-4) * 0.24)
+	lagColumnWidth := int(float64(halfWidth-4) * 0.22)
+
+	m.offsetsTable.SetHeight(ktx.AvailableTableHeight())
 	m.offsetsTable.SetColumns([]table.Column{
-		{"Partition", int(float64(halfWidth-6) * 0.5)},
-		{"Offset", int(float64(halfWidth-5) * 0.5)},
+		{Title: "Partition", Width: partitionColumnWidth},
+		{Title: "Offset", Width: offsetColumnWidth},
+		{Title: "High Watermark", Width: hwmColumnWidth},
+		{Title: "Lag", Width: lagColumnWidth},
 	})
 	m.offsetsTable.SetRows(m.offsetRows)
 
@@ -106,6 +118,24 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 type partOffset struct {
 	partition string
 	offset    int64
+	hwm       int64
+	lag       int64
+}
+
+func (partOffset *partOffset) getHwmValue() string {
+	if partOffset.hwm == kadmin.ErrorValue {
+		return na
+	} else {
+		return humanize.Comma(partOffset.hwm)
+	}
+}
+
+func (partOffset *partOffset) getLagValue() string {
+	if partOffset.lag == kadmin.ErrorValue {
+		return na
+	} else {
+		return humanize.Comma(partOffset.lag)
+	}
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -121,6 +151,20 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			// only accept when the table is focussed
 			if !m.cmdBar.IsFocussed() {
 				return ui.PublishMsg(nav.LoadCGroupsPageMsg{})
+			}
+		case "f5":
+			m.state = stateOffsetsLoading
+			return func() tea.Msg {
+				return m.lister.ListOffsets(m.groupName)
+			}
+		case "tab":
+			// only accept when the table is focussed
+			if !m.cmdBar.IsFocussed() {
+				if m.tableFocus == topicFocus {
+					m.tableFocus = offsetFocus
+				} else {
+					m.tableFocus = topicFocus
+				}
 			}
 		}
 	case kadmin.OffsetListingStartedMsg:
@@ -144,8 +188,10 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	if !m.cmdBar.IsFocussed() {
 		if m.tableFocus == topicFocus {
 			m.topicsTable, cmd = m.topicsTable.Update(msg)
+			m.offsetsTable.GotoTop()
 		} else {
 			m.offsetsTable, cmd = m.offsetsTable.Update(msg)
+			m.totalTable.Update(msg)
 		}
 		if cmd != nil {
 			cmds = append(cmds, cmd)
@@ -167,13 +213,18 @@ func (m *Model) recreateOffsetRows() {
 
 	selectedTopic := m.selectedRow()
 	if selectedTopic != "" {
+		totalLag := int64(0)
 		m.offsetRows = []table.Row{}
 		for _, partOffset := range m.topicByPartOffset[selectedTopic] {
+			totalLag += int64(partOffset.lag)
 			m.offsetRows = append(m.offsetRows, table.Row{
 				partOffset.partition,
 				humanize.Comma(partOffset.offset),
+				partOffset.getHwmValue(),
+				partOffset.getLagValue(),
 			})
 		}
+		m.totalLag = totalLag
 		sort.SliceStable(m.offsetRows, func(i, j int) bool {
 			a, _ := strconv.Atoi(m.offsetRows[i][0])
 			b, _ := strconv.Atoi(m.offsetRows[j][0])
@@ -201,6 +252,8 @@ func (m *Model) recreateTopicRows() {
 		partOffset := partOffset{
 			partition: strconv.FormatInt(int64(offset.Partition), 10),
 			offset:    offset.Offset,
+			hwm:       offset.HighWaterMark,
+			lag:       offset.Lag,
 		}
 		m.topicByPartOffset[offset.Topic] = append(m.topicByPartOffset[offset.Topic], partOffset)
 	}
@@ -223,9 +276,9 @@ func (m *Model) selectedRow() string {
 
 func (m *Model) Shortcuts() []statusbar.Shortcut {
 	return []statusbar.Shortcut{
-		{"Go Back", "esc"},
-		{"Search", "/"},
-		{"Refresh", "F5"},
+		{Name: "Go Back", Keybinding: "esc"},
+		{Name: "Search", Keybinding: "/"},
+		{Name: "Refresh", Keybinding: "F5"},
 	}
 }
 
@@ -268,6 +321,7 @@ func New(lister kadmin.OffsetLister, group string) (*Model, tea.Cmd) {
 	)
 
 	model := Model{
+		lister: lister,
 		cmdBar: NewCGroupCmdbar[string](
 			cmdbar.NewSearchCmdBar("Search groups by name"),
 			notifierCmdBar,
@@ -283,7 +337,10 @@ func New(lister kadmin.OffsetLister, group string) (*Model, tea.Cmd) {
 		border.WithTitleFn(func() string {
 			return border.KeyValueTitle("Total Topics", fmt.Sprintf(" %d", len(model.topicsRows)), true)
 		}))
-	model.offsetsBorder = border.New(border.WithInnerPaddingTop())
+	model.offsetsBorder = border.New(border.WithInnerPaddingTop(),
+		border.WithTitleFn(func() string {
+			return border.KeyValueTitle("Total Lag", fmt.Sprintf(" %d", model.totalLag), false)
+		}))
 	return &model, func() tea.Msg {
 		return lister.ListOffsets(group)
 	}
