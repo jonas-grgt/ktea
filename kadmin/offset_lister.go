@@ -1,15 +1,27 @@
 package kadmin
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"math"
+	"sync"
+
+	"github.com/IBM/sarama"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+const (
+	ErrorValue int64 = math.MinInt64
+)
 
 type OffsetLister interface {
 	ListOffsets(group string) tea.Msg
 }
 
 type TopicPartitionOffset struct {
-	Topic     string
-	Partition int32
-	Offset    int64
+	Topic         string
+	Partition     int32
+	Offset        int64
+	HighWaterMark int64
+	Lag           int64
 }
 
 type OffsetListingStartedMsg struct {
@@ -51,18 +63,46 @@ func (ka *SaramaKafkaAdmin) doListOffsets(group string, offsetsChan chan []Topic
 	listResult, err := ka.admin.ListConsumerGroupOffsets(group, nil)
 	if err != nil {
 		errChan <- err
+		return
 	}
 
-	var topicPartitionOffsets []TopicPartitionOffset
+	totalPartitions := 0
+	for _, m := range listResult.Blocks {
+		totalPartitions += len(m)
+	}
+
+	topicPartitionOffsets := make([]TopicPartitionOffset, 0, totalPartitions)
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
 	for t, m := range listResult.Blocks {
 		for p, block := range m {
-			topicPartitionOffsets = append(topicPartitionOffsets, TopicPartitionOffset{
-				Topic:     t,
-				Partition: p,
-				Offset:    block.Offset,
-			})
+			wg.Go(
+				func() {
+					hwm, err := ka.client.GetOffset(t, p, sarama.OffsetNewest)
+					var lag int64
+					if err != nil {
+						hwm = ErrorValue
+						lag = ErrorValue
+					} else {
+						lag = hwm - block.Offset
+					}
+					mu.Lock()
+					topicPartitionOffsets = append(topicPartitionOffsets, TopicPartitionOffset{
+						Topic:         t,
+						Partition:     p,
+						Offset:        block.Offset,
+						HighWaterMark: hwm,
+						Lag:           lag,
+					})
+					mu.Unlock()
+				},
+			)
 		}
 	}
+
+	wg.Wait()
 
 	offsetsChan <- topicPartitionOffsets
 }
