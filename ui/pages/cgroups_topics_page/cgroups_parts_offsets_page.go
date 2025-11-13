@@ -2,7 +2,6 @@ package cgroups_topics_page
 
 import (
 	"fmt"
-	"github.com/charmbracelet/log"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -17,6 +16,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -64,16 +65,19 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 
 	halfWidth := int(float64(ktx.WindowWidth / 2))
 	m.topicsTable.SetHeight(ktx.AvailableHeight - 4)
-	m.topicsTable.SetWidth(halfWidth - 2)
+	m.topicsTable.SetWidth(int(float64(halfWidth)))
 	m.topicsTable.SetColumns([]table.Column{
-		{"Topic Name", int(float64(halfWidth - 4))},
+		{Title: "Topic Name", Width: int(float64(halfWidth - 4))},
 	})
 	m.topicsTable.SetRows(m.topicsRows)
 
 	m.offsetsTable.SetHeight(ktx.AvailableHeight - 4)
+	// m.offsetsTable.SetWidth(int(float64(halfWidth)))
 	m.offsetsTable.SetColumns([]table.Column{
-		{"Partition", int(float64(halfWidth-6) * 0.5)},
-		{"Offset", int(float64(halfWidth-5) * 0.5)},
+		{Title: "Partition", Width: int(float64(halfWidth) * 0.2)},
+		{Title: "Offset", Width: int(float64(halfWidth) * 0.2)},
+		{Title: "High Watermark", Width: int(float64(halfWidth) * 0.3)},
+		{Title: "Lag", Width: int(float64(halfWidth) * 0.18)},
 	})
 	m.offsetsTable.SetRows(m.offsetRows)
 
@@ -106,6 +110,8 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 type partOffset struct {
 	partition string
 	offset    int64
+	hwm       int64
+	lag       int64
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -172,6 +178,8 @@ func (m *Model) recreateOffsetRows() {
 			m.offsetRows = append(m.offsetRows, table.Row{
 				partOffset.partition,
 				humanize.Comma(partOffset.offset),
+				humanize.Comma(partOffset.hwm),
+				humanize.Comma(partOffset.lag),
 			})
 		}
 		sort.SliceStable(m.offsetRows, func(i, j int) bool {
@@ -201,6 +209,8 @@ func (m *Model) recreateTopicRows() {
 		partOffset := partOffset{
 			partition: strconv.FormatInt(int64(offset.Partition), 10),
 			offset:    offset.Offset,
+			hwm:       offset.HighWaterMark,
+			lag:       offset.Lag,
 		}
 		m.topicByPartOffset[offset.Topic] = append(m.topicByPartOffset[offset.Topic], partOffset)
 	}

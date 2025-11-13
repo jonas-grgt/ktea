@@ -1,15 +1,20 @@
 package kadmin
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"github.com/IBM/sarama"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type OffsetLister interface {
 	ListOffsets(group string) tea.Msg
 }
 
 type TopicPartitionOffset struct {
-	Topic     string
-	Partition int32
-	Offset    int64
+	Topic         string
+	Partition     int32
+	Offset        int64
+	HighWaterMark int64
+	Lag           int64
 }
 
 type OffsetListingStartedMsg struct {
@@ -56,10 +61,13 @@ func (ka *SaramaKafkaAdmin) doListOffsets(group string, offsetsChan chan []Topic
 	var topicPartitionOffsets []TopicPartitionOffset
 	for t, m := range listResult.Blocks {
 		for p, block := range m {
+			hwm, _ := ka.client.GetOffset(t, p, sarama.OffsetNewest)
 			topicPartitionOffsets = append(topicPartitionOffsets, TopicPartitionOffset{
-				Topic:     t,
-				Partition: p,
-				Offset:    block.Offset,
+				Topic:         t,
+				Partition:     p,
+				Offset:        block.Offset,
+				HighWaterMark: hwm,
+				Lag:           hwm - block.Offset,
 			})
 		}
 	}
