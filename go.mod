@@ -11,7 +11,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.20.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/burdiyan/kafkautil v0.0.0-20240215092415-7e6d3d0fc870
-	github.com/charmbracelet/bubbles v0.20.1-0.20250305115717-cdc743f1f488
+	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/huh v0.6.0
 	github.com/charmbracelet/lipgloss v1.1.0
