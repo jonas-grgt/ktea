@@ -6,14 +6,11 @@
 
 ktea is a tool designed to simplify and accelerate interactions with Kafka clusters.
 
-If you're a **k9s** user you'll love **ktea**!
+If you're a **k9s** user, you'll love **ktea**!
 
 ![topics-page.png](topics-page.png)
 
 ![record-detail-page.png](record-detail-page.png)
-
-![record-page.png](record-page.png)
-
 
 ## Installation
 
@@ -26,11 +23,11 @@ brew install ktea
 
 ### Linux
 
-Binaries available at the release page.
+Binaries are available at the release page.
 
 ### Windows
 
-Binaries available at the release page.
+Binaries are available at the release page.
 
 ## Usage
 
@@ -46,42 +43,52 @@ All tables can be navigated using vi like bindings:
 
 All configuration is stored in `~/.config/ktea/config.yaml`
 
-All cluster configuration can be managed through the TUI even the initial one.
+All cluster configurations can be managed through the TUI even the initial one.
 
 Example configuration file:
 
 ```yaml
-plain-fonts: true # when nerd-fonts are not available set to true
+plain-fonts: true # when nerd-fonts are not available, set to true
 clusters:
     - name: local
-      color: '#00FF00'
-      active: false
+      color: '#FF0000'
+      active: true
       servers:
-        - localhost:9092
-      sasl: null
+          - localhost:9093
+      sasl:
+          authMethod: NONE
+      tls:
+          enable: true
+          skipVerify: false
+          caCertPath: "docker/cert/ca.crt"
       schema-registry:
-        url: http://localhost:8081
-        username: ""
-        password: ""
-      ssl-enabled: false
+          url: http://localhost:8081
+          username: "user"
+          password: "secret"
       kafka-connect-clusters:
-        - name: PRD
-          url: http://localhost:8083
-          username: admin
-          password: secret
+          - name: PRD
+            url: http://localhost:8083
+            username: "admin"
+            password: "secret"
 ```
 
 ### Cluster Management
 
 Multiple clusters can be added.
-Upon startup when no cluster is configured you will be prompted
+Upon startup when no cluster is configured, you will be prompted
 to add one.
+
+#### TLS support
+
+- TLS can be enabled by setting `tls.enabled` to true in the cluster configuration.
+- `tls.skipVerify` can be set to true to skip TLS certificate verification (not recommended for production).
+- `tls.caCertPath` can be set to the path of the CA certificate to use
 
 #### Supported Auth Methods
 
-- No Auth
-- SASL (SSL)
-    - PLAIN
+- None (no authentication)
+- SASL 
+    - Plaintext
 
 ## Features
 
@@ -109,10 +116,8 @@ to add one.
 A docker-compose setup is provided to quickly spin up a local Kafka cluster with pre-created topics, consumer groups,
 commited offsets etc ...
 
-```sh
-cd docker
-docker-compose up -d
-```
+`docker/docker-compose.yml` contains a cluster, schema-registry and kafka-connect setup.
+`docker/docker-compose-ssl.yml` contains a ssl enabled cluster only
 
 ### Generate data
 

@@ -2,9 +2,6 @@ package record_details_page
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/ansi"
-	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/serdes"
@@ -12,6 +9,10 @@ import (
 	"ktea/ui/clipper"
 	"ktea/ui/components/statusbar"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRecordDetailsPage(t *testing.T) {
@@ -63,9 +64,11 @@ func TestRecordDetailsPage(t *testing.T) {
 						Color:            "",
 						Active:           true,
 						BootstrapServers: nil,
-						SASLConfig:       nil,
-						SchemaRegistry:   nil,
-						SSLEnabled:       false,
+						SASLConfig: config.SASLConfig{
+							AuthMethod: config.AuthMethodNone,
+						},
+						SchemaRegistry: nil,
+						TLSConfig:      config.TLSConfig{Enable: false},
 					},
 				},
 				ConfigIO: nil,
@@ -103,13 +106,15 @@ func TestRecordDetailsPage(t *testing.T) {
 						Color:            "",
 						Active:           true,
 						BootstrapServers: nil,
-						SASLConfig:       nil,
+						SASLConfig: config.SASLConfig{
+							AuthMethod: config.AuthMethodNone,
+						},
 						SchemaRegistry: &config.SchemaRegistryConfig{
 							Url:      "http://localhost:8080",
 							Username: "john",
 							Password: "doe",
 						},
-						SSLEnabled: false,
+						TLSConfig: config.TLSConfig{Enable: false},
 					},
 				},
 				ConfigIO: nil,
@@ -147,13 +152,15 @@ func TestRecordDetailsPage(t *testing.T) {
 						Color:            "",
 						Active:           true,
 						BootstrapServers: nil,
-						SASLConfig:       nil,
+						SASLConfig: config.SASLConfig{
+							AuthMethod: config.AuthMethodNone,
+						},
 						SchemaRegistry: &config.SchemaRegistryConfig{
 							Url:      "http://localhost:8080",
 							Username: "john",
 							Password: "doe",
 						},
-						SSLEnabled: false,
+						TLSConfig: config.TLSConfig{Enable: false},
 					},
 				},
 				ConfigIO: nil,

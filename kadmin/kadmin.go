@@ -33,7 +33,13 @@ type Kadmin interface {
 type ConnectionDetails struct {
 	BootstrapServers []string
 	SASLConfig       *SASLConfig
-	SSLEnabled       bool
+	TLSConfig        *TLSConfig
+}
+
+type TLSConfig struct {
+	Enable     bool
+	SkipVerify bool
+	CACertPath string
 }
 
 type SASLProtocol int
@@ -58,12 +64,12 @@ type ConnErrMsg struct {
 	Err error
 }
 
-type Instantiator func(cd ConnectionDetails) (Kadmin, error)
+type Instantiator func(cluster *config.Cluster) (Kadmin, error)
 
 type ConnChecker func(cluster *config.Cluster) tea.Msg
 
 func SaramaInstantiator() Instantiator {
-	return func(cd ConnectionDetails) (Kadmin, error) {
-		return NewSaramaKadmin(cd)
+	return func(cluster *config.Cluster) (Kadmin, error) {
+		return NewSaramaKadmin(cluster)
 	}
 }

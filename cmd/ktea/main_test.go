@@ -1,12 +1,13 @@
 package main
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestKtea(t *testing.T) {
@@ -49,7 +50,9 @@ func TestKtea(t *testing.T) {
 								Username: "",
 								Password: "",
 							},
-							SASLConfig: nil,
+							SASLConfig: config.SASLConfig{
+								AuthMethod: config.AuthMethodNone,
+							},
 						},
 						{
 							Name:             "tst",
@@ -57,7 +60,9 @@ func TestKtea(t *testing.T) {
 							Active:           true,
 							BootstrapServers: []string{":19092"},
 							SchemaRegistry:   nil,
-							SASLConfig:       nil,
+							SASLConfig: config.SASLConfig{
+								AuthMethod: config.AuthMethodNone,
+							},
 						},
 					},
 				},
@@ -79,11 +84,10 @@ func TestKtea(t *testing.T) {
 
 			view := model.View()
 
-			var expectedLayout = `
-╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
-│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
-┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────
-`
+			var expectedLayout = "" +
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
+				"┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────"
 			assert.Contains(t, view, expectedLayout)
 
 			model.Update(tea.KeyMsg{
@@ -102,11 +106,10 @@ func TestKtea(t *testing.T) {
 
 			view = model.View()
 
-			expectedLayout = `
-╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
-│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
-┴────────┴┴─────────────────┴┘                 └┴──────────┴────────────────────────────────────────
-`
+			expectedLayout = "" +
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
+				"┴────────┴┴─────────────────┴┘                 └┴──────────┴────────────────────────────────────────\n"
 			assert.Contains(t, view, expectedLayout)
 
 			model.Update(tea.KeyMsg{
@@ -118,11 +121,10 @@ func TestKtea(t *testing.T) {
 
 			view = model.View()
 
-			expectedLayout = `
-╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
-│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
-┴────────┴┴─────────────────┴┴─────────────────┴┘          └────────────────────────────────────────
-`
+			expectedLayout = "" +
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
+				"┴────────┴┴─────────────────┴┴─────────────────┴┘          └────────────────────────────────────────\n"
 			assert.Contains(t, view, expectedLayout)
 
 			model.Update(tea.KeyMsg{
@@ -148,11 +150,10 @@ func TestKtea(t *testing.T) {
 
 			view = model.View()
 
-			expectedLayout = `
-╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        
-│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           
-┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────
-`
+			expectedLayout = "" +
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
+				"┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────\n"
 
 			assert.Contains(t, view, expectedLayout)
 		})

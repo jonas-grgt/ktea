@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -21,22 +22,25 @@ func TestConfig(t *testing.T) {
 
 		// when
 		config.RegisterCluster(RegistrationDetails{
-			Name:             "prd",
-			Color:            "#880808",
-			Host:             "localhost:9092",
-			AuthMethod:       SASLAuthMethod,
-			Username:         userJohn,
-			Password:         "test123",
-			SecurityProtocol: SASLPlaintextSecurityProtocol,
+			Name:       "prd",
+			Color:      "#880808",
+			Host:       "localhost:9092",
+			AuthMethod: AuthMethodSASLPlaintext,
+			Username:   userJohn,
+			Password:   "test123",
 		})
 
 		// then
 		assert.Equal(t, config.Clusters[0].Color, "#880808")
 		assert.Equal(t, config.Clusters[0].BootstrapServers, []string{"localhost:9092"})
-		assert.Equal(t, config.Clusters[0].SASLConfig.SecurityProtocol, SASLPlaintextSecurityProtocol)
+		assert.Equal(t, config.Clusters[0].SASLConfig.AuthMethod, AuthMethodSASLPlaintext)
 		assert.Equal(t, config.Clusters[0].SASLConfig.Username, userJohn)
 		assert.Equal(t, config.Clusters[0].SASLConfig.Password, "test123")
-		assert.False(t, config.Clusters[0].SSLEnabled)
+		assert.Equal(t, config.Clusters[0].TLSConfig, TLSConfig{
+			Enable:     false,
+			SkipVerify: false,
+			CACertPath: "",
+		})
 	})
 
 	t.Run("Registering a SASL cluster with SSL", func(t *testing.T) {
@@ -45,23 +49,30 @@ func TestConfig(t *testing.T) {
 
 		// when
 		config.RegisterCluster(RegistrationDetails{
-			Name:             "prd",
-			Color:            "#880808",
-			Host:             "localhost:9092",
-			AuthMethod:       SASLAuthMethod,
-			Username:         userJohn,
-			Password:         "test123",
-			SecurityProtocol: SASLPlaintextSecurityProtocol,
-			SSLEnabled:       true,
+			Name:       "prd",
+			Color:      "#880808",
+			Host:       "localhost:9092",
+			AuthMethod: AuthMethodSASLPlaintext,
+			Username:   userJohn,
+			Password:   "test123",
+			TLSConfig: TLSConfig{
+				Enable:     true,
+				SkipVerify: false,
+				CACertPath: "~/.certs/ca.crt",
+			},
 		})
 
 		// then
 		assert.Equal(t, config.Clusters[0].Color, "#880808")
 		assert.Equal(t, config.Clusters[0].BootstrapServers, []string{"localhost:9092"})
-		assert.Equal(t, config.Clusters[0].SASLConfig.SecurityProtocol, SASLPlaintextSecurityProtocol)
+		assert.Equal(t, config.Clusters[0].SASLConfig.AuthMethod, AuthMethodSASLPlaintext)
 		assert.Equal(t, config.Clusters[0].SASLConfig.Username, userJohn)
 		assert.Equal(t, config.Clusters[0].SASLConfig.Password, "test123")
-		assert.True(t, config.Clusters[0].SSLEnabled)
+		assert.Equal(t, config.Clusters[0].TLSConfig, TLSConfig{
+			Enable:     true,
+			SkipVerify: false,
+			CACertPath: "~/.certs/ca.crt",
+		})
 	})
 
 	t.Run("Registering a SASL_SSL Cluster with Schema Registry ", func(t *testing.T) {
@@ -70,13 +81,12 @@ func TestConfig(t *testing.T) {
 
 		// when
 		config.RegisterCluster(RegistrationDetails{
-			Name:             "prd",
-			Color:            "#880808",
-			Host:             "localhost:9092",
-			AuthMethod:       SASLAuthMethod,
-			Username:         userJohn,
-			Password:         "test123",
-			SecurityProtocol: SASLPlaintextSecurityProtocol,
+			Name:       "prd",
+			Color:      "#880808",
+			Host:       "localhost:9092",
+			AuthMethod: AuthMethodSASLPlaintext,
+			Username:   userJohn,
+			Password:   "test123",
 			SchemaRegistry: &SchemaRegistryDetails{
 				Url:      "https://sr:1923",
 				Username: "srJohn",
@@ -87,7 +97,7 @@ func TestConfig(t *testing.T) {
 		// then
 		assert.Equal(t, config.Clusters[0].Color, "#880808")
 		assert.Equal(t, config.Clusters[0].BootstrapServers, []string{"localhost:9092"})
-		assert.Equal(t, config.Clusters[0].SASLConfig.SecurityProtocol, SASLPlaintextSecurityProtocol)
+		assert.Equal(t, config.Clusters[0].SASLConfig.AuthMethod, AuthMethodSASLPlaintext)
 		assert.Equal(t, config.Clusters[0].SASLConfig.Username, userJohn)
 		assert.Equal(t, config.Clusters[0].SASLConfig.Password, "test123")
 		assert.Equal(t, config.Clusters[0].SchemaRegistry.Url, "https://sr:1923")
@@ -104,7 +114,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880801",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// then
@@ -119,7 +129,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// when
@@ -127,7 +137,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880801",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// then
@@ -142,7 +152,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// when
@@ -152,7 +162,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880801",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		}).(ClusterRegisteredMsg)
 
 		// then
@@ -169,7 +179,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// when
@@ -179,7 +189,7 @@ func TestConfig(t *testing.T) {
 			NewName:    &updatedName,
 			Color:      "#880808",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// then
@@ -195,7 +205,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// when
@@ -203,7 +213,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 			KafkaConnectClusters: []KafkaConnectClusterDetails{
 				{
 					Name:     "s3-sink",
@@ -234,7 +244,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 			KafkaConnectClusters: []KafkaConnectClusterDetails{
 				{
 					Name:     "s3-sink",
@@ -250,7 +260,7 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 			KafkaConnectClusters: []KafkaConnectClusterDetails{
 				{
 					Name:     "s3-sink",
@@ -293,7 +303,7 @@ func TestConfig(t *testing.T) {
 				Name:       "prd",
 				Color:      "#880808",
 				Host:       "localhost:9092",
-				AuthMethod: NoneAuthMethod,
+				AuthMethod: AuthMethodNone,
 			})
 
 			cluster := config.ActiveCluster()
@@ -303,7 +313,16 @@ func TestConfig(t *testing.T) {
 				Color:            "#880808",
 				Active:           true,
 				BootstrapServers: []string{"localhost:9092"},
-				SASLConfig:       nil,
+				SASLConfig: SASLConfig{
+					Username:   "",
+					Password:   "",
+					AuthMethod: AuthMethodNone,
+				},
+				TLSConfig: TLSConfig{
+					Enable:     false,
+					SkipVerify: false,
+					CACertPath: "",
+				},
 			}, cluster)
 
 		})
@@ -316,14 +335,14 @@ func TestConfig(t *testing.T) {
 						Color:            "#880808",
 						Active:           false,
 						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
+						SASLConfig:       SASLConfig{AuthMethod: AuthMethodNone},
 					},
 					{
 						Name:             "prd2",
 						Color:            "#880808",
 						Active:           false,
 						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
+						SASLConfig:       SASLConfig{AuthMethod: AuthMethodNone},
 					},
 				},
 			}
@@ -335,7 +354,7 @@ func TestConfig(t *testing.T) {
 				Color:            "#880808",
 				Active:           false,
 				BootstrapServers: []string{"localhost:9092"},
-				SASLConfig:       nil,
+				SASLConfig:       SASLConfig{AuthMethod: AuthMethodNone},
 			}, cluster)
 
 		})
@@ -348,19 +367,19 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 		config.RegisterCluster(RegistrationDetails{
 			Name:       "tst",
 			Color:      "#880808",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 		config.RegisterCluster(RegistrationDetails{
 			Name:       "uat",
 			Color:      "#880808",
 			Host:       "localhost:9094",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// when
@@ -382,13 +401,13 @@ func TestConfig(t *testing.T) {
 				Name:       "prd",
 				Color:      "#880808",
 				Host:       "localhost:9092",
-				AuthMethod: NoneAuthMethod,
+				AuthMethod: AuthMethodNone,
 			})
 			config.RegisterCluster(RegistrationDetails{
 				Name:       "tst",
 				Color:      "#880808",
 				Host:       "localhost:9093",
-				AuthMethod: NoneAuthMethod,
+				AuthMethod: AuthMethodNone,
 			})
 
 			// when
@@ -412,7 +431,7 @@ func TestConfig(t *testing.T) {
 				Name:       "prd",
 				Color:      "#880808",
 				Host:       "localhost:9092",
-				AuthMethod: NoneAuthMethod,
+				AuthMethod: AuthMethodNone,
 			})
 
 			// when
@@ -434,19 +453,19 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 		config.RegisterCluster(RegistrationDetails{
 			Name:       "tst",
 			Color:      "#880808",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 		config.RegisterCluster(RegistrationDetails{
 			Name:       "uat",
 			Color:      "#880808",
 			Host:       "localhost:9094",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// when
@@ -464,19 +483,19 @@ func TestConfig(t *testing.T) {
 			Name:       "prd",
 			Color:      "#880808",
 			Host:       "localhost:9092",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 		config.RegisterCluster(RegistrationDetails{
 			Name:       "tst",
 			Color:      "#880808",
 			Host:       "localhost:9093",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 		config.RegisterCluster(RegistrationDetails{
 			Name:       "uat",
 			Color:      "#880808",
 			Host:       "localhost:9094",
-			AuthMethod: NoneAuthMethod,
+			AuthMethod: AuthMethodNone,
 		})
 
 		// when

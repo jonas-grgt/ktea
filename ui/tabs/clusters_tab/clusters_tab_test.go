@@ -38,7 +38,9 @@ func TestClustersTab(t *testing.T) {
 						Color:            "#808080",
 						Active:           true,
 						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
+						SASLConfig: config.SASLConfig{
+							AuthMethod: config.AuthMethodNone,
+						},
 					},
 				},
 			}))
@@ -62,21 +64,27 @@ func TestClustersTab(t *testing.T) {
 							Color:            styles.ColorRed,
 							Active:           false,
 							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
+							SASLConfig: config.SASLConfig{
+								AuthMethod: config.AuthMethodNone,
+							},
 						},
 						{
 							Name:             "tst",
 							Color:            styles.ColorGreen,
 							Active:           true,
 							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
+							SASLConfig: config.SASLConfig{
+								AuthMethod: config.AuthMethodNone,
+							},
 						},
 						{
 							Name:             "uat",
 							Color:            styles.ColorBlue,
 							Active:           false,
 							BootstrapServers: []string{"localhost:9092"},
-							SASLConfig:       nil,
+							SASLConfig: config.SASLConfig{
+								AuthMethod: config.AuthMethodNone,
+							},
 						},
 					},
 				}))
@@ -105,21 +113,27 @@ func TestClustersTab(t *testing.T) {
 								Color:            styles.ColorRed,
 								Active:           true,
 								BootstrapServers: []string{"localhost:9092"},
-								SASLConfig:       nil,
+								SASLConfig: config.SASLConfig{
+									AuthMethod: config.AuthMethodNone,
+								},
 							},
 							{
 								Name:             "tst",
 								Color:            styles.ColorGreen,
 								Active:           false,
 								BootstrapServers: []string{"localhost:9092"},
-								SASLConfig:       nil,
+								SASLConfig: config.SASLConfig{
+									AuthMethod: config.AuthMethodNone,
+								},
 							},
 							{
 								Name:             "uat",
 								Color:            styles.ColorBlue,
 								Active:           false,
 								BootstrapServers: []string{"localhost:9092"},
-								SASLConfig:       nil,
+								SASLConfig: config.SASLConfig{
+									AuthMethod: config.AuthMethodNone,
+								},
 							},
 						},
 					},
@@ -197,19 +211,19 @@ func TestClustersTab(t *testing.T) {
 			Name:       "prd",
 			Color:      styles.ColorRed,
 			Host:       "localhost:9092",
-			AuthMethod: config.NoneAuthMethod,
+			AuthMethod: config.AuthMethodNone,
 		})
 		cfg.RegisterCluster(config.RegistrationDetails{
 			Name:       "tst",
 			Color:      styles.ColorRed,
 			Host:       "localhost:9093",
-			AuthMethod: config.NoneAuthMethod,
+			AuthMethod: config.AuthMethodNone,
 		})
 		cfg.RegisterCluster(config.RegistrationDetails{
 			Name:       "uat",
 			Color:      styles.ColorRed,
 			Host:       "localhost:9093",
-			AuthMethod: config.NoneAuthMethod,
+			AuthMethod: config.AuthMethodNone,
 		})
 		programKtx := tests.NewKontext(tests.WithConfig(cfg))
 
@@ -287,19 +301,19 @@ func TestClustersTab(t *testing.T) {
 				Name:       "prd",
 				Color:      styles.ColorRed,
 				Host:       "localhost:9092",
-				AuthMethod: config.NoneAuthMethod,
+				AuthMethod: config.AuthMethodNone,
 			})
 			cfg.RegisterCluster(config.RegistrationDetails{
 				Name:       "tst",
 				Color:      styles.ColorRed,
 				Host:       "localhost:9093",
-				AuthMethod: config.NoneAuthMethod,
+				AuthMethod: config.AuthMethodNone,
 			})
 			cfg.RegisterCluster(config.RegistrationDetails{
 				Name:       "uat",
 				Color:      styles.ColorRed,
 				Host:       "localhost:9093",
-				AuthMethod: config.NoneAuthMethod,
+				AuthMethod: config.AuthMethodNone,
 			})
 			programKtx := tests.NewKontext(tests.WithConfig(cfg))
 			// and
@@ -325,26 +339,30 @@ func TestClustersTab(t *testing.T) {
 	t.Run("Edit cluster", func(t *testing.T) {
 		cfg := config.New(&config.InMemoryConfigIO{})
 		cfg.RegisterCluster(config.RegistrationDetails{
-			Name:             "prd",
-			Color:            styles.ColorRed,
-			Host:             "localhost:9092",
-			AuthMethod:       config.SASLAuthMethod,
-			SecurityProtocol: config.SASLPlaintextSecurityProtocol,
-			SSLEnabled:       true,
-			Username:         "John",
-			Password:         "Doe",
+			Name:       "prd",
+			Color:      styles.ColorRed,
+			Host:       "localhost:9092",
+			AuthMethod: config.AuthMethodSASLPlaintext,
+			TLSConfig: config.TLSConfig{
+				Enable: true,
+			},
+			NewName:              nil,
+			Username:             "John",
+			Password:             "Doe",
+			SchemaRegistry:       nil,
+			KafkaConnectClusters: nil,
 		})
 		cfg.RegisterCluster(config.RegistrationDetails{
 			Name:       "tst",
 			Color:      styles.ColorRed,
 			Host:       "localhost:9093",
-			AuthMethod: config.NoneAuthMethod,
+			AuthMethod: config.AuthMethodNone,
 		})
 		cfg.RegisterCluster(config.RegistrationDetails{
 			Name:       "uat",
 			Color:      styles.ColorRed,
 			Host:       "localhost:9093",
-			AuthMethod: config.NoneAuthMethod,
+			AuthMethod: config.AuthMethodNone,
 		})
 		programKtx := tests.NewKontext(tests.WithConfig(cfg))
 
@@ -363,7 +381,7 @@ func TestClustersTab(t *testing.T) {
 			render := clustersTab.View(programKtx, tests.Renderer)
 			assert.Contains(t, render, "> prd")
 			assert.Contains(t, render, "> localhost:9092")
-			assert.Contains(t, render, "> Enable SSL")
+			assert.Contains(t, render, "> TLS")
 
 			t.Run("updates shortcuts", func(t *testing.T) {
 				assert.Contains(t, render, "Prev. Field:")

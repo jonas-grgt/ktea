@@ -1,13 +1,14 @@
 package kcon_clusters_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/styles"
 	"ktea/tests"
 	"ktea/ui/pages/kcon_page"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -22,9 +23,11 @@ func TestKConsPage(t *testing.T) {
 			Color:            styles.ColorRed,
 			Active:           true,
 			BootstrapServers: []string{"localhost:9092"},
-			SASLConfig:       nil,
-			SchemaRegistry:   nil,
-			SSLEnabled:       false,
+			SASLConfig: config.SASLConfig{
+				AuthMethod: config.AuthMethodNone,
+			},
+			SchemaRegistry: nil,
+			TLSConfig:      config.TLSConfig{Enable: false},
 			KafkaConnectClusters: []config.KafkaConnectConfig{
 				{
 					Name:     "s3-sink",
@@ -53,9 +56,11 @@ func TestKConsPage(t *testing.T) {
 			Color:            styles.ColorRed,
 			Active:           true,
 			BootstrapServers: []string{"localhost:9092"},
-			SASLConfig:       nil,
-			SchemaRegistry:   nil,
-			SSLEnabled:       false,
+			SASLConfig: config.SASLConfig{
+				AuthMethod: config.AuthMethodNone,
+			},
+			SchemaRegistry: nil,
+			TLSConfig:      config.TLSConfig{Enable: false},
 			KafkaConnectClusters: []config.KafkaConnectConfig{
 				{
 					Name:     "s3-sink",

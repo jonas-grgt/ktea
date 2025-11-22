@@ -31,11 +31,12 @@ type formState int
 type Option func(m *Model)
 
 const (
-	noneSelected      authSelection   = 0
-	saslSelected      authSelection   = 1
-	nothingSelected   authSelection   = 2
-	none              formState       = 0
-	loading           formState       = 1
+	authMethodNone        authSelection = 0
+	authMethodSasl        authSelection = 1
+	authMethodNotSelected authSelection = 2
+
+	none              formState       = 6
+	loading           formState       = 7
 	notifierCmdbarTag                 = "upsert-cluster-page"
 	cTab              border.TabLabel = "f4"
 	srTab             border.TabLabel = "f5"
@@ -43,39 +44,74 @@ const (
 )
 
 type Model struct {
-	navigator          tabs.ClustersTabNavigator
-	form               *huh.Form // the active form
-	state              formState
-	srForm             *huh.Form
-	cForm              *huh.Form
-	kForm              *huh.Form
-	clusterValues      *clusterValues
-	clusterToEdit      *config.Cluster
-	notifierCmdBar     *cmdbar.NotifierCmdBar
-	ktx                *kontext.ProgramKtx
-	clusterRegisterer  config.ClusterRegisterer
-	kConnChecker       kadmin.ConnChecker
-	srConnChecker      sradmin.ConnChecker
-	authSelectionState authSelection
-	preEditName        *string
-	shortcuts          []statusbar.Shortcut
-	title              string
-	border             *border.Model
-	kcModel            *UpsertKcModel
+	navigator                                 tabs.ClustersTabNavigator
+	form                                      *huh.Form // the active form
+	formState                                 formState
+	srForm                                    *huh.Form
+	cForm                                     *huh.Form
+	cFormValues                               *clusterFormValues
+	clusterToEdit                             *config.Cluster
+	notifierCmdBar                            *cmdbar.NotifierCmdBar
+	ktx                                       *kontext.ProgramKtx
+	clusterRegisterer                         config.ClusterRegisterer
+	kConnChecker                              kadmin.ConnChecker
+	srConnChecker                             sradmin.ConnChecker
+	authSelState                              authSelection
+	transportOption                           transportOption
+	verificationOption                        verificationOption
+	preEditName                               *string
+	shortcuts                                 []statusbar.Shortcut
+	title                                     string
+	border                                    *border.Model
+	kcModel                                   *UpsertKcModel
+	hasVerificationStatePreviouslyNotSelected bool
+	validateCert                              kadmin.CertValidationFunc
 }
 
-type clusterValues struct {
-	name             string
-	color            string
-	host             string
-	authMethod       config.AuthMethod
-	securityProtocol config.SecurityProtocol
-	sslEnabled       bool
-	username         string
-	password         string
-	srUrl            string
-	srUsername       string
-	srPassword       string
+type transportOption string
+
+const (
+	transportOptionNotSelected transportOption = ""
+	transportOptionPlaintext   transportOption = "PLAINTEXT"
+	transportOptionTLS         transportOption = "TLS"
+)
+
+type verificationOption string
+
+const (
+	verificationOptionNotSelected verificationOption = ""
+	verificationOptionBroker      verificationOption = "BROKER"
+	verificationOptionSkip        verificationOption = "SKIP"
+)
+
+type clusterFormValues struct {
+	name               string
+	color              string
+	host               string
+	authMethod         config.AuthMethod
+	transportOption    transportOption
+	verificationOption verificationOption
+	brokerCACertPath   string
+	username           string
+	password           string
+	srURL              string
+	srUsername         string
+	srPassword         string
+}
+
+func (cv *clusterFormValues) toTLSConfig() config.TLSConfig {
+	if cv.transportOption == transportOptionTLS {
+		return config.TLSConfig{
+			Enable:     true,
+			SkipVerify: false,
+			CACertPath: cv.brokerCACertPath,
+		}
+	}
+	return config.TLSConfig{
+		Enable:     false,
+		SkipVerify: false,
+		CACertPath: "",
+	}
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -106,7 +142,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	}
 
 	mainView = m.border.View(lipgloss.NewStyle().
-		PaddingBottom(ktx.AvailableHeight - 1).
+		PaddingBottom(ktx.AvailableHeight - 2).
 		Render(mainView))
 
 	views = append(views, deleteCmdbar, notifierView, mainView)
@@ -131,11 +167,13 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.title = "Clusters"
 			return m.navigator.ToClustersPage()
 		case "ctrl+r":
-			m.clusterValues = &clusterValues{}
+			m.cFormValues = &clusterFormValues{}
 			if activeTab == cTab {
+				m.authSelState = authMethodNone
+				m.transportOption = transportOptionNotSelected
+				m.verificationOption = verificationOptionNotSelected
 				m.cForm = m.createCForm()
 				m.form = m.cForm
-				m.authSelectionState = noneSelected
 			} else {
 				m.srForm = m.createSrForm()
 				m.form = m.srForm
@@ -150,43 +188,42 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				m.form = m.srForm
 				m.form.State = huh.StateNormal
 				m.border.GoTo("f5")
-				log.Debug("go to f5")
+				log.Debug("go transportOption f5")
 				return nil
-			} else {
-				log.Debug("not in edit")
-				return tea.Batch(
-					m.notifierCmdBar.Notifier.ShowError(fmt.Errorf("create a cluster before adding a schema registry")),
-					m.notifierCmdBar.Notifier.AutoHideCmd(notifierCmdbarTag),
-				)
 			}
+
+			return tea.Batch(
+				m.notifierCmdBar.Notifier.ShowError(fmt.Errorf("create a cluster before adding a schema registry")),
+				m.notifierCmdBar.Notifier.AutoHideCmd(notifierCmdbarTag),
+			)
 		case "f6":
 			if m.inEditingMode() {
 				m.form.State = huh.StateNormal
 				m.border.GoTo("f6")
 				return nil
-			} else {
-				return tea.Batch(
-					m.notifierCmdBar.Notifier.ShowError(fmt.Errorf("create a cluster before adding a Kafka Connect Cluster")),
-					m.notifierCmdBar.Notifier.AutoHideCmd(notifierCmdbarTag),
-				)
 			}
+
+			return tea.Batch(
+				m.notifierCmdBar.Notifier.ShowError(fmt.Errorf("create a cluster before adding a Kafka Connect Cluster")),
+				m.notifierCmdBar.Notifier.AutoHideCmd(notifierCmdbarTag),
+			)
 		}
 	case kadmin.ConnCheckStartedMsg:
-		m.state = loading
+		m.formState = loading
 		cmds = append(cmds, msg.AwaitCompletion)
 	case kadmin.ConnCheckSucceededMsg:
-		m.state = none
+		m.formState = none
 		cmds = append(cmds, m.registerCluster)
 	case sradmin.ConnCheckStartedMsg:
-		m.state = loading
+		m.formState = loading
 		cmds = append(cmds, msg.AwaitCompletion)
 	case sradmin.ConnCheckSucceededMsg:
-		m.state = none
+		m.formState = none
 		return m.registerCluster
 	case config.ClusterRegisteredMsg:
 		m.preEditName = &msg.Cluster.Name
 		m.clusterToEdit = msg.Cluster
-		m.state = none
+		m.formState = none
 		m.border.WithInActiveColor(styles.ColorGrey)
 		if activeTab == cTab {
 			m.cForm = m.createCForm()
@@ -223,34 +260,112 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	if activeTab == cTab {
-		if !m.clusterValues.HasSASLAuthMethodSelected() &&
-			m.authSelectionState == saslSelected {
-			// if SASL authentication mode was previously selected and switched back to none
-			m.cForm = m.createCForm()
-			m.form = m.cForm
-			m.NextField(4)
-			m.authSelectionState = noneSelected
-		} else if m.clusterValues.HasSASLAuthMethodSelected() &&
-			(m.authSelectionState == nothingSelected || m.authSelectionState == noneSelected) {
-			// SASL authentication mode selected and previously nothing or none auth mode was selected
-			m.cForm = m.createCForm()
-			m.form = m.cForm
-			m.NextField(4)
-			m.authSelectionState = saslSelected
-		}
-
-		if m.form.State == huh.StateCompleted && m.state != loading {
-			return m.processClusterSubmission()
+		t, done := m.updateClusterTab()
+		if done {
+			return t
 		}
 	}
 
 	if activeTab == srTab {
-		if m.form.State == huh.StateCompleted && m.state != loading {
+		if m.form.State == huh.StateCompleted && m.formState != loading {
 			return m.processSrSubmission()
 		}
 	}
 
 	return tea.Batch(cmds...)
+}
+
+func (m *Model) updateClusterTab() (tea.Cmd, bool) {
+	m.updateTransportOption()
+
+	m.updateVO()
+
+	if !m.cFormValues.selectedSASLAuthMethod() &&
+		m.authSelState == authMethodSasl {
+		// if SASL authentication mode was previously selected and switched back transportOption none
+		m.cForm = m.createCForm()
+		m.form = m.cForm
+		if m.cFormValues.selectedTLSTransportOption() {
+			if m.cFormValues.selectedBrokerVerificationOption() {
+				m.nextField(6)
+			} else {
+				m.nextField(5)
+			}
+		} else {
+			m.nextField(4)
+		}
+		m.authSelState = authMethodNone
+	} else if m.cFormValues.selectedSASLAuthMethod() &&
+		(m.authSelState == authMethodNotSelected || m.authSelState == authMethodNone) {
+		// SASL authentication mode selected and previously nothing or none auth mode was selected
+		m.cForm = m.createCForm()
+		m.form = m.cForm
+		m.authSelState = authMethodSasl
+		if m.cFormValues.selectedTLSTransportOption() {
+			if m.cFormValues.selectedBrokerVerificationOption() {
+				m.nextField(6)
+			} else {
+				m.nextField(5)
+			}
+		} else {
+			m.nextField(4)
+		}
+	}
+
+	if m.form.State == huh.StateCompleted && m.formState != loading {
+		return m.processClusterSubmission(), true
+	}
+	return nil, false
+}
+
+func (m *Model) updateTransportOption() {
+	if m.cFormValues.selectedTLSTransportOption() && m.prevSelPlaintextOrNoTO() {
+		m.cForm = m.createCForm()
+		m.form = m.cForm
+		m.transportOption = m.cFormValues.transportOption
+		m.nextField(3)
+	} else if m.cFormValues.selectedPlainTextTransportOption() && m.prevSelTlsTO() {
+		m.transportOption = m.cFormValues.transportOption // move outside maybe?
+
+		m.verificationOption = verificationOptionNotSelected
+		m.cFormValues.verificationOption = verificationOptionNotSelected
+		m.hasVerificationStatePreviouslyNotSelected = true
+
+		m.cForm = m.createCForm()
+		m.form = m.cForm
+		m.nextField(3)
+	}
+}
+
+func (m *Model) updateVO() {
+	if m.cFormValues.selectedBrokerVerificationOption() && m.prevSelNoVO() {
+		m.cForm = m.createCForm()
+		m.form = m.cForm
+		m.verificationOption = verificationOptionBroker
+		m.nextField(3)
+		if m.hasVerificationStatePreviouslyNotSelected {
+			m.hasVerificationStatePreviouslyNotSelected = false
+		} else {
+			m.nextField(1)
+		}
+	} else if !m.cFormValues.selectedBrokerVerificationOption() && m.verificationOption == verificationOptionBroker {
+		m.cForm = m.createCForm()
+		m.form = m.cForm
+		m.verificationOption = verificationOptionNotSelected
+		m.nextField(4)
+	}
+}
+
+func (m *Model) prevSelPlaintextOrNoTO() bool {
+	return m.transportOption == transportOptionNotSelected || m.transportOption == transportOptionPlaintext
+}
+
+func (m *Model) prevSelNoVO() bool {
+	return m.verificationOption == verificationOptionNotSelected
+}
+
+func (m *Model) prevSelTlsTO() bool {
+	return m.transportOption == transportOptionTLS
 }
 
 func (m *Model) registerCluster() tea.Msg {
@@ -273,7 +388,7 @@ func (m *Model) Title() string {
 }
 
 func (m *Model) processSrSubmission() tea.Cmd {
-	m.state = loading
+	m.formState = loading
 	details := m.getRegistrationDetails()
 
 	cluster := config.ToCluster(details)
@@ -283,7 +398,7 @@ func (m *Model) processSrSubmission() tea.Cmd {
 }
 
 func (m *Model) processClusterSubmission() tea.Cmd {
-	m.state = loading
+	m.formState = loading
 	details := m.getRegistrationDetails()
 
 	cluster := config.ToCluster(details)
@@ -296,40 +411,37 @@ func (m *Model) getRegistrationDetails() config.RegistrationDetails {
 	var name string
 	var newName *string
 	if m.preEditName == nil { // When creating a cluster
-		name = m.clusterValues.name
+		name = m.cFormValues.name
 		newName = nil
 	} else { // When updating a cluster.
 		name = *m.preEditName
-		if m.clusterValues.name != *m.preEditName {
-			newName = &m.clusterValues.name
+		if m.cFormValues.name != *m.preEditName {
+			newName = &m.cFormValues.name
 		}
 	}
 
 	var authMethod config.AuthMethod
-	var securityProtocol config.SecurityProtocol
-	if m.clusterValues.HasSASLAuthMethodSelected() {
-		authMethod = config.SASLAuthMethod
-		securityProtocol = m.clusterValues.securityProtocol
+	if m.cFormValues.selectedSASLAuthMethod() {
+		authMethod = m.cFormValues.authMethod
 	} else {
-		authMethod = config.NoneAuthMethod
+		authMethod = config.AuthMethodNone
 	}
 
 	details := config.RegistrationDetails{
-		Name:             name,
-		NewName:          newName,
-		Color:            m.clusterValues.color,
-		Host:             m.clusterValues.host,
-		AuthMethod:       authMethod,
-		SecurityProtocol: securityProtocol,
-		SSLEnabled:       m.clusterValues.sslEnabled,
-		Username:         m.clusterValues.username,
-		Password:         m.clusterValues.password,
+		Name:       name,
+		NewName:    newName,
+		Color:      m.cFormValues.color,
+		Host:       m.cFormValues.host,
+		AuthMethod: authMethod,
+		TLSConfig:  m.cFormValues.toTLSConfig(),
+		Username:   m.cFormValues.username,
+		Password:   m.cFormValues.password,
 	}
-	if m.clusterValues.SrEnabled() {
+	if m.cFormValues.schemaRegistryEnabled() {
 		details.SchemaRegistry = &config.SchemaRegistryDetails{
-			Url:      m.clusterValues.srUrl,
-			Username: m.clusterValues.srUsername,
-			Password: m.clusterValues.srPassword,
+			Url:      m.cFormValues.srURL,
+			Username: m.cFormValues.srUsername,
+			Password: m.cFormValues.srPassword,
 		}
 	}
 
@@ -338,15 +450,27 @@ func (m *Model) getRegistrationDetails() config.RegistrationDetails {
 	return details
 }
 
-func (f *clusterValues) HasSASLAuthMethodSelected() bool {
-	return f.authMethod == config.SASLAuthMethod
+func (cv *clusterFormValues) selectedSASLAuthMethod() bool {
+	return cv.authMethod == config.AuthMethodSASLPlaintext
 }
 
-func (f *clusterValues) SrEnabled() bool {
-	return len(f.srUrl) > 0
+func (cv *clusterFormValues) schemaRegistryEnabled() bool {
+	return len(cv.srURL) > 0
 }
 
-func (m *Model) NextField(count int) {
+func (cv *clusterFormValues) selectedBrokerVerificationOption() bool {
+	return cv.verificationOption == verificationOptionBroker
+}
+
+func (cv *clusterFormValues) selectedTLSTransportOption() bool {
+	return cv.transportOption == transportOptionTLS
+}
+
+func (cv *clusterFormValues) selectedPlainTextTransportOption() bool {
+	return cv.transportOption == transportOptionPlaintext
+}
+
+func (m *Model) nextField(count int) {
 	for i := 0; i < count; i++ {
 		m.form.NextField()
 	}
@@ -354,7 +478,7 @@ func (m *Model) NextField(count int) {
 
 func (m *Model) createCForm() *huh.Form {
 	name := huh.NewInput().
-		Value(&m.clusterValues.name).
+		Value(&m.cFormValues.name).
 		Title("Name").
 		Validate(func(v string) error {
 			if v == "" {
@@ -374,8 +498,8 @@ func (m *Model) createCForm() *huh.Form {
 			return nil
 		})
 	color := huh.NewSelect[string]().
-		Value(&m.clusterValues.color).
-		Title("Color").
+		Value(&m.cFormValues.color).
+		Title("Color ").
 		Options(
 			huh.NewOption(styles.Env.Colors.Green.Render("green"), styles.ColorGreen),
 			huh.NewOption(styles.Env.Colors.Blue.Render("blue"), styles.ColorBlue),
@@ -383,9 +507,9 @@ func (m *Model) createCForm() *huh.Form {
 			huh.NewOption(styles.Env.Colors.Purple.Render("purple"), styles.ColorPurple),
 			huh.NewOption(styles.Env.Colors.Yellow.Render("yellow"), styles.ColorYellow),
 			huh.NewOption(styles.Env.Colors.Red.Render("red"), styles.ColorRed),
-		)
+		).Inline(true)
 	host := huh.NewInput().
-		Value(&m.clusterValues.host).
+		Value(&m.cFormValues.host).
 		Title("Host").
 		Validate(func(v string) error {
 			if v == "" {
@@ -393,40 +517,62 @@ func (m *Model) createCForm() *huh.Form {
 			}
 			return nil
 		})
-	auth := huh.NewSelect[config.AuthMethod]().
-		Value(&m.clusterValues.authMethod).
-		Title("Authentication method").
-		Options(
-			huh.NewOption("NONE", config.NoneAuthMethod),
-			huh.NewOption("SASL", config.SASLAuthMethod),
-		)
 
-	sslEnabled := huh.NewSelect[bool]().
-		Value(&m.clusterValues.sslEnabled).
-		Title("SSL").
+	transport := huh.NewSelect[transportOption]().
+		Value(&m.cFormValues.transportOption).
+		Title("Transport").
 		Options(
-			huh.NewOption("Disable SSL", false),
-			huh.NewOption("Enable SSL", true),
+			huh.NewOption("Plaintext", transportOptionPlaintext),
+			huh.NewOption("TLS", transportOptionTLS),
 		)
 
 	var clusterFields []huh.Field
-	clusterFields = append(clusterFields, name, color, host, sslEnabled, auth)
+	clusterFields = append(clusterFields, name, color, host, transport)
 
-	if m.clusterValues.HasSASLAuthMethodSelected() {
-		securityProtocol := huh.NewSelect[config.SecurityProtocol]().
-			Value(&m.clusterValues.securityProtocol).
-			Title("Security Protocol").
+	if m.cFormValues.selectedTLSTransportOption() {
+		tlsVerification := huh.NewSelect[verificationOption]().
+			Value(&m.cFormValues.verificationOption).
+			Title("Verification").
 			Options(
-				huh.NewOption("SASL_PLAINTEXT", config.SASLPlaintextSecurityProtocol),
+				huh.NewOption("Verify Broker Certificate", verificationOptionBroker),
+				huh.NewOption("Skip verification (INSECURE)", verificationOptionSkip),
 			)
+		clusterFields = append(clusterFields, tlsVerification)
+	}
+
+	if m.cFormValues.selectedBrokerVerificationOption() {
+		caCert := huh.NewInput().
+			Value(&m.cFormValues.brokerCACertPath).
+			Title("Path to Broker CA Certificate").
+			Validate(func(certFile string) error {
+				if certFile == "" {
+					return errors.New("broker CA Certificate Path cannot be empty")
+				}
+
+				return m.validateCert(certFile)
+			})
+		clusterFields = append(clusterFields, caCert)
+	}
+
+	auth := huh.NewSelect[config.AuthMethod]().
+		Value(&m.cFormValues.authMethod).
+		Title("Authentication method").
+		Options(
+			huh.NewOption("NONE", config.AuthMethodNone),
+			huh.NewOption("SASL_PLAINTEXT", config.AuthMethodSASLPlaintext),
+		)
+
+	clusterFields = append(clusterFields, auth)
+
+	if m.cFormValues.selectedSASLAuthMethod() {
 		username := huh.NewInput().
-			Value(&m.clusterValues.username).
-			Title("Username")
+			Value(&m.cFormValues.username).
+			Title("SASL username")
 		pwd := huh.NewInput().
-			Value(&m.clusterValues.password).
+			Value(&m.cFormValues.password).
 			EchoMode(huh.EchoModePassword).
-			Title("Password")
-		clusterFields = append(clusterFields, securityProtocol, username, pwd)
+			Title("SASL password")
+		clusterFields = append(clusterFields, username, pwd)
 	}
 
 	form := huh.NewForm(
@@ -442,13 +588,13 @@ func (m *Model) createCForm() *huh.Form {
 func (m *Model) createSrForm() *huh.Form {
 	var fields []huh.Field
 	srUrl := huh.NewInput().
-		Value(&m.clusterValues.srUrl).
+		Value(&m.cFormValues.srURL).
 		Title("Schema Registry URL")
 	srUsername := huh.NewInput().
-		Value(&m.clusterValues.srUsername).
+		Value(&m.cFormValues.srUsername).
 		Title("Schema Registry Username")
 	srPwd := huh.NewInput().
-		Value(&m.clusterValues.srPassword).
+		Value(&m.cFormValues.srPassword).
 		EchoMode(huh.EchoModePassword).
 		Title("Schema Registry Password")
 	fields = append(fields, srUrl, srUsername, srPwd)
@@ -475,7 +621,7 @@ func (m *Model) createNotifierCmdBar() {
 	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg kadmin.ConnCheckErrMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		m.cForm = m.createCForm()
 		m.form = m.cForm
-		m.state = none
+		m.formState = none
 		nMsg := "Cluster not crated"
 		if m.inEditingMode() {
 			nMsg = "Cluster not updated"
@@ -484,12 +630,12 @@ func (m *Model) createNotifierCmdBar() {
 	})
 	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg config.ClusterRegisteredMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		if m.form == m.srForm {
-			nm.ShowSuccessMsg("Schema registry registered! <ESC> to go back.")
+			nm.ShowSuccessMsg("Schema registry registered! <ESC> transportOption go back.")
 		} else if m.form == m.cForm {
 			if m.inEditingMode() {
 				nm.ShowSuccessMsg("Cluster updated!")
 			} else {
-				nm.ShowSuccessMsg("Cluster registered! <ESC> to go back or <F5> to add a schema registry.")
+				nm.ShowSuccessMsg("Cluster registered! <ESC> transportOption go back or <F5> transportOption add a schema registry.")
 			}
 		} else {
 			nm.ShowSuccessMsg("Cluster registered!")
@@ -499,8 +645,8 @@ func (m *Model) createNotifierCmdBar() {
 	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg sradmin.ConnCheckErrMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		m.srForm = m.createSrForm()
 		m.form = m.srForm
-		m.state = none
-		nm.ShowErrorMsg("unable to reach the schema registry", msg.Err)
+		m.formState = none
+		nm.ShowErrorMsg("unable transportOption reach the schema registry", msg.Err)
 		return true, nm.AutoHideCmd(notifierCmdbarTag)
 	})
 }
@@ -533,15 +679,17 @@ func NewCreateClusterPage(
 	registerer config.ClusterRegisterer,
 	ktx *kontext.ProgramKtx,
 	shortcuts []statusbar.Shortcut,
+	certValidator kadmin.CertValidationFunc,
 	options ...Option,
 ) *Model {
-	formValues := &clusterValues{}
+	formValues := &clusterFormValues{}
 	model := Model{
 		navigator:     navigator,
-		clusterValues: formValues,
+		cFormValues:   formValues,
 		kConnChecker:  kConnChecker,
 		srConnChecker: srConnChecker,
 		shortcuts:     shortcuts,
+		validateCert:  certValidator,
 	}
 
 	model.ktx = ktx
@@ -554,15 +702,26 @@ func NewCreateClusterPage(
 
 	model.createNotifierCmdBar()
 
-	model.kcModel = NewUpsertKcModel(navigator, ktx, nil, []config.KafkaConnectConfig{}, kcadmin.CheckKafkaConnectClustersConn, model.notifierCmdBar, model.registerCluster)
+	model.kcModel = NewUpsertKcModel(
+		navigator,
+		ktx,
+		nil,
+		[]config.KafkaConnectConfig{},
+		kcadmin.CheckKafkaConnectClustersConn,
+		model.notifierCmdBar,
+		model.registerCluster,
+	)
 
 	model.clusterRegisterer = registerer
 
-	model.authSelectionState = nothingSelected
-	model.state = none
+	model.authSelState = authMethodNotSelected
+	model.transportOption = transportOptionNotSelected
+	model.verificationOption = verificationOptionNotSelected
+	model.hasVerificationStatePreviouslyNotSelected = true
+	model.formState = none
 
-	if model.clusterValues.HasSASLAuthMethodSelected() {
-		model.authSelectionState = saslSelected
+	if model.cFormValues.selectedSASLAuthMethod() {
+		model.authSelState = authMethodSasl
 	}
 
 	for _, option := range options {
@@ -580,31 +739,43 @@ func NewEditClusterPage(
 	connectClusterDeleter config.ConnectClusterDeleter,
 	ktx *kontext.ProgramKtx,
 	cluster config.Cluster,
+	certValidator kadmin.CertValidationFunc,
 	options ...Option,
 ) *Model {
-	formValues := &clusterValues{
+	formValues := &clusterFormValues{
 		name:  cluster.Name,
 		color: cluster.Color,
 		host:  cluster.BootstrapServers[0],
 	}
-	if cluster.SASLConfig != nil {
-		formValues.securityProtocol = cluster.SASLConfig.SecurityProtocol
-		formValues.username = cluster.SASLConfig.Username
-		formValues.password = cluster.SASLConfig.Password
-		formValues.authMethod = config.SASLAuthMethod
-		formValues.sslEnabled = cluster.SSLEnabled
+	formValues.authMethod = cluster.SASLConfig.AuthMethod
+	formValues.username = cluster.SASLConfig.Username
+	formValues.password = cluster.SASLConfig.Password
+	formValues.authMethod = cluster.SASLConfig.AuthMethod
+	if cluster.TLSConfig.Enable {
+		formValues.transportOption = transportOptionTLS
+		if cluster.TLSConfig.SkipVerify {
+			formValues.verificationOption = verificationOptionNotSelected
+		} else {
+			formValues.verificationOption = verificationOptionBroker
+			formValues.brokerCACertPath = cluster.TLSConfig.CACertPath
+		}
+	} else {
+		formValues.transportOption = transportOptionPlaintext
 	}
+
 	if cluster.SchemaRegistry != nil {
-		formValues.srUrl = cluster.SchemaRegistry.Url
+		formValues.srURL = cluster.SchemaRegistry.Url
 		formValues.srUsername = cluster.SchemaRegistry.Username
 		formValues.srPassword = cluster.SchemaRegistry.Password
 	}
 	model := Model{
-		navigator:     navigator,
-		clusterToEdit: &cluster,
-		clusterValues: formValues,
-		kConnChecker:  kConnChecker,
-		srConnChecker: srConnChecker,
+		transportOption:    formValues.transportOption,
+		verificationOption: formValues.verificationOption,
+		navigator:          navigator,
+		clusterToEdit:      &cluster,
+		cFormValues:        formValues,
+		kConnChecker:       kConnChecker,
+		srConnChecker:      srConnChecker,
 		shortcuts: []statusbar.Shortcut{
 			{"Confirm", "enter"},
 			{"Next Field", "tab"},
@@ -612,9 +783,10 @@ func NewEditClusterPage(
 			{"Reset Form", "C-r"},
 			{"Go Back", "esc"},
 		},
+		validateCert: certValidator,
 	}
 	if cluster.Name != "" {
-		// copied to prevent model.preEditedName to follow the formValues.Name pointer
+		// copied transportOption prevent model.preEditedName transportOption follow the formValues.Name pointer
 		preEditedName := cluster.Name
 		model.preEditName = &preEditedName
 	}
@@ -641,11 +813,11 @@ func NewEditClusterPage(
 	)
 
 	model.clusterRegisterer = registerer
-	model.authSelectionState = nothingSelected
-	model.state = none
+	model.authSelState = authMethodNotSelected
+	model.formState = none
 
-	if model.clusterValues.HasSASLAuthMethodSelected() {
-		model.authSelectionState = saslSelected
+	if model.cFormValues.selectedSASLAuthMethod() {
+		model.authSelState = authMethodSasl
 	}
 
 	for _, o := range options {
