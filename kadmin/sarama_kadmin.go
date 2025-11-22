@@ -1,13 +1,18 @@
 package kadmin
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
-	"github.com/IBM/sarama"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 	"ktea/config"
 	"ktea/sradmin"
+	"os"
 	"time"
+
+	"github.com/IBM/sarama"
+	"github.com/burdiyan/kafkautil"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 )
 
 type SaramaKafkaAdmin struct {
@@ -40,55 +45,58 @@ type ConnCheckErrMsg struct {
 	Err error
 }
 
-func ToConnectionDetails(cluster *config.Cluster) ConnectionDetails {
-	var saslConfig *SASLConfig
-	if cluster.SASLConfig != nil {
-		var protocol SASLProtocol
-		switch cluster.SASLConfig.SecurityProtocol {
-		// SSL, to make wrongly configured PLAINTEXT protocols (as SSL) compatible. Should be removed in the future.
-		case config.SASLPlaintextSecurityProtocol, "SSL":
-			protocol = PlainText
-		default:
-			panic(fmt.Sprintf("Unknown SASL protocol: %s", cluster.SASLConfig.SecurityProtocol))
-		}
-
-		saslConfig = &SASLConfig{
-			Username: cluster.SASLConfig.Username,
-			Password: cluster.SASLConfig.Password,
-			Protocol: protocol,
-		}
-	}
-
-	connDetails := ConnectionDetails{
-		BootstrapServers: cluster.BootstrapServers,
-		SASLConfig:       saslConfig,
-		SSLEnabled:       cluster.SSLEnabled,
-	}
-	return connDetails
-}
-
-func NewSaramaKadmin(cd ConnectionDetails) (Kadmin, error) {
+func ToSaramaCfg(cluster *config.Cluster) *sarama.Config {
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
 	cfg.Producer.RequiredAcks = sarama.WaitForAll
-	cfg.Producer.Partitioner = sarama.NewRoundRobinPartitioner
+	cfg.Producer.Partitioner = kafkautil.NewJVMCompatiblePartitioner
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
 
-	cfg.Net.TLS.Enable = cd.SSLEnabled
+	if cluster.TLSConfig.Enable {
 
-	if cd.SASLConfig != nil {
-		cfg.Net.SASL.Enable = true
-		cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
-		cfg.Net.SASL.User = cd.SASLConfig.Username
-		cfg.Net.SASL.Password = cd.SASLConfig.Password
+		var caCertPool *x509.CertPool
+		if cluster.TLSConfig.CACertPath != "" {
+			caCert, err := os.ReadFile(cluster.TLSConfig.CACertPath)
+			if err != nil {
+				panic(fmt.Sprintf("Unable to read CA cert file: %v", err))
+			}
+
+			caCertPool = x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCert)
+		}
+
+		tlsConfig := &tls.Config{
+			RootCAs:            caCertPool,
+			InsecureSkipVerify: cluster.TLSConfig.SkipVerify,
+		}
+
+		cfg.Net.TLS.Enable = true
+		cfg.Net.TLS.Config = tlsConfig
 	}
 
-	client, err := sarama.NewClient(cd.BootstrapServers, cfg)
+	if cluster.SASLConfig.AuthMethod == config.AuthMethodSASLPlaintext {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
+		cfg.Net.SASL.User = cluster.SASLConfig.Username
+		cfg.Net.SASL.Password = cluster.SASLConfig.Password
+	}
+
+	cfg.Net.DialTimeout = 5 * time.Second
+	cfg.Net.ReadTimeout = 5 * time.Second
+	cfg.Net.WriteTimeout = 5 * time.Second
+
+	return cfg
+}
+
+func NewSaramaKadmin(cluster *config.Cluster) (Kadmin, error) {
+	cfg := ToSaramaCfg(cluster)
+
+	client, err := sarama.NewClient(cluster.BootstrapServers, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	admin, err := sarama.NewClusterAdmin(cd.BootstrapServers, cfg)
+	admin, err := sarama.NewClusterAdmin(cluster.BootstrapServers, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +109,7 @@ func NewSaramaKadmin(cd ConnectionDetails) (Kadmin, error) {
 	return &SaramaKafkaAdmin{
 		client:   client,
 		admin:    admin,
-		addrs:    cd.BootstrapServers,
+		addrs:    cluster.BootstrapServers,
 		producer: producer,
 		config:   cfg,
 	}, nil
@@ -111,22 +119,9 @@ func CheckKafkaConnectivity(cluster *config.Cluster) tea.Msg {
 	connectedChan := make(chan bool)
 	errChan := make(chan error)
 
-	cd := ToConnectionDetails(cluster)
-	cfg := sarama.NewConfig()
+	cfg := ToSaramaCfg(cluster)
 
-	cfg.Net.TLS.Enable = cd.SSLEnabled
-
-	if cd.SASLConfig != nil {
-		cfg.Net.SASL.Enable = true
-		cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
-		cfg.Net.SASL.User = cd.SASLConfig.Username
-		cfg.Net.SASL.Password = cd.SASLConfig.Password
-		cfg.Net.DialTimeout = 5 * time.Second
-		cfg.Net.ReadTimeout = 5 * time.Second
-		cfg.Net.WriteTimeout = 5 * time.Second
-	}
-
-	go doCheckConnectivity(cd, cfg, errChan, connectedChan)
+	go doCheckConnectivity(cluster.BootstrapServers, cfg, errChan, connectedChan)
 
 	return ConnCheckStartedMsg{
 		Cluster:   cluster,
@@ -135,9 +130,9 @@ func CheckKafkaConnectivity(cluster *config.Cluster) tea.Msg {
 	}
 }
 
-func doCheckConnectivity(cd ConnectionDetails, config *sarama.Config, errChan chan error, connectedChan chan bool) {
+func doCheckConnectivity(servers []string, config *sarama.Config, errChan chan error, connectedChan chan bool) {
 	MaybeIntroduceLatency()
-	c, err := sarama.NewClient(cd.BootstrapServers, config)
+	c, err := sarama.NewClient(servers, config)
 	if err != nil {
 		errChan <- err
 		return

@@ -334,7 +334,7 @@ func NewUpsertKcModel(
 	cmdbar.BindNotificationHandler(m.cmdBar, func(msg kcadmin.ConnCheckErrMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		m.form = m.createKcForm()
 		m.state = entering
-		nm.ShowErrorMsg("Unable to reach the cluster", msg.Err)
+		nm.ShowErrorMsg("Unable transportOption reach the cluster", msg.Err)
 		return true, nm.AutoHideCmd(notifierCmdbarTag)
 	})
 

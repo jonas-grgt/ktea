@@ -3,14 +3,17 @@ package kadmin
 import (
 	"context"
 	"fmt"
-	"github.com/IBM/sarama"
-	kgo "github.com/segmentio/kafka-go"
-	"github.com/testcontainers/testcontainers-go/modules/kafka"
+	"ktea/config"
+	"ktea/styles"
 	"log"
 	"net"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/IBM/sarama"
+	kgo "github.com/segmentio/kafka-go"
+	"github.com/testcontainers/testcontainers-go/modules/kafka"
 )
 
 var ka Kadmin
@@ -37,9 +40,15 @@ func TestMain(m *testing.M) {
 	kc = k
 	brokers, _ = kc.Brokers(ctx)
 
-	ka, err = NewSaramaKadmin(ConnectionDetails{
-		BootstrapServers: brokers,
-		SASLConfig:       nil,
+	ka, err = NewSaramaKadmin(&config.Cluster{
+		Name:                 "test",
+		Color:                styles.ColorGreen,
+		Active:               true,
+		BootstrapServers:     brokers,
+		SASLConfig:           config.SASLConfig{AuthMethod: config.AuthMethodNone},
+		SchemaRegistry:       nil,
+		TLSConfig:            config.TLSConfig{Enable: false},
+		KafkaConnectClusters: nil,
 	})
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to create connection: %s", err))

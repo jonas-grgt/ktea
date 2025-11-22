@@ -1,12 +1,13 @@
 package statusbar_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/styles"
 	"ktea/tests"
 	"ktea/ui/components/statusbar"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type TestProvider struct {
@@ -74,23 +75,27 @@ func TestStatusbar(t *testing.T) {
 			tests.WithConfig(&config.Config{
 				Clusters: []config.Cluster{
 					{
-						Name:                 "prd",
-						Color:                styles.ColorRed,
-						Active:               false,
-						BootstrapServers:     nil,
-						SASLConfig:           nil,
+						Name:             "prd",
+						Color:            styles.ColorRed,
+						Active:           false,
+						BootstrapServers: nil,
+						SASLConfig: config.SASLConfig{
+							AuthMethod: config.AuthMethodNone,
+						},
 						SchemaRegistry:       nil,
-						SSLEnabled:           false,
+						TLSConfig:            config.TLSConfig{Enable: false},
 						KafkaConnectClusters: nil,
 					},
 					{
-						Name:                 "dev",
-						Color:                styles.ColorGreen,
-						Active:               true,
-						BootstrapServers:     nil,
-						SASLConfig:           nil,
+						Name:             "dev",
+						Color:            styles.ColorGreen,
+						Active:           true,
+						BootstrapServers: nil,
+						SASLConfig: config.SASLConfig{
+							AuthMethod: config.AuthMethodNone,
+						},
 						SchemaRegistry:       nil,
-						SSLEnabled:           false,
+						TLSConfig:            config.TLSConfig{Enable: false},
 						KafkaConnectClusters: nil,
 					},
 				},

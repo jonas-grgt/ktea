@@ -7,6 +7,7 @@ import (
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/sradmin"
+	"ktea/styles"
 	"math/big"
 	"strconv"
 	"sync"
@@ -409,7 +410,7 @@ type handler struct {
 	cancel context.CancelFunc
 }
 
-func (h *handler) Setup(s sarama.ConsumerGroupSession) error {
+func (h *handler) Setup(_ sarama.ConsumerGroupSession) error {
 	return nil
 }
 
@@ -500,10 +501,19 @@ func registerSchema(srAdmin sradmin.Client, subject string, schema string) {
 }
 
 func getAdmins() (kadmin.Kadmin, sradmin.Client) {
-	ka, err := kadmin.NewSaramaKadmin(kadmin.ConnectionDetails{
+	ka, err := kadmin.NewSaramaKadmin(&config.Cluster{
+		Name:             "generate",
+		Color:            styles.ColorGreen,
+		Active:           true,
 		BootstrapServers: []string{"localhost:9092"},
-		SASLConfig:       nil,
-		SSLEnabled:       false,
+		SASLConfig: config.SASLConfig{
+			AuthMethod: config.AuthMethodNone,
+		},
+		SchemaRegistry: nil,
+		TLSConfig: config.TLSConfig{
+			Enable: false,
+		},
+		KafkaConnectClusters: nil,
 	})
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create Kafka admin client: %v", err))

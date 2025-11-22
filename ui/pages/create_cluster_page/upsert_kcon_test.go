@@ -1,14 +1,15 @@
 package create_cluster_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kcadmin"
 	"ktea/tests"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/tabs"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUpsertKcModel(t *testing.T) {
@@ -74,7 +75,7 @@ func TestUpsertKcModel(t *testing.T) {
 		})
 	})
 
-	t.Run("Set username and password to nil when left empty", func(t *testing.T) {
+	t.Run("Set username and password transportOption nil when left empty", func(t *testing.T) {
 		m := NewUpsertKcModel(
 			tabs.NewMockClustersTabNavigator(),
 			ktx,

@@ -37,11 +37,13 @@ const (
 	kconnectTabLbl            = "kconnect"
 )
 
-var topicsTab = tab.Tab{Title: "Topics", Label: topicsTabLbl}
-var cgroupsTab = tab.Tab{Title: "Consumer Groups", Label: cgroupsTabLbl}
-var schemaRegTab = tab.Tab{Title: "Schema Registry", Label: schemaRegTabLbl}
-var kconnectTab = tab.Tab{Title: "Kafka Connect", Label: kconnectTabLbl}
-var clustersTab = tab.Tab{Title: "Clusters", Label: clustersTabLbl}
+var (
+	topicsTab    = tab.Tab{Title: "Topics", Label: topicsTabLbl}
+	cgroupsTab   = tab.Tab{Title: "Consumer Groups", Label: cgroupsTabLbl}
+	schemaRegTab = tab.Tab{Title: "Schema Registry", Label: schemaRegTabLbl}
+	kconnectTab  = tab.Tab{Title: "Kafka Connect", Label: kconnectTabLbl}
+	clustersTab  = tab.Tab{Title: "Clusters", Label: clustersTabLbl}
+)
 
 type Model struct {
 	tabs                  tab.Model
@@ -263,8 +265,7 @@ func (m *Model) recreateTabs(cluster *config.Cluster) {
 // recreateAdminClients (re)creates the kadmin.Model and kadmin.SrAdmin
 // based on the given cluster
 func (m *Model) recreateAdminClients(cluster *config.Cluster) error {
-	connDetails := kadmin.ToConnectionDetails(cluster)
-	if ka, err := m.kaInstantiator(connDetails); err != nil {
+	if ka, err := m.kaInstantiator(cluster); err != nil {
 		return err
 	} else {
 		m.ka = ka

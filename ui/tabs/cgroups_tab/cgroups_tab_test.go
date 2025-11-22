@@ -1,20 +1,21 @@
 package cgroups_tab
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/ansi"
-	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/tests"
 	"ktea/ui/components/statusbar"
 	"strings"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/stretchr/testify/assert"
 )
 
 type MockConsumerGroupOffsetLister struct{}
 
-func (m *MockConsumerGroupOffsetLister) ListOffsets(group string) tea.Msg {
+func (m *MockConsumerGroupOffsetLister) ListOffsets(_ string) tea.Msg {
 	return nil
 }
 
@@ -58,7 +59,9 @@ func TestGroupsTab(t *testing.T) {
 				{
 					Name:             "PRD",
 					BootstrapServers: []string{"localhost:9092"},
-					SASLConfig:       nil,
+					SASLConfig: config.SASLConfig{
+						AuthMethod: config.AuthMethodNone,
+					},
 				},
 			},
 		}))
@@ -92,7 +95,9 @@ func TestGroupsTab(t *testing.T) {
 					{
 						Name:             "PRD",
 						BootstrapServers: []string{"localhost:9092"},
-						SASLConfig:       nil,
+						SASLConfig: config.SASLConfig{
+							AuthMethod: config.AuthMethodNone,
+						},
 					},
 				},
 			}))

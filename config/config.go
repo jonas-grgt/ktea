@@ -2,31 +2,35 @@ package config
 
 import (
 	"fmt"
+	"os"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
-	"os"
 )
 
-type AuthMethod int
-
-type SecurityProtocol string
+type AuthMethod string
 
 const (
-	NoneAuthMethod                AuthMethod       = 0
-	SASLAuthMethod                AuthMethod       = 1
-	SASLPlaintextSecurityProtocol SecurityProtocol = "PLAIN_TEXT"
+	AuthMethodNone          AuthMethod = "NONE"
+	AuthMethodSASLPlaintext AuthMethod = "SASL_PLAINTEXT"
 )
 
 type SASLConfig struct {
-	Username         string           `yaml:"username"`
-	Password         string           `yaml:"password"`
-	SecurityProtocol SecurityProtocol `yaml:"securityProtocol"`
+	Username   string     `yaml:"username"`
+	Password   string     `yaml:"password"`
+	AuthMethod AuthMethod `yaml:"authMethod"`
 }
 
 type SchemaRegistryConfig struct {
 	Url      string `yaml:"url"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
+}
+
+type TLSConfig struct {
+	Enable     bool   `yaml:"enable"`
+	SkipVerify bool   `yaml:"skipVerify"`
+	CACertPath string `yaml:"caCertPath"`
 }
 
 type KafkaConnectConfig struct {
@@ -37,14 +41,16 @@ type KafkaConnectConfig struct {
 }
 
 type Cluster struct {
-	Name                 string                `yaml:"name"`
-	Color                string                `yaml:"color"`
-	Active               bool                  `yaml:"active"`
-	BootstrapServers     []string              `yaml:"servers"`
-	SASLConfig           *SASLConfig           `yaml:"sasl"`
-	SchemaRegistry       *SchemaRegistryConfig `yaml:"schema-registry"`
-	SSLEnabled           bool                  `yaml:"ssl-enabled"`
-	KafkaConnectClusters []KafkaConnectConfig  `yaml:"kafka-connect-clusters"`
+	Name             string     `yaml:"name"`
+	Color            string     `yaml:"color"`
+	Active           bool       `yaml:"active"`
+	BootstrapServers []string   `yaml:"servers"`
+	SASLConfig       SASLConfig `yaml:"sasl"`
+	// Schema registry is optional, hence can be nil
+	SchemaRegistry *SchemaRegistryConfig `yaml:"schemaRegistry"`
+	TLSConfig      TLSConfig             `yaml:"tls"`
+	// Kafka Connect clusters are optional, hence can be empty
+	KafkaConnectClusters []KafkaConnectConfig `yaml:"kafkaConnectClusters"`
 }
 
 func (c *Cluster) HasSchemaRegistry() bool {
@@ -58,7 +64,7 @@ func (c *Cluster) HasKafkaConnect() bool {
 type Config struct {
 	Clusters   []Cluster `yaml:"clusters"`
 	ConfigIO   IO        `yaml:"-"`
-	PlainFonts bool      `yaml:"plain-fonts"`
+	PlainFonts bool      `yaml:"plainFonts"`
 }
 
 func (c *Config) HasClusters() bool {
@@ -83,8 +89,7 @@ type RegistrationDetails struct {
 	Color                string
 	Host                 string
 	AuthMethod           AuthMethod
-	SecurityProtocol     SecurityProtocol
-	SSLEnabled           bool
+	TLSConfig            TLSConfig
 	NewName              *string
 	Username             string
 	Password             string
@@ -182,14 +187,18 @@ func ToCluster(details RegistrationDetails) Cluster {
 		Name:             details.Name,
 		Color:            details.Color,
 		BootstrapServers: []string{details.Host},
-		SSLEnabled:       details.SSLEnabled,
+		TLSConfig:        details.TLSConfig,
 	}
 
-	if details.AuthMethod == SASLAuthMethod {
-		cluster.SASLConfig = &SASLConfig{
-			Username:         details.Username,
-			Password:         details.Password,
-			SecurityProtocol: details.SecurityProtocol,
+	if details.AuthMethod == AuthMethodSASLPlaintext {
+		cluster.SASLConfig = SASLConfig{
+			Username:   details.Username,
+			Password:   details.Password,
+			AuthMethod: details.AuthMethod,
+		}
+	} else if details.AuthMethod == AuthMethodNone {
+		cluster.SASLConfig = SASLConfig{
+			AuthMethod: details.AuthMethod,
 		}
 	}
 

@@ -8,8 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type MockKadmin struct {
-}
+type MockKadmin struct{}
 
 type MockConnectionCheckedMsg struct {
 	Cluster *config.Cluster
@@ -73,7 +72,7 @@ func (m MockKadmin) GetBrokerConfig(brokerID int32) tea.Msg {
 }
 
 func NewMockKadminInstantiator() Instantiator {
-	return func(cd ConnectionDetails) (Kadmin, error) {
+	return func(cluster *config.Cluster) (Kadmin, error) {
 		return &MockKadmin{}, nil
 	}
 }

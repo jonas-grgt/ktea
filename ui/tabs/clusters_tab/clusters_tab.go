@@ -2,8 +2,6 @@ package clusters_tab
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -13,6 +11,9 @@ import (
 	"ktea/ui/pages"
 	"ktea/ui/pages/clusters_page"
 	"ktea/ui/pages/create_cluster_page"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type state int
@@ -71,6 +72,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 						{"Reset Form", "C-r"},
 						{"Go Back", "esc"},
 					},
+					kadmin.CertValidator,
 				)
 			}
 		case "ctrl+e":
@@ -85,6 +87,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					m.ktx.Config(),
 					m.ktx,
 					*selectedCluster,
+					kadmin.CertValidator,
 					create_cluster_page.WithTitle(fmt.Sprintf("Clusters / %s / Edit", selectedCluster.Name)),
 				)
 			}
@@ -135,6 +138,7 @@ func New(
 				{"Prev. Field", "s-tab"},
 				{"Reset Form", "C-r"},
 			},
+			kadmin.CertValidator,
 			create_cluster_page.WithTitle("Clusters / Register"),
 		)
 		m.escGoesBack = false
