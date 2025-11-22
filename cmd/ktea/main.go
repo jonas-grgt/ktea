@@ -44,6 +44,7 @@ var kconnectTab = tab.Tab{Title: "Kafka Connect", Label: kconnectTabLbl}
 var clustersTab = tab.Tab{Title: "Clusters", Label: clustersTabLbl}
 
 type Model struct {
+	logoless              bool
 	tabs                  tab.Model
 	activeTab             tab.Tab
 	tabCtrl               tabs.TabController
@@ -82,8 +83,10 @@ func (m *Model) View() string {
 	}
 
 	var views []string
-	logoView := m.renderer.Render("   ___        \n |/ |  _   _.\n |\\ | (/_ (_|  " + version)
-	views = append(views, logoView)
+	if !m.logoless {
+		logoView := m.renderer.Render("   ___        \n |/ |  _   _.\n |\\ | (/_ (_|  " + version)
+		views = append(views, logoView)
+	}
 
 	tabsView := m.tabs.View(m.ktx, m.renderer)
 	views = append(views, tabsView)
@@ -336,9 +339,11 @@ func main() {
 	var (
 		debugParam      bool
 		plainFontsParam bool
+		logoless        bool
 	)
 	flag.BoolVar(&debugParam, "debug", false, "enable debug")
 	flag.BoolVar(&plainFontsParam, "plain-fonts", false, "disable NerdFonts (if you see weird icons)")
+	flag.BoolVar(&logoless, "logoless", false, "start ktea without logo")
 	flag.Parse()
 
 	plainFontParamSet := false
@@ -353,12 +358,15 @@ func main() {
 		disableNerdFonts = &plainFontsParam
 	}
 
+	m := NewModel(
+		disableNerdFonts,
+		kadmin.SaramaInstantiator(),
+		config.NewDefaultIO(),
+	)
+	m.logoless = logoless
+
 	p := tea.NewProgram(
-		NewModel(
-			disableNerdFonts,
-			kadmin.SaramaInstantiator(),
-			config.NewDefaultIO(),
-		),
+		m,
 		tea.WithAltScreen(),
 	)
 
