@@ -2,10 +2,11 @@ package kadmin
 
 import (
 	"context"
-	"github.com/IBM/sarama"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/IBM/sarama"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConsumerGroupOffsets(t *testing.T) {
@@ -52,9 +53,11 @@ func TestConsumerGroupOffsets(t *testing.T) {
 			assert.NotNil(t, offsets)
 			assert.Len(t, offsets, 1)
 			assert.Equal(t, offsets[0], TopicPartitionOffset{
-				Topic:     topic,
-				Partition: 0,
-				Offset:    9,
+				Topic:         topic,
+				Partition:     0,
+				Offset:        9,
+				HighWaterMark: 10,
+				Lag:           1,
 			})
 		case err := <-offsetListingStartedMsg.Err:
 			t.Fatal("Error while listing offsets", err)
