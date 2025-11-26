@@ -44,7 +44,7 @@ var kconnectTab = tab.Tab{Title: "Kafka Connect", Label: kconnectTabLbl}
 var clustersTab = tab.Tab{Title: "Clusters", Label: clustersTabLbl}
 
 type Model struct {
-	logoless              bool
+	hideLogo              bool
 	tabs                  tab.Model
 	activeTab             tab.Tab
 	tabCtrl               tabs.TabController
@@ -83,7 +83,7 @@ func (m *Model) View() string {
 	}
 
 	var views []string
-	if !m.logoless {
+	if !m.hideLogo {
 		logoView := m.renderer.Render("   ___        \n |/ |  _   _.\n |\\ | (/_ (_|  " + version)
 		views = append(views, logoView)
 	}
@@ -339,11 +339,11 @@ func main() {
 	var (
 		debugParam      bool
 		plainFontsParam bool
-		logoless        bool
+		hideLogo        bool
 	)
 	flag.BoolVar(&debugParam, "debug", false, "enable debug")
 	flag.BoolVar(&plainFontsParam, "plain-fonts", false, "disable NerdFonts (if you see weird icons)")
-	flag.BoolVar(&logoless, "logoless", false, "start ktea without logo")
+	flag.BoolVar(&hideLogo, "hide-logo", false, "start ktea without logo")
 	flag.Parse()
 
 	plainFontParamSet := false
@@ -363,7 +363,7 @@ func main() {
 		kadmin.SaramaInstantiator(),
 		config.NewDefaultIO(),
 	)
-	m.logoless = logoless
+	m.hideLogo = hideLogo
 
 	p := tea.NewProgram(
 		m,
