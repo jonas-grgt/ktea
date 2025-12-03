@@ -44,7 +44,7 @@ All tables can be navigated using vi like bindings:
 
 ### Configuration
 
-All configuration is stored in `~/.config/ktea/config.conf`
+All configuration is stored in `~/.config/ktea/config.yaml`
 
 All cluster configuration can be managed through the TUI even the initial one.
 
