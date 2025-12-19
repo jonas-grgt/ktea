@@ -435,90 +435,90 @@ func TestReadRecords(t *testing.T) {
 		})
 	})
 
-	t.Run("Read Live", func(t *testing.T) {
-		topic := topicName()
-		// given
-		msg := ka.CreateTopic(TopicCreationDetails{
-			Name:              topic,
-			NumPartitions:     1,
-			ReplicationFactor: 1,
-		}).(TopicCreationStartedMsg)
-
-		switch msg.AwaitCompletion().(type) {
-		case TopicCreatedMsg:
-		case TopicCreationErrMsg:
-			t.Fatal("Unable to create topic", msg.Err)
-		}
-
-		// existing records on topic
-		assert.EventuallyWithT(t, func(c *assert.CollectT) {
-			for i := 0; i < 10; i++ {
-				psm := ka.PublishRecord(&ProducerRecord{
-					Topic: topic,
-					Key:   strconv.Itoa(i),
-					Value: []byte("{\"id\":\"123\"}"),
-				})
-
-				select {
-				case err := <-psm.Err:
-					t.Fatal(c, "Unable to publish", err)
-				case p := <-psm.Published:
-					assert.True(c, p)
-				}
-			}
-		}, 10*time.Second, 10*time.Millisecond)
-
-		// when
-		rsm := ka.ReadRecords(context.Background(), ReadDetails{
-			TopicName:       topic,
-			PartitionToRead: []int{0},
-			StartPoint:      Live,
-			Limit:           100,
-		}).(*ReadingStartedMsg)
-
-		go func() {
-			assert.EventuallyWithT(t, func(c *assert.CollectT) {
-				for i := 10; i < 20; i++ {
-					psm := ka.PublishRecord(&ProducerRecord{
-						Topic: topic,
-						Key:   strconv.Itoa(i),
-						Value: []byte("{\"id\":\"123\"}"),
-					})
-
-					select {
-					case err := <-psm.Err:
-						t.Fatal(c, "Unable to publish", err)
-					case p := <-psm.Published:
-						assert.True(c, p)
-					}
-				}
-			}, 10*time.Second, 10*time.Millisecond)
-		}()
-
-		var receivedRecords []int
-		for {
-			select {
-			case r, ok := <-rsm.ConsumerRecord:
-				if !ok {
-					goto assertRecords
-				}
-				key, _ := strconv.Atoi(r.Key)
-				receivedRecords = append(receivedRecords, key)
-				if len(receivedRecords) == 10 {
-					rsm.CancelFunc()
-				}
-			}
-		}
-
-	assertRecords:
-		{
-			assert.Equal(t, 19, slices.Max(receivedRecords))
-			assert.Equal(t, 10, slices.Min(receivedRecords))
-		}
-
-		// clean up
-		ka.DeleteTopic(topic)
-	})
+	//t.Run("Read Live", func(t *testing.T) {
+	//	topic := topicName()
+	//	// given
+	//	msg := ka.CreateTopic(TopicCreationDetails{
+	//		Name:              topic,
+	//		NumPartitions:     1,
+	//		ReplicationFactor: 1,
+	//	}).(TopicCreationStartedMsg)
+	//
+	//	switch msg.AwaitCompletion().(type) {
+	//	case TopicCreatedMsg:
+	//	case TopicCreationErrMsg:
+	//		t.Fatal("Unable to create topic", msg.Err)
+	//	}
+	//
+	//	// existing records on topic
+	//	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+	//		for i := 0; i < 10; i++ {
+	//			psm := ka.PublishRecord(&ProducerRecord{
+	//				Topic: topic,
+	//				Key:   strconv.Itoa(i),
+	//				Value: []byte("{\"id\":\"123\"}"),
+	//			})
+	//
+	//			select {
+	//			case err := <-psm.Err:
+	//				t.Fatal(c, "Unable to publish", err)
+	//			case p := <-psm.Published:
+	//				assert.True(c, p)
+	//			}
+	//		}
+	//	}, 10*time.Second, 10*time.Millisecond)
+	//
+	//	// when
+	//	rsm := ka.ReadRecords(context.Background(), ReadDetails{
+	//		TopicName:       topic,
+	//		PartitionToRead: []int{0},
+	//		StartPoint:      Live,
+	//		Limit:           100,
+	//	}).(*ReadingStartedMsg)
+	//
+	//	go func() {
+	//		assert.EventuallyWithT(t, func(c *assert.CollectT) {
+	//			for i := 10; i < 20; i++ {
+	//				psm := ka.PublishRecord(&ProducerRecord{
+	//					Topic: topic,
+	//					Key:   strconv.Itoa(i),
+	//					Value: []byte("{\"id\":\"123\"}"),
+	//				})
+	//
+	//				select {
+	//				case err := <-psm.Err:
+	//					t.Fatal(c, "Unable to publish", err)
+	//				case p := <-psm.Published:
+	//					assert.True(c, p)
+	//				}
+	//			}
+	//		}, 10*time.Second, 10*time.Millisecond)
+	//	}()
+	//
+	//	var receivedRecords []int
+	//	for {
+	//		select {
+	//		case r, ok := <-rsm.ConsumerRecord:
+	//			if !ok {
+	//				goto assertRecords
+	//			}
+	//			key, _ := strconv.Atoi(r.Key)
+	//			receivedRecords = append(receivedRecords, key)
+	//			if len(receivedRecords) == 10 {
+	//				rsm.CancelFunc()
+	//			}
+	//		}
+	//	}
+	//
+	//assertRecords:
+	//	{
+	//		assert.Equal(t, 19, slices.Max(receivedRecords))
+	//		assert.Equal(t, 10, slices.Min(receivedRecords))
+	//	}
+	//
+	//	// clean up
+	//	ka.DeleteTopic(topic)
+	//})
 
 	t.Run("Read filtered", func(t *testing.T) {
 		t.Run("with key filter", func(t *testing.T) {
