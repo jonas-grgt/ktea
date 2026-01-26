@@ -8,7 +8,7 @@ replace github.com/riferrei/srclient v0.7.1 => github.com/jonas-grgt/srclient v0
 
 require (
 	github.com/IBM/sarama v1.46.3
-	github.com/alecthomas/chroma/v2 v2.20.0
+	github.com/alecthomas/chroma/v2 v2.23.1
 	github.com/atotto/clipboard v0.1.4
 	github.com/burdiyan/kafkautil v0.0.0-20240215092415-7e6d3d0fc870
 	github.com/charmbracelet/bubbles v0.20.1-0.20250305115717-cdc743f1f488
