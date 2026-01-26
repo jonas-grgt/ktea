@@ -388,8 +388,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/lib/pq v0.0.0-20150723085316-0dad96c0b94f/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/linkedin/goavro/v2 v2.13.1/go.mod h1:KXx+erlq+RPlGSPmLF7xGo6SAbh8sCQ53x064+ioxhk=
-github.com/linkedin/goavro/v2 v2.14.1 h1:/8VjDpd38PRsy02JS0jflAu7JZPfJcGTwqWgMkFS2iI=
-github.com/linkedin/goavro/v2 v2.14.1/go.mod h1:KXx+erlq+RPlGSPmLF7xGo6SAbh8sCQ53x064+ioxhk=
+github.com/linkedin/goavro/v2 v2.15.0 h1:pDj1UrjUOO62iXhgBiE7jQkpNIc5/tA5eZsgolMjgVI=
+github.com/linkedin/goavro/v2 v2.15.0/go.mod h1:KXx+erlq+RPlGSPmLF7xGo6SAbh8sCQ53x064+ioxhk=
 github.com/lovoo/goka v1.1.14 h1:tb3h9dZpz0Bs58+0d+purMnJD+GSeiw6CdQYhEX6yHw=
 github.com/lovoo/goka v1.1.14/go.mod h1:hwGDFmyE9cASVmjFMnNXsWr7hI9mBvG1IJdj2vrnXrU=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
