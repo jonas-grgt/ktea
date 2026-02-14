@@ -188,7 +188,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				m.form = m.srForm
 				m.form.State = huh.StateNormal
 				m.border.GoTo("f5")
-				log.Debug("go transportOption f5")
 				return nil
 			}
 
@@ -325,7 +324,7 @@ func (m *Model) updateTransportOption() {
 		m.transportOption = m.cFormValues.transportOption
 		m.nextField(3)
 	} else if m.cFormValues.selectedPlainTextTransportOption() && m.prevSelTlsTO() {
-		m.transportOption = m.cFormValues.transportOption // move outside maybe?
+		m.transportOption = m.cFormValues.transportOption
 
 		m.verificationOption = verificationOptionNotSelected
 		m.cFormValues.verificationOption = verificationOptionNotSelected
@@ -622,9 +621,9 @@ func (m *Model) createNotifierCmdBar() {
 		m.cForm = m.createCForm()
 		m.form = m.cForm
 		m.formState = none
-		nMsg := "Cluster not crated"
+		nMsg := "Failed to Create Cluster"
 		if m.inEditingMode() {
-			nMsg = "Cluster not updated"
+			nMsg = "Failed to Update Cluster"
 		}
 		return true, nm.ShowErrorMsg(nMsg, msg.Err)
 	})
