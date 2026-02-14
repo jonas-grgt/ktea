@@ -51,6 +51,7 @@ type Model struct {
 	cForm                                     *huh.Form
 	cFormValues                               *clusterFormValues
 	clusterToEdit                             *config.Cluster
+	isEditing                                 bool
 	notifierCmdBar                            *cmdbar.NotifierCmdBar
 	ktx                                       *kontext.ProgramKtx
 	clusterRegisterer                         config.ClusterRegisterer
@@ -66,6 +67,7 @@ type Model struct {
 	kcModel                                   *UpsertKcModel
 	hasVerificationStatePreviouslyNotSelected bool
 	validateCert                              kadmin.CertValidationFunc
+	clusterSaved                              bool
 }
 
 type transportOption string
@@ -183,12 +185,10 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.border.GoTo("f4")
 			return nil
 		case "f5":
-			m.border.GoTo("handling f5")
-			if m.inEditingMode() {
+			if m.clusterSaved {
 				m.form = m.srForm
 				m.form.State = huh.StateNormal
 				m.border.GoTo("f5")
-				log.Debug("go transportOption f5")
 				return nil
 			}
 
@@ -225,6 +225,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		m.clusterToEdit = msg.Cluster
 		m.formState = none
 		m.border.WithInActiveColor(styles.ColorGrey)
+		m.clusterSaved = true
 		if activeTab == cTab {
 			m.cForm = m.createCForm()
 			m.form = m.cForm
@@ -282,7 +283,7 @@ func (m *Model) updateClusterTab() (tea.Cmd, bool) {
 
 	if !m.cFormValues.selectedSASLAuthMethod() &&
 		m.authSelState == authMethodSasl {
-		// if SASL authentication mode was previously selected and switched back transportOption none
+		// if SASL authentication mode was previously selected and switched back to none
 		m.cForm = m.createCForm()
 		m.form = m.cForm
 		if m.cFormValues.selectedTLSTransportOption() {
@@ -325,7 +326,7 @@ func (m *Model) updateTransportOption() {
 		m.transportOption = m.cFormValues.transportOption
 		m.nextField(3)
 	} else if m.cFormValues.selectedPlainTextTransportOption() && m.prevSelTlsTO() {
-		m.transportOption = m.cFormValues.transportOption // move outside maybe?
+		m.transportOption = m.cFormValues.transportOption
 
 		m.verificationOption = verificationOptionNotSelected
 		m.cFormValues.verificationOption = verificationOptionNotSelected
@@ -622,20 +623,20 @@ func (m *Model) createNotifierCmdBar() {
 		m.cForm = m.createCForm()
 		m.form = m.cForm
 		m.formState = none
-		nMsg := "Cluster not crated"
+		nMsg := "Failed to Create Cluster"
 		if m.inEditingMode() {
-			nMsg = "Cluster not updated"
+			nMsg = "Failed to Update Cluster"
 		}
 		return true, nm.ShowErrorMsg(nMsg, msg.Err)
 	})
 	cmdbar.BindNotificationHandler(m.notifierCmdBar, func(msg config.ClusterRegisteredMsg, nm *notifier.Model) (bool, tea.Cmd) {
 		if m.form == m.srForm {
-			nm.ShowSuccessMsg("Schema registry registered! <ESC> transportOption go back.")
+			nm.ShowSuccessMsg("Schema registry registered! <ESC> to go back.")
 		} else if m.form == m.cForm {
 			if m.inEditingMode() {
 				nm.ShowSuccessMsg("Cluster updated!")
 			} else {
-				nm.ShowSuccessMsg("Cluster registered! <ESC> transportOption go back or <F5> transportOption add a schema registry.")
+				nm.ShowSuccessMsg("Cluster registered! <ESC> to go back or <F5> to add a schema registry.")
 			}
 		} else {
 			nm.ShowSuccessMsg("Cluster registered!")
@@ -646,13 +647,13 @@ func (m *Model) createNotifierCmdBar() {
 		m.srForm = m.createSrForm()
 		m.form = m.srForm
 		m.formState = none
-		nm.ShowErrorMsg("unable transportOption reach the schema registry", msg.Err)
+		nm.ShowErrorMsg("Failed to register schema registry", msg.Err)
 		return true, nm.AutoHideCmd(notifierCmdbarTag)
 	})
 }
 
 func (m *Model) inEditingMode() bool {
-	return m.clusterToEdit != nil
+	return m.isEditing
 }
 
 func WithTitle(title string) Option {
@@ -690,6 +691,7 @@ func NewCreateClusterPage(
 		srConnChecker: srConnChecker,
 		shortcuts:     shortcuts,
 		validateCert:  certValidator,
+		isEditing:     false,
 	}
 
 	model.ktx = ktx
@@ -773,6 +775,7 @@ func NewEditClusterPage(
 		verificationOption: formValues.verificationOption,
 		navigator:          navigator,
 		clusterToEdit:      &cluster,
+		isEditing:          true,
 		cFormValues:        formValues,
 		kConnChecker:       kConnChecker,
 		srConnChecker:      srConnChecker,
@@ -784,9 +787,10 @@ func NewEditClusterPage(
 			{"Go Back", "esc"},
 		},
 		validateCert: certValidator,
+		clusterSaved: true,
 	}
 	if cluster.Name != "" {
-		// copied transportOption prevent model.preEditedName transportOption follow the formValues.Name pointer
+		// copied to prevent model.preEditedName to follow the formValues.Name pointer
 		preEditedName := cluster.Name
 		model.preEditName = &preEditedName
 	}

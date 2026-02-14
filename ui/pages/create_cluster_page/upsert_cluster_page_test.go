@@ -143,29 +143,23 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 }
 
 func TestTabs(t *testing.T) {
-	t.Run("Switch transportOption schema registry tab", func(t *testing.T) {
+	t.Run("Switch to schema registry tab", func(t *testing.T) {
 		// given
-		page, ktx := createClusterPage()
-		// and: a cluster is registered
-		cluster := config.Cluster{}
-		page.clusterToEdit = &cluster
+		page, ktx := createEditClusterPage()
 
 		// when
 		page.Update(tests.Key(tea.KeyF5))
 
-		// then: schema registry tab is visible
+		// then: schema-registry tab is visible
 		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "Schema Registry URL")
 		assert.Contains(t, render, "Schema Registry Username")
 		assert.Contains(t, render, "Schema Registry Password")
 	})
 
-	t.Run("Switch transportOption kafka connect tab", func(t *testing.T) {
+	t.Run("Switch to kafka connect tab", func(t *testing.T) {
 		// given
-		page, ktx := createClusterPage()
-		// and: a cluster is registered
-		cluster := config.Cluster{}
-		page.clusterToEdit = &cluster
+		page, ktx := createEditClusterPage()
 
 		// when
 		page.Update(tests.Key(tea.KeyF6))
@@ -177,12 +171,9 @@ func TestTabs(t *testing.T) {
 		assert.Contains(t, render, "Kafka Connect Password")
 	})
 
-	t.Run("switching back transportOption clusters tab remembers previously entered state", func(t *testing.T) {
+	t.Run("switching back to clusters tab remembers previously entered state", func(t *testing.T) {
 		// given
-		page, ktx := createClusterPage()
-		// and: a cluster is registered
-		cluster := config.Cluster{}
-		page.clusterToEdit = &cluster
+		page, ktx := createEditClusterPage()
 		// and: enter name
 		tests.UpdateKeys(page, "TST")
 		cmd := page.Update(tests.Key(tea.KeyEnter))
@@ -211,7 +202,7 @@ func TestTabs(t *testing.T) {
 		assert.Contains(t, render, "localhost:9092")
 	})
 
-	t.Run("Cannot switch transportOption schema registry tab when no cluster registered yet", func(t *testing.T) {
+	t.Run("Cannot switch to schema registry tab when no cluster registered yet", func(t *testing.T) {
 		// given
 		page, ktx := createClusterPage()
 
@@ -357,7 +348,7 @@ func TestValidation(t *testing.T) {
 		)
 
 		kb := tests.NewKeyboard(page)
-		// when: change name from prd transportOption prod
+		// when: change name from prd to prod
 		kb.Backspace().Backspace().Backspace().Type("prod").Enter()
 
 		// then
@@ -443,7 +434,7 @@ func TestCreateCluster(t *testing.T) {
 		// and: verification broker cert
 		kb.Enter()
 		// and: CA Cert path is entered
-		kb.Type("path/transportOption/cert.crt").Enter()
+		kb.Type("path/to/cert.crt").Enter()
 		// and: Auth method SASL_PLAINTEXT
 		kb.Down().Enter()
 		// and: Auth method username
@@ -466,7 +457,7 @@ func TestCreateCluster(t *testing.T) {
 			TLSConfig: config.TLSConfig{
 				Enable:     true,
 				SkipVerify: false,
-				CACertPath: "path/transportOption/cert.crt",
+				CACertPath: "path/to/cert.crt",
 			},
 			SASLConfig: config.SASLConfig{
 				AuthMethod: config.AuthMethodSASLPlaintext,
@@ -474,6 +465,42 @@ func TestCreateCluster(t *testing.T) {
 				Password:   "secret",
 			},
 		}, msgs[0].(kadmin.MockConnectionCheckedMsg).Cluster)
+	})
+
+	t.Run("Display notification when cluster has been created", func(t *testing.T) {
+		// given
+		page, _ := createClusterPage()
+
+		// when
+		cluster := config.Cluster{
+			Name:             "production",
+			Color:            styles.ColorGreen,
+			Active:           false,
+			BootstrapServers: []string{"localhost:9093"},
+			SASLConfig: config.SASLConfig{
+				AuthMethod: config.AuthMethodNone,
+			},
+			SchemaRegistry: nil,
+			TLSConfig:      config.TLSConfig{Enable: false},
+		}
+		page.Update(
+			config.ClusterRegisteredMsg{
+				Cluster: &cluster,
+			},
+		)
+
+		// then
+		render := page.View(
+			tests.NewKontext(
+				tests.WithConfig(
+					&config.Config{
+						Clusters: []config.Cluster{cluster},
+					},
+				),
+			),
+			tests.Renderer)
+
+		assert.Contains(t, render, "Cluster registered! <ESC> to go back or <F5> to add a schema registry.")
 	})
 }
 
@@ -570,7 +597,7 @@ func TestClusterForm(t *testing.T) {
 			assert.Contains(t, render, "SASL username")
 			assert.Contains(t, render, "SASL password")
 
-			t.Run("deselecting SASL_PLAINTEXT transportOption select NONE hides username and password fields", func(t *testing.T) {
+			t.Run("deselecting SASL_PLAINTEXT to select NONE hides username and password fields", func(t *testing.T) {
 				// given
 				page, _ := createClusterPage(withContext(tests.NewKontext(tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
@@ -595,7 +622,7 @@ func TestClusterForm(t *testing.T) {
 				// and: Verify Broker
 				kb.Enter()
 				// and: CA cert
-				kb.Type("path/transportOption/cert.crt").Enter()
+				kb.Type("path/to/cert.crt").Enter()
 				// and: Auth Method SASL_PLAINTEXT
 				kb.Down()
 
@@ -622,10 +649,10 @@ func TestClusterForm(t *testing.T) {
 				assert.NotContains(t, render, "SASL username")
 				assert.NotContains(t, render, "SASL password")
 				assert.Contains(t, render, "> Verify Broker Certificate")
-				assert.Contains(t, render, "> path/transportOption/cert.crt")
+				assert.Contains(t, render, "> path/to/cert.crt")
 			})
 
-			t.Run("deselecting SASL_PLAINTEXT transportOption select NONE keeps previous selected fields state", func(t *testing.T) {
+			t.Run("deselecting SASL_PLAINTEXT to select NONE keeps previous selected fields state", func(t *testing.T) {
 				// given
 				page, _ := createClusterPage(withContext(tests.NewKontext(tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
@@ -914,7 +941,7 @@ func TestEditClusterForm(t *testing.T) {
 			TLSConfig: config.TLSConfig{
 				Enable:     true,
 				SkipVerify: false,
-				CACertPath: "path/transportOption/ca.cert",
+				CACertPath: "path/to/ca.cert",
 			},
 			SASLConfig: config.SASLConfig{
 				Username:   "john",
@@ -975,22 +1002,22 @@ func TestEditClusterForm(t *testing.T) {
 		)
 
 		kb := tests.NewKeyboard(page)
-		// when: change name from prd transportOption prod
+		// when: change name from prd to prod
 		kb.Backspace().Backspace().Backspace().Type("prod").Enter()
-		// and: change color transportOption orange
+		// and: change color to orange
 		kb.Right().Right().Enter()
 		// and: update host
 		for i := 0; i < len("localhost:9092"); i++ {
 			kb.Backspace()
 		}
 		kb.Type("localhost:9091").Enter()
-		// and: change transport transportOption TLS
+		// and: change transport to TLS
 		kb.Down().Enter()
 		// and: verify broker
 		kb.Enter()
 		// and: and ca file path
 
-		kb.Type("path/transportOption/ca.cert").Enter()
+		kb.Type("path/to/ca.cert").Enter()
 		// and: auth method SASL_PLAINTEXT
 		kb.Down().Enter()
 		// and: username john
@@ -1017,7 +1044,7 @@ func TestEditClusterForm(t *testing.T) {
 			TLSConfig: config.TLSConfig{
 				Enable:     true,
 				SkipVerify: false,
-				CACertPath: "path/transportOption/ca.cert",
+				CACertPath: "path/to/ca.cert",
 			},
 			SchemaRegistry: nil,
 		}, msgs[0].(kadmin.MockConnectionCheckedMsg).Cluster)
@@ -1069,7 +1096,7 @@ func TestEditClusterForm(t *testing.T) {
 			TLSConfig: config.TLSConfig{
 				Enable:     true,
 				SkipVerify: false,
-				CACertPath: "path/transportOption/ca.cert",
+				CACertPath: "path/to/ca.cert",
 			},
 		}
 		page, ktx := createEditClusterPage(
@@ -1090,7 +1117,7 @@ func TestEditClusterForm(t *testing.T) {
 		render := page.View(ktx, tests.Renderer)
 		assert.Contains(t, render, "> TLS")
 		assert.Contains(t, render, "> Verify Broker Certificate")
-		assert.Contains(t, render, "> path/transportOption/ca.cert")
+		assert.Contains(t, render, "> path/to/ca.cert")
 	})
 
 	t.Run("Check connectivity upon updating", func(t *testing.T) {
@@ -1199,28 +1226,32 @@ func TestEditClusterForm(t *testing.T) {
 		page.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := page.View(tests.NewKontext(tests.WithConfig(&config.Config{
-			Clusters: []config.Cluster{
-				{
-					Name:             "prd",
-					Color:            "#808080",
-					Active:           true,
-					BootstrapServers: []string{":19092"},
-					SASLConfig: config.SASLConfig{
-						AuthMethod: config.AuthMethodNone,
+		render := page.View(
+			tests.NewKontext(
+				tests.WithConfig(&config.Config{
+					Clusters: []config.Cluster{
+						{
+							Name:             "prd",
+							Color:            "#808080",
+							Active:           true,
+							BootstrapServers: []string{":19092"},
+							SASLConfig: config.SASLConfig{
+								AuthMethod: config.AuthMethodNone,
+							},
+						},
+						{
+							Name:             "tst",
+							Color:            "#F0F0F0",
+							Active:           false,
+							BootstrapServers: nil,
+							SASLConfig: config.SASLConfig{
+								AuthMethod: config.AuthMethodNone,
+							},
+						},
 					},
-				},
-				{
-					Name:             "tst",
-					Color:            "#F0F0F0",
-					Active:           false,
-					BootstrapServers: nil,
-					SASLConfig: config.SASLConfig{
-						AuthMethod: config.AuthMethodNone,
-					},
-				},
-			},
-		})), tests.Renderer)
+				})),
+			tests.Renderer,
+		)
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 
@@ -1280,57 +1311,49 @@ func TestEditClusterForm(t *testing.T) {
 
 	t.Run("Display notification when connection has failed", func(t *testing.T) {
 		// given
-		page, _ := createEditClusterPage(
-			withContext(tests.NewKontext(tests.WithConfig(&config.Config{
-				Clusters: []config.Cluster{
-					{
-						Name:             "prd",
-						Color:            "#808080",
-						Active:           true,
-						BootstrapServers: []string{":19092"},
-						SASLConfig: config.SASLConfig{
-							AuthMethod: config.AuthMethodNone,
-						},
-					},
-					{
-						Name:             "tst",
-						Color:            "#F0F0F0",
-						Active:           false,
-						BootstrapServers: nil,
-						SASLConfig: config.SASLConfig{
-							AuthMethod: config.AuthMethodNone,
-						},
-					},
+		clusters := []config.Cluster{
+			{
+				Name:             "prd",
+				Color:            "#808080",
+				Active:           true,
+				BootstrapServers: []string{":19092"},
+				SASLConfig: config.SASLConfig{
+					AuthMethod: config.AuthMethodNone,
 				},
-			}))))
+			},
+			{
+				Name:             "tst",
+				Color:            "#F0F0F0",
+				Active:           false,
+				BootstrapServers: nil,
+				SASLConfig: config.SASLConfig{
+					AuthMethod: config.AuthMethodNone,
+				},
+			},
+		}
+		page, _ := createEditClusterPage(
+			withContext(
+				tests.NewKontext(
+					tests.WithConfig(
+						&config.Config{Clusters: clusters},
+					),
+				),
+			),
+		)
 
 		// when
 		page.Update(kadmin.ConnCheckErrMsg{Err: fmt.Errorf("kafka: client has run out of available brokers to talk to")})
 
 		// then
-		render := page.View(tests.NewKontext(tests.WithConfig(&config.Config{
-			Clusters: []config.Cluster{
-				{
-					Name:             "prd",
-					Color:            "#808080",
-					Active:           true,
-					BootstrapServers: []string{":19092"},
-					SASLConfig: config.SASLConfig{
-						AuthMethod: config.AuthMethodNone,
-					},
-				},
-				{
-					Name:             "tst",
-					Color:            "#F0F0F0",
-					Active:           false,
-					BootstrapServers: nil,
-					SASLConfig: config.SASLConfig{
-						AuthMethod: config.AuthMethodNone,
-					},
-				},
-			},
-		})), tests.Renderer)
-		assert.Contains(t, render, "Cluster not updated: kafka: client has run out of available brokers to talk to")
+		render := page.View(
+			tests.NewKontext(
+				tests.WithConfig(
+					&config.Config{Clusters: clusters},
+				),
+			),
+			tests.Renderer,
+		)
+		assert.Contains(t, render, "Failed to Update Cluster: kafka: client has run out of available brokers to talk to")
 	})
 
 	t.Run("Display notification when cluster has been updated", func(t *testing.T) {
@@ -1416,40 +1439,37 @@ func TestCreateSchemaRegistry(t *testing.T) {
 
 	t.Run("Check connectivity before registering the schema registry", func(t *testing.T) {
 		// and: enter name
-		kb.Type("TST")
-		// select Primary
-		kb.Up().Enter()
+		kb.Type("TST").Enter()
 		// and: select Color
 		kb.Enter()
 		// and: Host is entered
 		kb.Type("localhost:9092").Enter()
-		// and: auth method none is selected
-		kb.Down().Enter()
-		// and: select SSL enabled
-		kb.Down().Enter()
-		// and: select SASL_SSL security protocol
+		// and: transport Plaintext
 		kb.Enter()
+		// and: auth method SASL_PLAINTEXT
+		kb.Down().Enter()
 		// and: enter SASL username
 		kb.Type("SASL username").Enter()
 		// and: enter SASL password
 		kb.Type("SASL password").Enter()
 		// submit
 		kb.Submit()
-		page.Update(config.ClusterRegisteredMsg{
-			Cluster: &config.Cluster{
-				Name:             "cluster-name",
-				Color:            styles.ColorGreen,
-				Active:           false,
-				BootstrapServers: nil,
-				SASLConfig: config.SASLConfig{
-					AuthMethod: config.AuthMethodNone,
-				},
-				SchemaRegistry: nil,
-				TLSConfig:      config.TLSConfig{Enable: false},
+		cluster := config.Cluster{
+			Name:             "cluster-name",
+			Color:            styles.ColorGreen,
+			Active:           false,
+			BootstrapServers: nil,
+			SASLConfig: config.SASLConfig{
+				AuthMethod: config.AuthMethodNone,
 			},
+			SchemaRegistry: nil,
+			TLSConfig:      config.TLSConfig{Enable: false},
+		}
+		page.Update(config.ClusterRegisteredMsg{
+			Cluster: &cluster,
 		})
 
-		// and: switch transportOption schema registry tab
+		// and: switch to the schema-registry tab
 		kb.F5()
 
 		// and: schema registry url
@@ -1457,8 +1477,8 @@ func TestCreateSchemaRegistry(t *testing.T) {
 		// and: schema registry username
 		kb.Type("sr-username").Enter()
 		// and: schema registry pwd
-		kb.Type("sr-password").Enter()
-		// when: submit
+		kb.Type("sr-password")
+		// and
 		msgs := kb.Submit()
 
 		// then
@@ -1475,7 +1495,17 @@ func TestCreateSchemaRegistry(t *testing.T) {
 
 			render := page.View(ktx, tests.Renderer)
 
-			assert.Contains(t, render, "unable transportOption reach the schema registry")
+			assert.Contains(t, render, "Failed to register schema registry")
+		})
+
+		t.Run("Display success notification upon registration", func(t *testing.T) {
+			page.Update(config.ClusterRegisteredMsg{
+				Cluster: &cluster,
+			})
+
+			render := page.View(ktx, tests.Renderer)
+
+			assert.Contains(t, render, "Schema registry registered! <ESC> to go back.")
 		})
 	})
 }
