@@ -76,16 +76,17 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		if msg.String() == "esc" {
 			m.cancelConsumption()
+
 			if m.readDetails.StartPoint == kadmin.Live || m.origin == tabs.OriginTopicsPage {
 				return m.navigator.ToTopicsPage()
-			} else {
-				return m.navigator.ToConsumeFormPage(
-					tabs.ConsumeFormPageDetails{
-						ReadDetails: &m.readDetails,
-						Topic:       m.topic,
-					},
-				)
 			}
+
+			return m.navigator.ToConsumeFormPage(
+				tabs.ConsumeFormPageDetails{
+					ReadDetails: &m.readDetails,
+					Topic:       m.topic,
+				},
+			)
 		} else if msg.String() == "f2" {
 			m.cancelConsumption()
 			m.consuming = false
@@ -222,12 +223,12 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 			{"Select Sorting Column", "←/→/h/l"},
 			{"Apply Sorting Column", "enter"},
 		}
-	} else {
-		return []statusbar.Shortcut{
-			{"View Record", "enter"},
-			{"Sort", "F3"},
-			{"Go Back", "esc"},
-		}
+	}
+
+	return []statusbar.Shortcut{
+		{"View Record", "enter"},
+		{"Sort", "F3"},
+		{"Go Back", "esc"},
 	}
 }
 
