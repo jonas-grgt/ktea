@@ -19,10 +19,14 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-type eventGenFunc func(id string) interface{}
+type eventGenFunc func(id string) (string, interface{})
 
+type topic struct {
+	name      string
+	compacted bool
+}
 type generationData struct {
-	topic   string
+	topic
 	subject string
 	schema  []string
 	eventGenFunc
@@ -30,7 +34,7 @@ type generationData struct {
 
 func main() {
 	genData := []generationData{
-		{"dev.finance.invoice",
+		{topic{"dev.finance.invoice", false},
 			"dev.finance.invoice-io.jonasg.ktea.invoice.InvoiceCreated",
 			[]string{`
 			{
@@ -50,8 +54,8 @@ func main() {
 				]
 			}
 		`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":          id,
 					"customerId":  uuid.New().String(),
 					"amount":      big.NewRat(100, 100),
@@ -65,7 +69,7 @@ func main() {
 		},
 
 		{
-			"dev.finance.payment",
+			topic{"dev.finance.payment", false},
 			"dev.finance.payment-io.jonasg.ktea.payment.PaymentProcessed",
 			[]string{`
 	{
@@ -84,8 +88,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":          id,
 					"invoiceId":   uuid.New().String(),
 					"amount":      big.NewRat(500, 100),
@@ -98,7 +102,7 @@ func main() {
 		},
 
 		{
-			"dev.order.checkout",
+			topic{"dev.order.checkout", false},
 			"dev.order.checkout-io.jonasg.ktea.order.CheckoutInitiated",
 			[]string{`
 	{
@@ -115,8 +119,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":           id,
 					"cartId":       uuid.New().String(),
 					"totalAmount":  big.NewRat(1500, 100),
@@ -126,7 +130,7 @@ func main() {
 			},
 		},
 		{
-			"dev.order.shipment",
+			topic{"dev.order.shipment", false},
 			"dev.order.shipment-io.jonasg.ktea.order.ShipmentCreated",
 			[]string{`
 	{
@@ -143,8 +147,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":             id,
 					"orderId":        uuid.New().String(),
 					"shipmentDate":   time.Now().Format(time.RFC3339),
@@ -154,7 +158,7 @@ func main() {
 			},
 		},
 		{
-			"dev.product.stock",
+			topic{"dev.product.stock", false},
 			"dev.product.stock-io.jonasg.ktea.product.StockUpdated",
 			[]string{`
 	{
@@ -170,8 +174,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":         id,
 					"productId":  uuid.New().String(),
 					"quantity":   100,
@@ -180,7 +184,7 @@ func main() {
 			},
 		},
 		{
-			"dev.product.category",
+			topic{"dev.product.category", false},
 			"dev.product.category-io.jonasg.ktea.product.CategoryAssigned",
 			[]string{`
 	{
@@ -196,8 +200,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":             id,
 					"productId":      uuid.New().String(),
 					"category":       "Electronics",
@@ -206,7 +210,7 @@ func main() {
 			},
 		},
 		{
-			"dev.product.price",
+			topic{"dev.product.price", false},
 			"dev.product.price-io.jonasg.ktea.product.PriceUpdated",
 			[]string{`
 	{
@@ -223,8 +227,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":         id,
 					"productId":  uuid.New().String(),
 					"price":      big.NewRat(2000, 100),
@@ -234,7 +238,7 @@ func main() {
 			},
 		},
 		{
-			"dev.customer.profile",
+			topic{"dev.customer.profile", true},
 			"dev.customer.profile-io.jonasg.ktea.customer.ProfileUpdated",
 			[]string{`
 	{
@@ -250,8 +254,9 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(_ string) (string, interface{}) {
+				id := fmt.Sprintf("%d", rand.Intn(10)+1)
+				return id, map[string]interface{}{
 					"id":         id,
 					"customerId": uuid.New().String(),
 					"updateDate": time.Now().Format(time.RFC3339),
@@ -260,40 +265,9 @@ func main() {
 			},
 		},
 		{
-			"dev.customer.action",
+			topic{"dev.customer.action", false},
 			"dev.customer.action-io.jonasg.ktea.customer.ActionLogged",
 			[]string{
-				`
-	{
-		"type": "record",
-		"name": "ActionLogged",
-		"namespace": "io.jonasg.ktea.customer",
-		"doc": "Schema for the ActionLogged event.",
-		"fields": [
-			{"name": "id", "type": "string", "doc": "Unique identifier for the action log."},
-			{"name": "customerId", "type": "string", "doc": "Unique identifier for the customer."},
-			{"name": "origin", "type": "string", "doc": "Original of the action."},
-			{"name": "platform", "type": "string", "doc": "Platform from which the action was performed."},
-			{"name": "action", "type": "string", "doc": "Description of the action performed by the customer."},
-			{"name": "actionDate", "type": "string", "doc": "Date when the action was performed, in ISO 8601 format."}
-		]
-	}
-	`,
-				`
-	{
-		"type": "record",
-		"name": "ActionLogged",
-		"namespace": "io.jonasg.ktea.customer",
-		"doc": "Schema for the ActionLogged event.",
-		"fields": [
-			{"name": "id", "type": "string", "doc": "Unique identifier for the action log."},
-			{"name": "customerId", "type": "string", "doc": "Unique identifier for the customer."},
-			{"name": "origin", "type": "string", "doc": "Original of the action."},
-			{"name": "action", "type": "string", "doc": "Description of the action performed by the customer."},
-			{"name": "actionDate", "type": "string", "doc": "Date when the action was performed, in ISO 8601 format."}
-		]
-	}
-	`,
 				`
 	{
 		"type": "record",
@@ -308,8 +282,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":         id,
 					"customerId": uuid.New().String(),
 					"action":     "Logged in to the system.",
@@ -318,7 +292,7 @@ func main() {
 			},
 		},
 		{
-			"dev.customer.feedback",
+			topic{"dev.customer.feedback", false},
 			"dev.customer.feedback-io.jonasg.ktea.customer.FeedbackReceived",
 			[]string{`
 	{
@@ -334,8 +308,8 @@ func main() {
 		]
 	}
 	`},
-			func(id string) interface{} {
-				return map[string]interface{}{
+			func(id string) (string, interface{}) {
+				return id, map[string]interface{}{
 					"id":           id,
 					"customerId":   uuid.New().String(),
 					"feedback":     "Great service!",
@@ -384,7 +358,7 @@ func main() {
 }
 
 func generateData(ka kadmin.Kadmin, gd generationData, sa sradmin.Client, count int) {
-	if !topicExists(ka, gd.topic) {
+	if !topicExists(ka, gd.topic.name) {
 		createTopic(ka, gd.topic)
 	}
 
@@ -398,10 +372,10 @@ func generateData(ka kadmin.Kadmin, gd generationData, sa sradmin.Client, count 
 
 	for i := 0; i < count; i++ {
 		id := uuid.New().String()
-		event := gd.eventGenFunc(id)
-		publish(ka, gd.topic, id, event, schemaInfo)
+		id, event := gd.eventGenFunc(id)
+		publish(ka, gd.topic.name, id, event, schemaInfo)
 	}
-	fmt.Printf("Published 1000 events to topic %s with subject %s\n", gd.topic, gd.subject)
+	fmt.Printf("Published 1000 events to topic %s with subject %s\n", gd.topic.name, gd.subject)
 }
 
 type handler struct {
@@ -414,7 +388,7 @@ func (h *handler) Setup(_ sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (h *handler) Cleanup(s sarama.ConsumerGroupSession) error {
+func (h *handler) Cleanup(_ sarama.ConsumerGroupSession) error {
 	return nil
 }
 
@@ -528,20 +502,25 @@ func getAdmins() (kadmin.Kadmin, sradmin.Client) {
 	return ka, sa
 }
 
-func createTopic(ka kadmin.Kadmin, topic string) {
+func createTopic(ka kadmin.Kadmin, topic topic) {
 	partitions := 1
 	if (rand.Intn(1) % 2) == 0 {
 		partitions = rand.Intn(10) + 1
 	}
+	var properties = map[string]string{}
+	if topic.compacted {
+		properties["cleanup.policy"] = "compact"
+	}
 	tm := ka.CreateTopic(kadmin.TopicCreationDetails{
-		Name:              topic,
+		Name:              topic.name,
 		NumPartitions:     partitions,
 		ReplicationFactor: 1,
+		Properties:        properties,
 	}).(kadmin.TopicCreationStartedMsg)
 
 	switch msg := tm.AwaitCompletion().(type) {
 	case kadmin.TopicCreatedMsg:
-		fmt.Printf("Topic %s created successfully", topic)
+		fmt.Printf("Topic %s created successfully", topic.name)
 	case kadmin.TopicCreationErrMsg:
 		panic(fmt.Sprintf("Failed to create topic: %v", msg.Err))
 	}

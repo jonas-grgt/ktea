@@ -2,11 +2,6 @@ package record_details_page
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -23,6 +18,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/charmbracelet/bubbles/table"
+	"github.com/charmbracelet/bubbles/viewport"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 type focus bool
@@ -274,7 +275,7 @@ func (m *Model) handleCopy(cmds []tea.Cmd) []tea.Cmd {
 }
 
 func (m *Model) updatedFocussedArea(msg tea.Msg, cmds []tea.Cmd) []tea.Cmd {
-	// only update component if no error is present
+	// only update the component if no error is present
 	if m.err != nil {
 		return cmds
 	}
@@ -321,15 +322,16 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 		}
 
 		return shortcuts
-	} else {
-		return []statusbar.Shortcut{
-			{"Go Back", "esc"},
-		}
+	}
+
+	return []statusbar.Shortcut{
+		{"Go Back", "esc"},
 	}
 }
 
 func (m *Model) Title() string {
-	return "Topics / " + m.topicName + " / Records / " + strconv.FormatInt(m.record.Offset, 10)
+	return "Topics / " + m.topicName + " / Partition / " + strconv.FormatInt(m.record.Partition, 10) +
+		" / Offset / " + strconv.FormatInt(m.record.Offset, 10)
 }
 
 func New(
