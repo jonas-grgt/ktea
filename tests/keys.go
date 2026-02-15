@@ -80,6 +80,10 @@ func (k *KeyBoard) Enter() {
 	}
 }
 
+func (k *KeyBoard) EnterAndGetCmd() tea.Cmd {
+	return k.view.Update(Key(tea.KeyEnter))
+}
+
 func (k *KeyBoard) Submit() []tea.Msg {
 	cmd := k.view.Update(Key(tea.KeyEnter))
 	// next field

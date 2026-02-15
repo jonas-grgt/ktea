@@ -166,82 +166,6 @@ func TestConsumptionPage(t *testing.T) {
 		assert.Less(t, t4Idx, t5Idx)
 	})
 
-	t.Run("Default sort by Timestamp Desc", func(t *testing.T) {
-		m, _ := New(
-			kadmin.NewMockKadmin(),
-			kadmin.ReadDetails{},
-			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
-			tabs.NewMockTopicsTabNavigator(),
-		)
-
-		var records []kadmin.ConsumerRecord
-		now := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-		for i := 0; i < 10; i++ {
-			records = append(records, kadmin.ConsumerRecord{
-				Key:       fmt.Sprintf("key-%d", i),
-				Payload:   serdes.DesData{},
-				Err:       nil,
-				Partition: 0,
-				Offset:    int64(i),
-				Headers:   nil,
-				Timestamp: now.Add(time.Duration(i) * time.Second),
-			})
-		}
-		m.Update(kadmin.ConsumerRecordReceived{
-			Records: records,
-		})
-
-		render := m.View(tests.NewKontext(), tests.Renderer)
-
-		assert.Contains(t, render, "▼ Timestamp")
-
-		t1Idx := strings.Index(render, "2024-01-01 00:00:09")
-		t2Idx := strings.Index(render, "2024-01-01 00:00:08")
-		t3Idx := strings.Index(render, "2024-01-01 00:00:07")
-		t4Idx := strings.Index(render, "2024-01-01 00:00:06")
-		t5Idx := strings.Index(render, "2024-01-01 00:00:00")
-
-		assert.Less(t, t1Idx, t2Idx)
-		assert.Less(t, t2Idx, t3Idx)
-		assert.Less(t, t3Idx, t4Idx)
-		assert.Less(t, t4Idx, t5Idx)
-	})
-
-	t.Run("F2 Cancels consumption", func(t *testing.T) {
-		m, _ := New(
-			kadmin.NewMockKadmin(),
-			kadmin.ReadDetails{},
-			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
-			tabs.NewMockTopicsTabNavigator(),
-		)
-
-		var records []kadmin.ConsumerRecord
-		now := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-		for i := 0; i < 10; i++ {
-			records = append(records, kadmin.ConsumerRecord{
-				Key:       fmt.Sprintf("key-%d", i),
-				Payload:   serdes.DesData{},
-				Err:       nil,
-				Partition: 0,
-				Offset:    int64(i),
-				Headers:   nil,
-				Timestamp: now.Add(time.Duration(i) * time.Second),
-			})
-		}
-		m.Update(kadmin.ConsumerRecordReceived{
-			Records: records,
-		})
-
-		cmd := m.Update(tests.Key(tea.KeyF2))
-
-		msgs := tests.ExecuteBatchCmd(cmd)
-
-		assert.Len(t, msgs, 1)
-		assert.IsType(t, kadmin.ConsumptionEndedMsg{}, msgs[0])
-	})
-
 	t.Run("F2 Cancels consumption", func(t *testing.T) {
 		m, _ := New(
 			kadmin.NewMockKadmin(),
@@ -811,4 +735,48 @@ func TestConsumptionPage(t *testing.T) {
 		assert.Contains(t, render, "key-30")
 		assert.Contains(t, render, "key-40")
 	})
+
+	t.Run("Select record with multiple keys on the same partition", func(t *testing.T) {
+		m, _ := New(
+			kadmin.NewMockKadmin(),
+			kadmin.ReadDetails{},
+			&kadmin.ListedTopic{},
+			tabs.OriginTopicsPage,
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		var records []kadmin.ConsumerRecord
+		now := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+		for i := 0; i < 10; i++ {
+			records = append(records, kadmin.ConsumerRecord{
+				Key:       "X",
+				Payload:   serdes.DesData{},
+				Err:       nil,
+				Partition: 0,
+				Offset:    int64(i),
+				Headers:   nil,
+				Timestamp: now.Add(time.Duration(i) * time.Second),
+			})
+		}
+		m.Update(kadmin.ConsumerRecordReceived{
+			Records: records,
+		})
+	
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		kb := tests.NewKeyboard(m)
+		kb.Down()
+		kb.Down()
+		kb.Down()
+		m.View(tests.NewKontext(), tests.Renderer)
+		cmd := kb.EnterAndGetCmd()
+
+		msg := cmd()
+		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msg)
+		record := (msg.(tabs.ToRecordDetailsPageCalledMsg)).Msg.Record
+		assert.EqualValues(t, 0, record.Partition)
+		assert.EqualValues(t, 6, record.Offset)
+
+	})
+
 }

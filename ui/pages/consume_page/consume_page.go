@@ -137,8 +137,11 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (m *Model) recordForRow(row table.Row) kadmin.ConsumerRecord {
+	offset, _ := strconv.ParseInt(row[3], 10, 64)
+	partition, _ := strconv.ParseInt(row[2], 10, 32)
 	for _, rec := range m.records {
-		if rec.Key == row[0] {
+		if rec.Partition == partition &&
+			rec.Offset == offset {
 			return rec
 		}
 	}
