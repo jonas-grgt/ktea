@@ -219,6 +219,24 @@ func TestRecordDetailsPage(t *testing.T) {
 		assert.Contains(t, render, "No headers present")
 	})
 
+	t.Run("Title contains topic name, partition and offset", func(t *testing.T) {
+		m := New(&kadmin.ConsumerRecord{
+			Key:       "ABC",
+			Payload:   serdes.DesData{Value: ""},
+			Partition: 88,
+			Offset:    123,
+			Headers:   nil,
+		},
+			"dev.title.test",
+			clipper.NewMock(),
+			tests.NewKontext(),
+		)
+
+		title := m.Title()
+
+		assert.Equal(t, title, "Topics / dev.title.test / Partition / 88 / Offset / 123")
+	})
+
 	t.Run("Copy payload", func(t *testing.T) {
 		var clippedText string
 		clipMock := clipper.NewMock()
