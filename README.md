@@ -8,9 +8,14 @@ ktea is a tool designed to simplify and accelerate interactions with Kafka clust
 
 If you're a **k9s** user, you'll love **ktea**!
 
+**List Topics**
 ![topics-page.png](topics-page.png)
 
+**View AVRO Schema**
 ![schema-page.png](schema-page.png)
+
+**View Consumer Lag**
+![consumer-lag.png](consumer-lag.png)
 
 ## Installation
 
