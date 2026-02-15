@@ -10,7 +10,7 @@ If you're a **k9s** user, you'll love **ktea**!
 
 ![topics-page.png](topics-page.png)
 
-![record-detail-page.png](record-detail-page.png)
+![schema-page.png](schema-page.png)
 
 ## Installation
 
