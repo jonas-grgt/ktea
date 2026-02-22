@@ -2,9 +2,6 @@ package topics_tab
 
 import (
 	"context"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/ui"
@@ -21,6 +18,10 @@ import (
 	"ktea/ui/pages/topics_page"
 	"ktea/ui/tabs"
 	"reflect"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 type Model struct {
@@ -66,7 +67,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		m.active = m.topicsPage
 
 	case nav.LoadTopicConfigPageMsg:
-		page, cmd := configs_page.New(m.ka, m.ka, m.topicsPage.SelectedTopicName())
+		page, cmd := configs_page.New(m.ka, m.ka, msg.Topic)
 		cmds = append(cmds, cmd)
 		m.active = page
 

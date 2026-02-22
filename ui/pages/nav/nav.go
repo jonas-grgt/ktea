@@ -11,7 +11,9 @@ type LoadTopicsPageMsg struct {
 
 type LoadCreateTopicPageMsg struct{}
 
-type LoadTopicConfigPageMsg struct{}
+type LoadTopicConfigPageMsg struct {
+	Topic string
+}
 
 type LoadPublishPageMsg struct {
 	Topic *kadmin.ListedTopic

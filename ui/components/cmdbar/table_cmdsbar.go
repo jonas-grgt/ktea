@@ -1,10 +1,11 @@
 package cmdbar
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"ktea/kontext"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type TableCmdsBar[T any] struct {
@@ -61,7 +62,7 @@ func (m *TableCmdsBar[T]) Update(msg tea.Msg, selection *T) (tea.Msg, tea.Cmd) {
 			}
 			return nil, nil
 		case "f3":
-			if selection != nil && m.sortByCBar != nil {
+			if m.sortByCBar != nil {
 				return m.handleF3(msg, pmsg, cmd)
 			}
 			return pmsg, cmd
