@@ -3,11 +3,6 @@ package topics_page
 import (
 	"context"
 	"fmt"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -24,6 +19,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 )
 
 const name = "topics-page"
@@ -98,10 +99,11 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+n":
 			return ui.PublishMsg(nav.LoadCreateTopicPageMsg{})
 		case "ctrl+o":
-			if m.SelectedTopic() == nil {
+			topic := m.SelectedTopic()
+			if topic == nil {
 				return nil
 			}
-			return ui.PublishMsg(nav.LoadTopicConfigPageMsg{})
+			return ui.PublishMsg(nav.LoadTopicConfigPageMsg{Topic: topic.Name})
 		case "ctrl+p":
 			if m.SelectedTopic() == nil {
 				return nil
@@ -143,7 +145,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 	case spinner.TickMsg:
 		selectedTopic := m.SelectedTopicName()
-		_, c := m.tcb.Update(msg, &selectedTopic)
+		_, c := m.tcb.Update(msg, selectedTopic)
 		if c != nil {
 			cmds = append(cmds, c)
 		}
@@ -165,7 +167,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 
 	var cmd tea.Cmd
 	name := m.SelectedTopicName()
-	msg, cmd = m.tcb.Update(msg, &name)
+	msg, cmd = m.tcb.Update(msg, name)
 	m.tableFocussed = !m.tcb.IsFocussed()
 	cmds = append(cmds, cmd)
 
@@ -254,20 +256,19 @@ func (m *Model) createRows() []table.Row {
 func (m *Model) SelectedTopic() *kadmin.ListedTopic {
 	selectedTopic := m.SelectedTopicName()
 	for _, t := range m.topics {
-		if t.Name == selectedTopic {
+		if selectedTopic != nil && t.Name == *selectedTopic {
 			return &t
 		}
 	}
 	return nil
 }
 
-func (m *Model) SelectedTopicName() string {
+func (m *Model) SelectedTopicName() *string {
 	selectedRow := m.table.SelectedRow()
-	var selectedTopic string
 	if selectedRow != nil {
-		selectedTopic = selectedRow[0]
+		return &selectedRow[0]
 	}
-	return selectedTopic
+	return nil
 }
 
 func (m *Model) Title() string {

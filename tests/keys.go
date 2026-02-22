@@ -118,6 +118,11 @@ func (k *KeyBoard) F5() *KeyBoard {
 	return k
 }
 
+func (k *KeyBoard) F2() *KeyBoard {
+	k.view.Update(Key(tea.KeyF2))
+	return k
+}
+
 func NewKeyboard(view ui.View) *KeyBoard {
 	return &KeyBoard{
 		view: view,

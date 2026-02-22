@@ -2,13 +2,14 @@ package topics_page
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/tests"
 	"ktea/ui/tabs"
 	"strings"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTopicsPage(t *testing.T) {
@@ -434,5 +435,29 @@ func TestTopicsPage(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF4))
 		page.View(tests.NewKontext(), tests.Renderer)
 		assert.Equal(t, 3, page.hiddenInternalTopicsCount)
+	})
+
+	t.Run("Do not show deletion cmdbar when no topic is selected", func(t *testing.T) {
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		kb := tests.NewKeyboard(page)
+		kb.F2()
+
+		render := page.View(tests.NewKontext(), tests.Renderer)
+		assert.NotContains(t, render, "will be deleted permanently")
+	})
+
+	t.Run("Do not navigate to topic config page when no topic is selected", func(t *testing.T) {
+		page, _ := New(
+			kadmin.NewMockKadmin(),
+			tabs.NewMockTopicsTabNavigator(),
+		)
+
+		cmd := page.Update(tests.Key(tea.KeyCtrlO))
+
+		assert.Nil(t, cmd)
 	})
 }
