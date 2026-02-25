@@ -95,6 +95,8 @@ type clusterFormValues struct {
 	transportOption    transportOption
 	verificationOption verificationOption
 	brokerCACertPath   string
+	clientCertPath     string
+	clientKeyPath      string
 	username           string
 	password           string
 	srURL              string
@@ -104,16 +106,21 @@ type clusterFormValues struct {
 
 func (cv *clusterFormValues) toTLSConfig() config.TLSConfig {
 	if cv.transportOption == transportOptionTLS {
+		skipVerify := cv.verificationOption == verificationOptionSkip
 		return config.TLSConfig{
 			Enable:     true,
-			SkipVerify: false,
+			SkipVerify: skipVerify,
 			CACertPath: cv.brokerCACertPath,
+			ClientCert: cv.clientCertPath,
+			ClientKey:  cv.clientKeyPath,
 		}
 	}
 	return config.TLSConfig{
 		Enable:     false,
 		SkipVerify: false,
 		CACertPath: "",
+		ClientCert: "",
+		ClientKey:  "",
 	}
 }
 
@@ -289,9 +296,9 @@ func (m *Model) updateClusterTab() (tea.Cmd, bool) {
 		m.form = m.cForm
 		if m.cFormValues.selectedTLSTransportOption() {
 			if m.cFormValues.selectedBrokerVerificationOption() {
-				m.nextField(6)
+				m.nextField(8)
 			} else {
-				m.nextField(5)
+				m.nextField(7)
 			}
 		} else {
 			m.nextField(4)
@@ -309,9 +316,9 @@ func (m *Model) updateClusterTab() (tea.Cmd, bool) {
 		}
 		if m.cFormValues.selectedTLSTransportOption() {
 			if m.cFormValues.selectedBrokerVerificationOption() {
-				m.nextField(6)
+				m.nextField(8)
 			} else {
-				m.nextField(5)
+				m.nextField(7)
 			}
 		} else {
 			m.nextField(4)
@@ -344,7 +351,7 @@ func (m *Model) updateTransportOption() {
 }
 
 func (m *Model) updateVO() {
-	if m.cFormValues.selectedBrokerVerificationOption() && m.prevSelNoVO() {
+	if m.cFormValues.selectedBrokerVerificationOption() && m.verificationOption != verificationOptionBroker {
 		m.cForm = m.createCForm()
 		m.form = m.cForm
 		m.verificationOption = verificationOptionBroker
@@ -357,7 +364,7 @@ func (m *Model) updateVO() {
 	} else if !m.cFormValues.selectedBrokerVerificationOption() && m.verificationOption == verificationOptionBroker {
 		m.cForm = m.createCForm()
 		m.form = m.cForm
-		m.verificationOption = verificationOptionNotSelected
+		m.verificationOption = m.cFormValues.verificationOption
 		m.nextField(4)
 	}
 }
@@ -560,6 +567,16 @@ func (m *Model) createCForm() *huh.Form {
 				return m.validateCert(certFile)
 			})
 		clusterFields = append(clusterFields, caCert)
+	}
+
+	if m.cFormValues.selectedTLSTransportOption() {
+		clientCert := huh.NewInput().
+			Value(&m.cFormValues.clientCertPath).
+			Title("Path to Client Certificate (optional)")
+		clientKey := huh.NewInput().
+			Value(&m.cFormValues.clientKeyPath).
+			Title("Path to Client Key (optional)")
+		clusterFields = append(clusterFields, clientCert, clientKey)
 	}
 
 	auth := huh.NewSelect[config.AuthMethod]().
@@ -765,11 +782,13 @@ func NewEditClusterPage(
 	if cluster.TLSConfig.Enable {
 		formValues.transportOption = transportOptionTLS
 		if cluster.TLSConfig.SkipVerify {
-			formValues.verificationOption = verificationOptionNotSelected
+			formValues.verificationOption = verificationOptionSkip
 		} else {
 			formValues.verificationOption = verificationOptionBroker
 			formValues.brokerCACertPath = cluster.TLSConfig.CACertPath
 		}
+		formValues.clientCertPath = cluster.TLSConfig.ClientCert
+		formValues.clientKeyPath = cluster.TLSConfig.ClientKey
 	} else {
 		formValues.transportOption = transportOptionPlaintext
 	}

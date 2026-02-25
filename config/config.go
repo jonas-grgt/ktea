@@ -33,6 +33,8 @@ type TLSConfig struct {
 	Enable     bool   `yaml:"enable"`
 	SkipVerify bool   `yaml:"skipVerify"`
 	CACertPath string `yaml:"caCertPath"`
+	ClientCert string `yaml:"clientCert"`
+	ClientKey  string `yaml:"clientKey"`
 }
 
 type KafkaConnectConfig struct {

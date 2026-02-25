@@ -435,6 +435,10 @@ func TestCreateCluster(t *testing.T) {
 		kb.Enter()
 		// and: CA Cert path is entered
 		kb.Type("path/to/cert.crt").Enter()
+		// and: skip client cert (optional)
+		kb.Enter()
+		// and: skip client key (optional)
+		kb.Enter()
 		// and: Auth method SASL_PLAINTEXT
 		kb.Down().Enter()
 		// and: Auth method username
@@ -560,6 +564,34 @@ func TestClusterForm(t *testing.T) {
 				assert.NotContains(t, render, "Skip verification (INSECURE)")
 				assert.NotContains(t, render, "Path to Broker CA Certificate")
 			})
+
+			t.Run("switching verification options updates form fields", func(t *testing.T) {
+				t.Run("Verify Broker shows CA cert field", func(t *testing.T) {
+					page, _ := createClusterPage(withContext(ktx))
+					kb := tests.NewKeyboard(page)
+					kb.Type("TST").Enter()
+					kb.Enter()
+					kb.Type("localhost:9092").Enter()
+					kb.Down().Enter() // Select TLS
+					kb.Enter() // Confirm Verify Broker
+					
+					render := page.View(ktx, tests.Renderer)
+					assert.Contains(t, render, "Path to Broker CA Certificate")
+				})
+				
+				t.Run("Skip verification hides CA cert field", func(t *testing.T) {
+					page, _ := createClusterPage(withContext(ktx))
+					kb := tests.NewKeyboard(page)
+					kb.Type("TST").Enter()
+					kb.Enter()
+					kb.Type("localhost:9092").Enter()
+					kb.Down().Enter() // Select TLS
+					kb.Down().Enter() // Select Skip verification
+					
+					render := page.View(ktx, tests.Renderer)
+					assert.NotContains(t, render, "Path to Broker CA Certificate")
+				})
+			})
 		})
 	})
 
@@ -676,6 +708,9 @@ func TestClusterForm(t *testing.T) {
 				kb.Down().Enter()
 				// and: Skip Verify
 				kb.Down().Enter()
+				// and: Skip Client Certificate and Client Key fields
+				kb.Enter()
+				kb.Enter()
 				// and: Auth Method SASL_PLAINTEXT
 				kb.Down()
 
@@ -708,7 +743,9 @@ func TestClusterForm(t *testing.T) {
 						},
 					},
 				})), tests.Renderer)
-				assert.Contains(t, render, "┃ > NONE")
+				assert.Contains(t, render, "> NONE")
+				assert.NotContains(t, render, "SASL username")
+				assert.NotContains(t, render, "SASL password")
 				assert.Contains(t, render, "> Skip verification (INSECURE)")
 
 				page, _ = createClusterPage(withContext(tests.NewKontext(tests.WithConfig(&config.Config{
@@ -851,6 +888,10 @@ func TestClusterForm(t *testing.T) {
 		kb.Enter()
 		// and: CA Cert path is entered
 		kb.Type("/").Enter()
+		// and: skip client cert (optional)
+		kb.Enter()
+		// and: skip client key (optional)
+		kb.Enter()
 		// and: Auth Method SASL_PLAINTEXT
 		kb.Down().Enter()
 		// and: username is entered
@@ -1018,6 +1059,10 @@ func TestEditClusterForm(t *testing.T) {
 		// and: and ca file path
 
 		kb.Type("path/to/ca.cert").Enter()
+		// and: skip client cert (optional)
+		kb.Enter()
+		// and: skip client key (optional)
+		kb.Enter()
 		// and: auth method SASL_PLAINTEXT
 		kb.Down().Enter()
 		// and: username john
