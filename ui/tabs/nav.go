@@ -37,6 +37,8 @@ type ConsumePageDetails struct {
 type LoadRecordDetailPageMsg struct {
 	Record    *kadmin.ConsumerRecord
 	TopicName string
+	Records   []kadmin.ConsumerRecord
+	Index     int
 }
 
 type ClustersTabNavigator interface {

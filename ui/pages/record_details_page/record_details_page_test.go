@@ -17,7 +17,7 @@ import (
 
 func TestRecordDetailsPage(t *testing.T) {
 	t.Run("c-h or arrows toggles focus between content and headers", func(t *testing.T) {
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "",
 			Payload:   serdes.DesData{Value: ""},
 			Partition: 0,
@@ -28,8 +28,11 @@ func TestRecordDetailsPage(t *testing.T) {
 					Value: kadmin.NewHeaderValue("v2"),
 				},
 			},
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
 		)
@@ -73,7 +76,7 @@ func TestRecordDetailsPage(t *testing.T) {
 				},
 				ConfigIO: nil,
 			}))
-			m := New(&kadmin.ConsumerRecord{
+			record := &kadmin.ConsumerRecord{
 				Key:       "",
 				Payload:   serdes.DesData{Value: ""},
 				Partition: 0,
@@ -84,8 +87,11 @@ func TestRecordDetailsPage(t *testing.T) {
 						Value: kadmin.NewHeaderValue("v2"),
 					},
 				},
-			},
+			}
+			m := New(record,
 				"",
+				[]kadmin.ConsumerRecord{*record},
+				0,
 				clipper.NewMock(),
 				&ktx,
 			)
@@ -119,7 +125,7 @@ func TestRecordDetailsPage(t *testing.T) {
 				},
 				ConfigIO: nil,
 			}))
-			m := New(&kadmin.ConsumerRecord{
+			record := &kadmin.ConsumerRecord{
 				Key:       "",
 				Payload:   serdes.DesData{Value: ""},
 				Partition: 0,
@@ -130,8 +136,11 @@ func TestRecordDetailsPage(t *testing.T) {
 						Value: kadmin.NewHeaderValue("v2"),
 					},
 				},
-			},
+			}
+			m := New(record,
 				"",
+				[]kadmin.ConsumerRecord{*record},
+				0,
 				clipper.NewMock(),
 				&ktx,
 			)
@@ -165,7 +174,7 @@ func TestRecordDetailsPage(t *testing.T) {
 				},
 				ConfigIO: nil,
 			}))
-			m := New(&kadmin.ConsumerRecord{
+			record := &kadmin.ConsumerRecord{
 				Key: "",
 				Payload: serdes.DesData{Value: `{"Name": "john", "Age": 12"}`, Schema: `
 {
@@ -186,8 +195,11 @@ func TestRecordDetailsPage(t *testing.T) {
 						Value: kadmin.NewHeaderValue("v2"),
 					},
 				},
-			},
+			}
+			m := New(record,
 				"",
+				[]kadmin.ConsumerRecord{*record},
+				0,
 				clipper.NewMock(),
 				&ktx,
 			)
@@ -202,14 +214,17 @@ func TestRecordDetailsPage(t *testing.T) {
 	})
 
 	t.Run("Display record without headers", func(t *testing.T) {
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "",
 			Payload:   serdes.DesData{Value: ""},
 			Partition: 0,
 			Offset:    0,
 			Headers:   nil,
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
 		)
@@ -220,14 +235,17 @@ func TestRecordDetailsPage(t *testing.T) {
 	})
 
 	t.Run("Title contains topic name, partition and offset", func(t *testing.T) {
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "ABC",
 			Payload:   serdes.DesData{Value: ""},
 			Partition: 88,
 			Offset:    123,
 			Headers:   nil,
-		},
+		}
+		m := New(record,
 			"dev.title.test",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
 		)
@@ -244,7 +262,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			clippedText = text
 			return nil
 		}
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "740ed9fd-195f-427e-8e0d-adb63d9c16ed",
 			Payload:   serdes.DesData{Value: `{"name":"John"}`},
 			Partition: 0,
@@ -255,8 +273,11 @@ func TestRecordDetailsPage(t *testing.T) {
 					Value: kadmin.NewHeaderValue("v1"),
 				},
 			},
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipMock,
 			tests.NewKontext(),
 		)
@@ -281,7 +302,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			clippedText = text
 			return nil
 		}
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key: "740ed9fd-195f-427e-8e0d-adb63d9c16ed",
 			Payload: serdes.DesData{Value: `{"name":"John"}`, Schema: `
 {
@@ -298,8 +319,11 @@ func TestRecordDetailsPage(t *testing.T) {
 					Value: kadmin.NewHeaderValue("v1"),
 				},
 			},
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipMock,
 			tests.NewKontext(),
 		)
@@ -331,7 +355,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			clippedText = text
 			return nil
 		}
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "740ed9fd-195f-427e-8e0d-adb63d9c16ed",
 			Payload:   serdes.DesData{Value: `{"name":"John"}`},
 			Partition: 0,
@@ -350,8 +374,11 @@ func TestRecordDetailsPage(t *testing.T) {
 					Value: kadmin.NewHeaderValue("v3\nv3"),
 				},
 			},
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipMock,
 			tests.NewKontext(),
 		)
@@ -378,7 +405,7 @@ func TestRecordDetailsPage(t *testing.T) {
 		clipMock.WriteFunc = func(text string) error {
 			return fmt.Errorf("unable to access clipboard")
 		}
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "740ed9fd-195f-427e-8e0d-adb63d9c16ed",
 			Payload:   serdes.DesData{Value: `{"name":"John"}`},
 			Partition: 0,
@@ -397,8 +424,11 @@ func TestRecordDetailsPage(t *testing.T) {
 					Value: kadmin.NewHeaderValue("v3\nv3"),
 				},
 			},
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipMock,
 			tests.NewKontext(),
 		)
@@ -424,7 +454,7 @@ func TestRecordDetailsPage(t *testing.T) {
 		clipMock.WriteFunc = func(text string) error {
 			return fmt.Errorf("unable to access clipboard")
 		}
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "740ed9fd-195f-427e-8e0d-adb63d9c16ed",
 			Payload:   serdes.DesData{Value: `{"name":"John"}`},
 			Partition: 0,
@@ -435,8 +465,11 @@ func TestRecordDetailsPage(t *testing.T) {
 					Value: kadmin.NewHeaderValue("v1"),
 				},
 			},
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipMock,
 			tests.NewKontext(),
 		)
@@ -454,15 +487,18 @@ func TestRecordDetailsPage(t *testing.T) {
 	})
 
 	t.Run("on deserialization error", func(t *testing.T) {
-		m := New(&kadmin.ConsumerRecord{
+		record := &kadmin.ConsumerRecord{
 			Key:       "",
 			Payload:   serdes.DesData{Value: ""},
 			Err:       fmt.Errorf("deserialization error"),
 			Partition: 0,
 			Offset:    0,
 			Headers:   []kadmin.Header{},
-		},
+		}
+		m := New(record,
 			"",
+			[]kadmin.ConsumerRecord{*record},
+			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
 		)
@@ -477,5 +513,218 @@ func TestRecordDetailsPage(t *testing.T) {
 			// do not crash but ignore the update
 			m.Update(tests.Key(tea.KeyF2))
 		})
+	})
+}
+
+func TestRecordNavigation(t *testing.T) {
+	ctrlN := tea.KeyMsg{Type: tea.KeyCtrlN, Runes: []rune{}, Alt: false}
+	ctrlP := tea.KeyMsg{Type: tea.KeyCtrlP, Runes: []rune{}, Alt: false}
+
+	t.Run("Ctrl+n navigates to next record", func(t *testing.T) {
+		record1 := &kadmin.ConsumerRecord{
+			Key:       "key-0",
+			Payload:   serdes.DesData{Value: `{"value":"first"}`},
+			Partition: 0,
+			Offset:    0,
+		}
+		record2 := &kadmin.ConsumerRecord{
+			Key:       "key-1",
+			Payload:   serdes.DesData{Value: `{"value":"second"}`},
+			Partition: 0,
+			Offset:    1,
+		}
+		records := []kadmin.ConsumerRecord{*record1, *record2}
+
+		m := New(record1,
+			"topic1",
+			records,
+			0,
+			clipper.NewMock(),
+			tests.NewKontext(),
+		)
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		cmds := m.Update(ctrlN)
+		for _, msg := range tests.ExecuteBatchCmd(cmds) {
+			m.Update(msg)
+		}
+
+		assert.Equal(t, 1, m.recordIndex)
+		assert.Equal(t, "key-1", m.record.Key)
+	})
+
+	t.Run("Ctrl+n shows error when no more records", func(t *testing.T) {
+		record := &kadmin.ConsumerRecord{
+			Key:       "key-0",
+			Payload:   serdes.DesData{Value: `{"value":"first"}`},
+			Partition: 0,
+			Offset:    0,
+		}
+		records := []kadmin.ConsumerRecord{*record}
+
+		m := New(record,
+			"topic1",
+			records,
+			0,
+			clipper.NewMock(),
+			tests.NewKontext(),
+		)
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		cmds := m.Update(ctrlN)
+
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
+		assert.Contains(t, render, "no more records")
+		assert.Empty(t, cmds)
+	})
+
+	t.Run("Ctrl+p navigates to previous record", func(t *testing.T) {
+		record1 := &kadmin.ConsumerRecord{
+			Key:       "key-0",
+			Payload:   serdes.DesData{Value: `{"value":"first"}`},
+			Partition: 0,
+			Offset:    0,
+		}
+		record2 := &kadmin.ConsumerRecord{
+			Key:       "key-1",
+			Payload:   serdes.DesData{Value: `{"value":"second"}`},
+			Partition: 0,
+			Offset:    1,
+		}
+		records := []kadmin.ConsumerRecord{*record1, *record2}
+
+		m := New(record2,
+			"topic1",
+			records,
+			1,
+			clipper.NewMock(),
+			tests.NewKontext(),
+		)
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		cmds := m.Update(ctrlP)
+		for _, msg := range tests.ExecuteBatchCmd(cmds) {
+			m.Update(msg)
+		}
+
+		assert.Equal(t, 0, m.recordIndex)
+		assert.Equal(t, "key-0", m.record.Key)
+	})
+
+	t.Run("Ctrl+p shows error when no previous records", func(t *testing.T) {
+		record := &kadmin.ConsumerRecord{
+			Key:       "key-0",
+			Payload:   serdes.DesData{Value: `{"value":"first"}`},
+			Partition: 0,
+			Offset:    0,
+		}
+		records := []kadmin.ConsumerRecord{*record}
+
+		m := New(record,
+			"topic1",
+			records,
+			0,
+			clipper.NewMock(),
+			tests.NewKontext(),
+		)
+		m.View(tests.NewKontext(), tests.Renderer)
+
+		cmds := m.Update(ctrlP)
+
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
+		assert.Contains(t, render, "no previous records")
+		assert.Empty(t, cmds)
+	})
+
+	t.Run("Shortcuts show next/prev when multiple records", func(t *testing.T) {
+		ktx := *tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "cluster1",
+					Color:            "",
+					Active:           true,
+					BootstrapServers: nil,
+					SASLConfig:       config.SASLConfig{AuthMethod: config.AuthMethodNone},
+					SchemaRegistry:   nil,
+					TLSConfig:        config.TLSConfig{Enable: false},
+				},
+			},
+			ConfigIO: nil,
+		}))
+		record1 := &kadmin.ConsumerRecord{
+			Key:       "key-0",
+			Payload:   serdes.DesData{Value: `{"value":"first"}`},
+			Partition: 0,
+			Offset:    0,
+		}
+		record2 := &kadmin.ConsumerRecord{
+			Key:       "key-1",
+			Payload:   serdes.DesData{Value: `{"value":"second"}`},
+			Partition: 0,
+			Offset:    1,
+		}
+		records := []kadmin.ConsumerRecord{*record1, *record2}
+
+		m := New(record1,
+			"topic1",
+			records,
+			0,
+			clipper.NewMock(),
+			&ktx,
+		)
+
+		shortcuts := m.Shortcuts()
+
+		foundNext := false
+		foundPrev := false
+		for _, sc := range shortcuts {
+			if sc.Name == "Next Record" {
+				foundNext = true
+			}
+			if sc.Name == "Prev Record" {
+				foundPrev = true
+			}
+		}
+		assert.True(t, foundNext, "Next Record shortcut should be present")
+		assert.True(t, foundPrev, "Prev Record shortcut should be present")
+	})
+
+	t.Run("Shortcuts hidden when single record", func(t *testing.T) {
+		ktx := *tests.NewKontext(tests.WithConfig(&config.Config{
+			Clusters: []config.Cluster{
+				{
+					Name:             "cluster1",
+					Color:            "",
+					Active:           true,
+					BootstrapServers: nil,
+					SASLConfig:       config.SASLConfig{AuthMethod: config.AuthMethodNone},
+					SchemaRegistry:   nil,
+					TLSConfig:        config.TLSConfig{Enable: false},
+				},
+			},
+			ConfigIO: nil,
+		}))
+		record := &kadmin.ConsumerRecord{
+			Key:       "key-0",
+			Payload:   serdes.DesData{Value: `{"value":"first"}`},
+			Partition: 0,
+			Offset:    0,
+		}
+		records := []kadmin.ConsumerRecord{*record}
+
+		m := New(record,
+			"topic1",
+			records,
+			0,
+			clipper.NewMock(),
+			&ktx,
+		)
+
+		shortcuts := m.Shortcuts()
+
+		for _, sc := range shortcuts {
+			assert.NotEqual(t, "Next Record", sc.Name)
+			assert.NotEqual(t, "Prev Record", sc.Name)
+		}
 	})
 }
