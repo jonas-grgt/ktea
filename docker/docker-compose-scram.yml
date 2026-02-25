@@ -1,0 +1,63 @@
+# Redpanda with SASL/SCRAM authentication
+# 
+# Usage:
+#   docker-compose -f docker-compose-scram.yml up -d
+#
+# Connection details:
+#   Kafka: localhost:9092
+#   Admin API: localhost:9644
+#   Schema Registry: localhost:8081
+#   HTTP Proxy: localhost:8082
+#   Username: admin
+#   Password: adminadmin
+#   SASL Mechanism: scram-sha-256
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+    container_name: redpanda
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+      - "8081:8081"
+      - "8082:8082"
+    command: >
+      redpanda start
+      --smp 1
+      --memory 1G
+      --overprovisioned
+      --node-id 0
+      --kafka-addr 0.0.0.0:9092
+      --advertise-kafka-addr localhost:9092
+      --set redpanda.enable_sasl=true
+      --set 'redpanda.kafka_api[0].authentication_method=sasl'
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:9644"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redpanda-init:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Waiting for Redpanda to be ready..."
+        sleep 5
+        
+        echo "Setting superuser config..."
+        rpk cluster config set superusers '["admin"]' -X admin.hosts=redpanda:9644 || echo "Config may already be set"
+        
+        echo "Creating admin user..."
+        rpk security user create admin -p 'adminadmin' --mechanism SCRAM-SHA-256 -X admin.hosts=redpanda:9644 || echo "User may already exist"
+        
+        echo "Done!"
+
+volumes:
+  redpanda-data:

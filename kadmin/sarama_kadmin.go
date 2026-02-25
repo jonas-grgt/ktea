@@ -1,6 +1,8 @@
 package kadmin
 
 import (
+	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -13,7 +15,28 @@ import (
 	"github.com/burdiyan/kafkautil"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
+	"github.com/xdg-go/scram"
 )
+
+var (
+	SHA256 scram.HashGeneratorFcn = sha256.New
+	SHA512 scram.HashGeneratorFcn = sha512.New
+)
+
+type XDGSCRAMClient struct {
+	*scram.Client
+	*scram.ClientConversation
+	scram.HashGeneratorFcn
+}
+
+func (x *XDGSCRAMClient) Begin(userName, password, authzID string) (err error) {
+	x.Client, err = x.HashGeneratorFcn.NewClient(userName, password, authzID)
+	if err != nil {
+		return err
+	}
+	x.ClientConversation = x.Client.NewConversation()
+	return nil
+}
 
 type SaramaKafkaAdmin struct {
 	client   sarama.Client
@@ -79,6 +102,22 @@ func ToSaramaCfg(cluster *config.Cluster) *sarama.Config {
 		cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
 		cfg.Net.SASL.User = cluster.SASLConfig.Username
 		cfg.Net.SASL.Password = cluster.SASLConfig.Password
+	} else if cluster.SASLConfig.AuthMethod == config.AuthMethodSASLSCRAMSHA256 {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA256
+		cfg.Net.SASL.User = cluster.SASLConfig.Username
+		cfg.Net.SASL.Password = cluster.SASLConfig.Password
+		cfg.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient {
+			return &XDGSCRAMClient{HashGeneratorFcn: SHA256}
+		}
+	} else if cluster.SASLConfig.AuthMethod == config.AuthMethodSASLSCRAMSHA512 {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA512
+		cfg.Net.SASL.User = cluster.SASLConfig.Username
+		cfg.Net.SASL.Password = cluster.SASLConfig.Password
+		cfg.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient {
+			return &XDGSCRAMClient{HashGeneratorFcn: SHA512}
+		}
 	}
 
 	cfg.Net.DialTimeout = 5 * time.Second

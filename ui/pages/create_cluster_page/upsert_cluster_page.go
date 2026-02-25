@@ -31,9 +31,10 @@ type formState int
 type Option func(m *Model)
 
 const (
-	authMethodNone        authSelection = 0
-	authMethodSasl        authSelection = 1
-	authMethodNotSelected authSelection = 2
+	authMethodNone          authSelection = 0
+	authMethodSaslPlaintext authSelection = 1
+	authMethodSaslScram     authSelection = 2
+	authMethodNotSelected   authSelection = 3
 
 	none              formState       = 6
 	loading           formState       = 7
@@ -282,7 +283,7 @@ func (m *Model) updateClusterTab() (tea.Cmd, bool) {
 	m.updateVO()
 
 	if !m.cFormValues.selectedSASLAuthMethod() &&
-		m.authSelState == authMethodSasl {
+		(m.authSelState == authMethodSaslPlaintext || m.authSelState == authMethodSaslScram) {
 		// if SASL authentication mode was previously selected and switched back to none
 		m.cForm = m.createCForm()
 		m.form = m.cForm
@@ -301,7 +302,11 @@ func (m *Model) updateClusterTab() (tea.Cmd, bool) {
 		// SASL authentication mode selected and previously nothing or none auth mode was selected
 		m.cForm = m.createCForm()
 		m.form = m.cForm
-		m.authSelState = authMethodSasl
+		if m.cFormValues.authMethod == config.AuthMethodSASLPlaintext {
+			m.authSelState = authMethodSaslPlaintext
+		} else {
+			m.authSelState = authMethodSaslScram
+		}
 		if m.cFormValues.selectedTLSTransportOption() {
 			if m.cFormValues.selectedBrokerVerificationOption() {
 				m.nextField(6)
@@ -452,7 +457,9 @@ func (m *Model) getRegistrationDetails() config.RegistrationDetails {
 }
 
 func (cv *clusterFormValues) selectedSASLAuthMethod() bool {
-	return cv.authMethod == config.AuthMethodSASLPlaintext
+	return cv.authMethod == config.AuthMethodSASLPlaintext ||
+		cv.authMethod == config.AuthMethodSASLSCRAMSHA256 ||
+		cv.authMethod == config.AuthMethodSASLSCRAMSHA512
 }
 
 func (cv *clusterFormValues) schemaRegistryEnabled() bool {
@@ -561,6 +568,8 @@ func (m *Model) createCForm() *huh.Form {
 		Options(
 			huh.NewOption("NONE", config.AuthMethodNone),
 			huh.NewOption("SASL_PLAINTEXT", config.AuthMethodSASLPlaintext),
+			huh.NewOption("SASL_SCRAM_SHA256", config.AuthMethodSASLSCRAMSHA256),
+			huh.NewOption("SASL_SCRAM_SHA512", config.AuthMethodSASLSCRAMSHA512),
 		)
 
 	clusterFields = append(clusterFields, auth)
@@ -723,7 +732,7 @@ func NewCreateClusterPage(
 	model.formState = none
 
 	if model.cFormValues.selectedSASLAuthMethod() {
-		model.authSelState = authMethodSasl
+		model.authSelState = authMethodSaslPlaintext
 	}
 
 	for _, option := range options {
@@ -821,7 +830,11 @@ func NewEditClusterPage(
 	model.formState = none
 
 	if model.cFormValues.selectedSASLAuthMethod() {
-		model.authSelState = authMethodSasl
+		if model.cFormValues.authMethod == config.AuthMethodSASLPlaintext {
+			model.authSelState = authMethodSaslPlaintext
+		} else {
+			model.authSelState = authMethodSaslScram
+		}
 	}
 
 	for _, o := range options {

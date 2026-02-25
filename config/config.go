@@ -11,8 +11,10 @@ import (
 type AuthMethod string
 
 const (
-	AuthMethodNone          AuthMethod = "NONE"
-	AuthMethodSASLPlaintext AuthMethod = "SASL_PLAINTEXT"
+	AuthMethodNone            AuthMethod = "NONE"
+	AuthMethodSASLPlaintext   AuthMethod = "SASL_PLAINTEXT"
+	AuthMethodSASLSCRAMSHA256 AuthMethod = "SASL_SCRAM_SHA256"
+	AuthMethodSASLSCRAMSHA512 AuthMethod = "SASL_SCRAM_SHA512"
 )
 
 type SASLConfig struct {
@@ -190,7 +192,7 @@ func ToCluster(details RegistrationDetails) Cluster {
 		TLSConfig:        details.TLSConfig,
 	}
 
-	if details.AuthMethod == AuthMethodSASLPlaintext {
+	if details.AuthMethod == AuthMethodSASLPlaintext || details.AuthMethod == AuthMethodSASLSCRAMSHA256 || details.AuthMethod == AuthMethodSASLSCRAMSHA512 {
 		cluster.SASLConfig = SASLConfig{
 			Username:   details.Username,
 			Password:   details.Password,
