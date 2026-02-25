@@ -76,21 +76,28 @@ func ToSaramaCfg(cluster *config.Cluster) *sarama.Config {
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
 
 	if cluster.TLSConfig.Enable {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: cluster.TLSConfig.SkipVerify,
+		}
 
-		var caCertPool *x509.CertPool
 		if cluster.TLSConfig.CACertPath != "" {
 			caCert, err := os.ReadFile(cluster.TLSConfig.CACertPath)
 			if err != nil {
 				panic(fmt.Sprintf("Unable to read CA cert file: %v", err))
 			}
-
-			caCertPool = x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(caCert)
+			caCertPool := x509.NewCertPool()
+			if !caCertPool.AppendCertsFromPEM(caCert) {
+				panic("Failed to parse CA certificate")
+			}
+			tlsConfig.RootCAs = caCertPool
 		}
 
-		tlsConfig := &tls.Config{
-			RootCAs:            caCertPool,
-			InsecureSkipVerify: cluster.TLSConfig.SkipVerify,
+		if cluster.TLSConfig.ClientCert != "" && cluster.TLSConfig.ClientKey != "" {
+			cert, err := tls.LoadX509KeyPair(cluster.TLSConfig.ClientCert, cluster.TLSConfig.ClientKey)
+			if err != nil {
+				panic(fmt.Sprintf("Unable to load client certificate: %v", err))
+			}
+			tlsConfig.Certificates = []tls.Certificate{cert}
 		}
 
 		cfg.Net.TLS.Enable = true
