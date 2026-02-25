@@ -39,6 +39,8 @@ const (
 type Model struct {
 	notifierCmdbar *cmdbar.NotifierCmdBar
 	record         *kadmin.ConsumerRecord
+	records        []kadmin.ConsumerRecord
+	recordIndex    int
 	recordVp       *viewport.Model
 	headerValueVp  *viewport.Model
 	topicName      string
@@ -66,6 +68,12 @@ type HeaderValueCopiedMsg struct {
 
 type CopyErrorMsg struct {
 	Err error
+}
+
+type NavigateToNextRecordMsg struct {
+}
+
+type NavigateToPrevRecordMsg struct {
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -102,6 +110,10 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		switch msg.String() {
 		case "esc":
 			return ui.PublishMsg(nav.LoadCachedConsumptionPageMsg{})
+		case "ctrl+n":
+			cmds = m.handleNavigateToNext(cmds)
+		case "ctrl+p":
+			cmds = m.handleNavigateToPrev(cmds)
 		case "h", "left", "right":
 			if len(m.record.Headers) >= 1 {
 				m.focus = !m.focus
@@ -117,6 +129,10 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		default:
 			cmds = m.updatedFocussedArea(msg, cmds)
 		}
+	case NavigateToNextRecordMsg:
+		cmds = m.loadRecordAtIndex(m.recordIndex+1, cmds)
+	case NavigateToPrevRecordMsg:
+		cmds = m.loadRecordAtIndex(m.recordIndex-1, cmds)
 	}
 
 	return tea.Batch(cmds...)
@@ -274,6 +290,66 @@ func (m *Model) handleCopy(cmds []tea.Cmd) []tea.Cmd {
 	return cmds
 }
 
+func (m *Model) handleNavigateToNext(cmds []tea.Cmd) []tea.Cmd {
+	if m.recordIndex >= len(m.records)-1 {
+		m.notifierCmdbar.Notifier.ShowError(fmt.Errorf("no more records"))
+		return cmds
+	}
+	cmds = append(cmds, ui.PublishMsg(NavigateToNextRecordMsg{}))
+	return cmds
+}
+
+func (m *Model) handleNavigateToPrev(cmds []tea.Cmd) []tea.Cmd {
+	if m.recordIndex <= 0 {
+		m.notifierCmdbar.Notifier.ShowError(fmt.Errorf("no previous records"))
+		return cmds
+	}
+	cmds = append(cmds, ui.PublishMsg(NavigateToPrevRecordMsg{}))
+	return cmds
+}
+
+func (m *Model) loadRecordAtIndex(index int, cmds []tea.Cmd) []tea.Cmd {
+	if index < 0 || index >= len(m.records) {
+		return cmds
+	}
+	m.record = &m.records[index]
+	m.recordIndex = index
+	m.resetViews()
+	m.rebuildHeaderRows()
+	m.updateMetaInfo()
+	return cmds
+}
+
+func (m *Model) rebuildHeaderRows() {
+	sort.SliceStable(m.record.Headers, func(i, j int) bool {
+		return m.record.Headers[i].Key < m.record.Headers[j].Key
+	})
+	m.headerRows = nil
+	for _, header := range m.record.Headers {
+		m.headerRows = append(m.headerRows, table.Row{header.Key})
+	}
+}
+
+func (m *Model) resetViews() {
+	m.recordVp = nil
+	m.schemaVp = nil
+}
+
+func (m *Model) updateMetaInfo() {
+	key := m.record.Key
+	if key == "" {
+		key = "<null>"
+	}
+	m.metaInfo = fmt.Sprintf("key: %s\ntimestamp: %s", key, m.record.Timestamp.Format(time.UnixDate))
+	if m.record.Err != nil {
+		m.err = m.record.Err
+		m.notifierCmdbar.Notifier.ShowError(m.record.Err)
+	} else {
+		m.err = nil
+		m.payload = ui.PrettyPrintJson(m.record.Payload.Value)
+	}
+}
+
 func (m *Model) updatedFocussedArea(msg tea.Msg, cmds []tea.Cmd) []tea.Cmd {
 	// only update the component if no error is present
 	if m.err != nil {
@@ -314,6 +390,13 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 			{"Copy " + whatToCopy, "c"},
 		}
 
+		if len(m.records) > 1 {
+			shortcuts = append(shortcuts, []statusbar.Shortcut{
+				{"Next Record", "ctrl+n"},
+				{"Prev Record", "ctrl+p"},
+			}...)
+		}
+
 		if m.config.ActiveCluster().HasSchemaRegistry() && m.focus == mainViewFocus {
 			shortcuts = append(shortcuts, statusbar.Shortcut{
 				Name:       "Toggle Record/Schema",
@@ -337,6 +420,8 @@ func (m *Model) Title() string {
 func New(
 	record *kadmin.ConsumerRecord,
 	topicName string,
+	records []kadmin.ConsumerRecord,
+	recordIndex int,
 	clipWriter clipper.Writer,
 	ktx *kontext.ProgramKtx,
 ) *Model {
@@ -402,6 +487,8 @@ func New(
 
 	return &Model{
 		record:         record,
+		records:        records,
+		recordIndex:    recordIndex,
 		topicName:      topicName,
 		headerKeyTable: &headersTable,
 		focus:          mainViewFocus,

@@ -97,10 +97,13 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					selectedRow := m.rows[m.table.Cursor()]
 					selectedRecord := m.recordForRow(selectedRow)
 					m.consuming = false
+					recordIndex := m.recordIndexForRow(selectedRow)
 					return m.navigator.ToRecordDetailsPage(
 						tabs.LoadRecordDetailPageMsg{
 							Record:    &selectedRecord,
 							TopicName: m.readDetails.TopicName,
+							Records:   m.records,
+							Index:     recordIndex,
 						})
 				}
 			}
@@ -143,6 +146,18 @@ func (m *Model) recordForRow(row table.Row) kadmin.ConsumerRecord {
 		if rec.Partition == partition &&
 			rec.Offset == offset {
 			return rec
+		}
+	}
+	panic(fmt.Sprintf("Record not found for row: %v", row))
+}
+
+func (m *Model) recordIndexForRow(row table.Row) int {
+	offset, _ := strconv.ParseInt(row[3], 10, 64)
+	partition, _ := strconv.ParseInt(row[2], 10, 32)
+	for i, rec := range m.records {
+		if rec.Partition == partition &&
+			rec.Offset == offset {
+			return i
 		}
 	}
 	panic(fmt.Sprintf("Record not found for row: %v", row))

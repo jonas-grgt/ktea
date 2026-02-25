@@ -149,7 +149,7 @@ func (m *Model) ToConsumeFormPage(d tabs.ConsumeFormPageDetails) tea.Cmd {
 }
 
 func (m *Model) ToRecordDetailsPage(msg tabs.LoadRecordDetailPageMsg) tea.Cmd {
-	m.active = record_details_page.New(msg.Record, msg.TopicName, clipper.New(), m.ktx)
+	m.active = record_details_page.New(msg.Record, msg.TopicName, msg.Records, msg.Index, clipper.New(), m.ktx)
 	m.recordDetailsPage = m.active
 	return nil
 }

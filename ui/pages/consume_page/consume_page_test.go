@@ -653,18 +653,11 @@ func TestConsumptionPage(t *testing.T) {
 		msgs := tests.ExecuteBatchCmd(cmd)
 		assert.Len(t, msgs, 1)
 		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msgs[0])
-		assert.Equal(t, tabs.LoadRecordDetailPageMsg{
-			Record: &kadmin.ConsumerRecord{
-				Key:       "key-9",
-				Payload:   serdes.DesData{},
-				Err:       nil,
-				Partition: int64(9),
-				Offset:    int64(9),
-				Headers:   nil,
-				Timestamp: now.Add(time.Duration(9) * time.Second),
-			},
-			TopicName: "topic1",
-		}, msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg)
+		msg := msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg
+		assert.Equal(t, "key-9", msg.Record.Key)
+		assert.Equal(t, "topic1", msg.TopicName)
+		assert.Len(t, msg.Records, 10)
+		assert.Equal(t, 9, msg.Index)
 
 		m.Update(tests.Key(tea.KeyF3))
 		m.Update(tests.Key(tea.KeyLeft))
@@ -677,18 +670,11 @@ func TestConsumptionPage(t *testing.T) {
 		msgs = tests.ExecuteBatchCmd(cmd)
 		assert.Len(t, msgs, 1)
 		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msgs[0])
-		assert.Equal(t, tabs.LoadRecordDetailPageMsg{
-			Record: &kadmin.ConsumerRecord{
-				Key:       "key-9",
-				Payload:   serdes.DesData{},
-				Err:       nil,
-				Partition: int64(9),
-				Offset:    int64(9),
-				Headers:   nil,
-				Timestamp: now.Add(time.Duration(9) * time.Second),
-			},
-			TopicName: "topic1",
-		}, msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg)
+		msg = msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg
+		assert.Equal(t, "key-9", msg.Record.Key)
+		assert.Equal(t, "topic1", msg.TopicName)
+		assert.Len(t, msg.Records, 10)
+		assert.Equal(t, 9, msg.Index)
 	})
 
 	t.Run("Search by key", func(t *testing.T) {
@@ -761,7 +747,7 @@ func TestConsumptionPage(t *testing.T) {
 		m.Update(kadmin.ConsumerRecordReceived{
 			Records: records,
 		})
-	
+
 		m.View(tests.NewKontext(), tests.Renderer)
 
 		kb := tests.NewKeyboard(m)
