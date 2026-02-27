@@ -77,9 +77,10 @@ func (c *Config) HasClusters() bool {
 }
 
 type SchemaRegistryDetails struct {
-	Url      string
-	Username string
-	Password string
+	Url       string
+	Username  string
+	Password  string
+	TLSConfig TLSConfig
 }
 
 type KafkaConnectClusterDetails struct {
@@ -212,7 +213,7 @@ func ToCluster(details RegistrationDetails) Cluster {
 			Url:       details.SchemaRegistry.Url,
 			Username:  details.SchemaRegistry.Username,
 			Password:  details.SchemaRegistry.Password,
-			TLSConfig: details.TLSConfig,
+			TLSConfig: details.SchemaRegistry.TLSConfig,
 		}
 	}
 

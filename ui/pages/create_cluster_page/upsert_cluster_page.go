@@ -88,20 +88,25 @@ const (
 )
 
 type clusterFormValues struct {
-	name               string
-	color              string
-	host               string
-	authMethod         config.AuthMethod
-	transportOption    transportOption
-	verificationOption verificationOption
-	brokerCACertPath   string
-	clientCertPath     string
-	clientKeyPath      string
-	username           string
-	password           string
-	srURL              string
-	srUsername         string
-	srPassword         string
+	name                      string
+	color                     string
+	host                      string
+	authMethod                config.AuthMethod
+	transportOption           transportOption
+	verificationOption        verificationOption
+	brokerCACertPath          string
+	clientCertPath            string
+	clientKeyPath             string
+	username                  string
+	password                  string
+	srURL                     string
+	srUsername                string
+	srPassword                string
+	srTransportOption         transportOption
+	srVerificationOption      verificationOption
+	srCACertPath              string
+	srClientCertPath          string
+	srClientKeyPath           string
 }
 
 func (cv *clusterFormValues) toTLSConfig() config.TLSConfig {
@@ -276,6 +281,9 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	if activeTab == srTab {
+		m.updateSrTransportOption()
+		m.updateSrVO()
+
 		if m.form.State == huh.StateCompleted && m.formState != loading {
 			return m.processSrSubmission()
 		}
@@ -369,6 +377,34 @@ func (m *Model) updateVO() {
 	}
 }
 
+func (m *Model) updateSrTransportOption() {
+	if m.cFormValues.srTransportOption == transportOptionTLS && m.cFormValues.srTransportOption != m.transportOption {
+		m.srForm = m.createSrForm()
+		m.form = m.srForm
+		m.nextField(3)
+	} else if m.cFormValues.srTransportOption == transportOptionPlaintext && m.transportOption == transportOptionTLS {
+		m.srForm = m.createSrForm()
+		m.form = m.srForm
+		m.nextField(3)
+	}
+	m.transportOption = m.cFormValues.srTransportOption
+}
+
+func (m *Model) updateSrVO() {
+	if m.cFormValues.srVerificationOption == verificationOptionBroker && m.verificationOption != verificationOptionBroker {
+		m.srForm = m.createSrForm()
+		m.form = m.srForm
+		m.verificationOption = verificationOptionBroker
+		m.nextField(4)
+		m.nextField(1)
+	} else if m.cFormValues.srVerificationOption == verificationOptionSkip && m.verificationOption == verificationOptionBroker {
+		m.srForm = m.createSrForm()
+		m.form = m.srForm
+		m.verificationOption = verificationOptionSkip
+		m.nextField(5)
+	}
+}
+
 func (m *Model) prevSelPlaintextOrNoTO() bool {
 	return m.transportOption == transportOptionNotSelected || m.transportOption == transportOptionPlaintext
 }
@@ -455,6 +491,15 @@ func (m *Model) getRegistrationDetails() config.RegistrationDetails {
 			Url:      m.cFormValues.srURL,
 			Username: m.cFormValues.srUsername,
 			Password: m.cFormValues.srPassword,
+		}
+		if m.cFormValues.srTransportOption == transportOptionTLS {
+			details.SchemaRegistry.TLSConfig = config.TLSConfig{
+				Enable:     true,
+				SkipVerify: m.cFormValues.srVerificationOption == verificationOptionSkip,
+				CACertPath: m.cFormValues.srCACertPath,
+				ClientCert: m.cFormValues.srClientCertPath,
+				ClientKey:  m.cFormValues.srClientKeyPath,
+			}
 		}
 	}
 
@@ -625,6 +670,47 @@ func (m *Model) createSrForm() *huh.Form {
 		EchoMode(huh.EchoModePassword).
 		Title("Schema Registry Password")
 	fields = append(fields, srUrl, srUsername, srPwd)
+
+	transport := huh.NewSelect[transportOption]().
+		Value(&m.cFormValues.srTransportOption).
+		Title("Transport").
+		Options(
+			huh.NewOption("Plaintext", transportOptionPlaintext),
+			huh.NewOption("TLS", transportOptionTLS),
+		)
+	fields = append(fields, transport)
+
+	if m.cFormValues.srTransportOption == transportOptionTLS {
+		tlsVerification := huh.NewSelect[verificationOption]().
+			Value(&m.cFormValues.srVerificationOption).
+			Title("Verification").
+			Options(
+				huh.NewOption("Verify Certificate", verificationOptionBroker),
+				huh.NewOption("Skip verification (INSECURE)", verificationOptionSkip),
+			)
+		fields = append(fields, tlsVerification)
+
+		if m.cFormValues.srVerificationOption == verificationOptionBroker {
+			caCert := huh.NewInput().
+				Value(&m.cFormValues.srCACertPath).
+				Title("Path to CA Certificate").
+				Validate(func(certFile string) error {
+					if certFile == "" {
+						return errors.New("CA Certificate Path cannot be empty")
+					}
+					return m.validateCert(certFile)
+				})
+			fields = append(fields, caCert)
+		}
+
+		clientCert := huh.NewInput().
+			Value(&m.cFormValues.srClientCertPath).
+			Title("Path to Client Certificate (optional)")
+		clientKey := huh.NewInput().
+			Value(&m.cFormValues.srClientKeyPath).
+			Title("Path to Client Key (optional)")
+		fields = append(fields, clientCert, clientKey)
+	}
 
 	form := huh.NewForm(
 		huh.NewGroup(fields...).
@@ -797,6 +883,19 @@ func NewEditClusterPage(
 		formValues.srURL = cluster.SchemaRegistry.Url
 		formValues.srUsername = cluster.SchemaRegistry.Username
 		formValues.srPassword = cluster.SchemaRegistry.Password
+		if cluster.SchemaRegistry.TLSConfig.Enable {
+			formValues.srTransportOption = transportOptionTLS
+			if cluster.SchemaRegistry.TLSConfig.SkipVerify {
+				formValues.srVerificationOption = verificationOptionSkip
+			} else {
+				formValues.srVerificationOption = verificationOptionBroker
+				formValues.srCACertPath = cluster.SchemaRegistry.TLSConfig.CACertPath
+			}
+			formValues.srClientCertPath = cluster.SchemaRegistry.TLSConfig.ClientCert
+			formValues.srClientKeyPath = cluster.SchemaRegistry.TLSConfig.ClientKey
+		} else {
+			formValues.srTransportOption = transportOptionPlaintext
+		}
 	}
 	model := Model{
 		transportOption:    formValues.transportOption,
