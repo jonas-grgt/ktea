@@ -1,11 +1,15 @@
 package sradmin
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
+	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/riferrei/srclient"
 	"ktea/config"
 	"net/http"
+	"os"
 	"sync"
 )
 
@@ -82,8 +86,33 @@ func createHttpClient(registry *config.SchemaRegistryConfig) *http.Client {
 	auth := registry.Username + ":" + registry.Password
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
 
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: registry.TLSConfig.SkipVerify,
+	}
+
+	if registry.TLSConfig.CACertPath != "" {
+		caCert, err := os.ReadFile(registry.TLSConfig.CACertPath)
+		if err != nil {
+			panic(fmt.Sprintf("Unable to read CA cert file: %v", err))
+		}
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			panic("Failed to parse CA certificate")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	if registry.TLSConfig.ClientCert != "" && registry.TLSConfig.ClientKey != "" {
+		cert, err := tls.LoadX509KeyPair(registry.TLSConfig.ClientCert, registry.TLSConfig.ClientKey)
+		if err != nil {
+			panic(fmt.Sprintf("Unable to load client certificate: %v", err))
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
 	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:           http.ProxyFromEnvironment,
+		TLSClientConfig: tlsConfig,
 	}
 
 	client := &http.Client{

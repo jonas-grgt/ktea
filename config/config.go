@@ -24,9 +24,10 @@ type SASLConfig struct {
 }
 
 type SchemaRegistryConfig struct {
-	Url      string `yaml:"url"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Url       string    `yaml:"url"`
+	Username  string    `yaml:"username"`
+	Password  string    `yaml:"password"`
+	TLSConfig TLSConfig `yaml:"tls"`
 }
 
 type TLSConfig struct {
@@ -76,9 +77,10 @@ func (c *Config) HasClusters() bool {
 }
 
 type SchemaRegistryDetails struct {
-	Url      string
-	Username string
-	Password string
+	Url       string
+	Username  string
+	Password  string
+	TLSConfig TLSConfig
 }
 
 type KafkaConnectClusterDetails struct {
@@ -208,9 +210,10 @@ func ToCluster(details RegistrationDetails) Cluster {
 
 	if details.SchemaRegistry != nil {
 		cluster.SchemaRegistry = &SchemaRegistryConfig{
-			Url:      details.SchemaRegistry.Url,
-			Username: details.SchemaRegistry.Username,
-			Password: details.SchemaRegistry.Password,
+			Url:       details.SchemaRegistry.Url,
+			Username:  details.SchemaRegistry.Username,
+			Password:  details.SchemaRegistry.Password,
+			TLSConfig: details.SchemaRegistry.TLSConfig,
 		}
 	}
 

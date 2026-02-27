@@ -1522,7 +1522,9 @@ func TestCreateSchemaRegistry(t *testing.T) {
 		// and: schema registry username
 		kb.Type("sr-username").Enter()
 		// and: schema registry pwd
-		kb.Type("sr-password")
+		kb.Type("sr-password").Enter()
+		// and: transport (select Plaintext)
+		kb.Enter()
 		// and
 		msgs := kb.Submit()
 
@@ -1533,6 +1535,7 @@ func TestCreateSchemaRegistry(t *testing.T) {
 			Url:      "sr-url",
 			Username: "sr-username",
 			Password: "sr-password",
+			TLSConfig: config.TLSConfig{},
 		}, msgs[0].(sradmin.MockConnectionCheckedMsg).Config)
 
 		t.Run("Display error notification when connection cannot be made", func(t *testing.T) {
