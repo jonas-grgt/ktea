@@ -590,6 +590,74 @@ func TestReadRecords(t *testing.T) {
 				// clean up
 				ka.DeleteTopic(topic)
 			})
+
+			t.Run("most recent with filter that matches fewer records than limit should exhaust consumption", func(t *testing.T) {
+				topic := topicName()
+				// given
+				msg := ka.CreateTopic(TopicCreationDetails{
+					Name:              topic,
+					NumPartitions:     1,
+					ReplicationFactor: 1,
+				}).(TopicCreationStartedMsg)
+
+				switch msg.AwaitCompletion().(type) {
+				case TopicCreatedMsg:
+				case TopicCreationErrMsg:
+					t.Fatal("Unable to create topic", msg.Err)
+				}
+
+				// when - produce 30 messages (keys 0-29)
+				assert.EventuallyWithT(t, func(c *assert.CollectT) {
+					for i := 0; i < 30; i++ {
+						psm := ka.PublishRecord(&ProducerRecord{
+							Topic: topic,
+							Key:   strconv.Itoa(i),
+							Value: []byte("{\"id\":\"test\"}"),
+						})
+
+						select {
+						case err := <-psm.Err:
+							t.Fatal(c, "Unable to publish", err)
+						case p := <-psm.Published:
+							assert.True(c, p)
+						}
+					}
+				}, 10*time.Second, 10*time.Millisecond)
+
+				// then - consume with MostRecent and Limit=30, but filter matches only 11 records (keys containing "1")
+				rsm := ka.ReadRecords(context.Background(), ReadDetails{
+					TopicName:       topic,
+					PartitionToRead: []int{0},
+					StartPoint:      MostRecent,
+					Limit:           30,
+					Filter: &Filter{
+						KeySearchTerm: "1",
+						KeyFilter:     ContainsFilterType,
+					},
+				}).(*ReadingStartedMsg)
+
+				var receivedRecords []int
+				for {
+					select {
+					case r, ok := <-rsm.ConsumerRecord:
+						if !ok {
+							goto assertRecords
+						}
+						key, _ := strconv.Atoi(r.Key)
+						receivedRecords = append(receivedRecords, key)
+					case <-time.After(5 * time.Second):
+						rsm.CancelFunc()
+						t.Fatal("timed out waiting for consumption to end - channel should have closed")
+					}
+				}
+
+			assertRecords:
+				// Should have received 12 records (keys 1, 10-19, 21)
+				assert.Equal(t, 12, len(receivedRecords), "expected 12 records matching filter '1'")
+
+				// clean up
+				ka.DeleteTopic(topic)
+			})
 		})
 
 		t.Run("starts with", func(t *testing.T) {
