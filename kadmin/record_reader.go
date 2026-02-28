@@ -417,6 +417,10 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 
 						if rd.Filter != nil && err == nil {
 							if !ka.matchesFilter(key, desData.Value, rd.Filter) {
+								// For MostRecent + filter, check if we've reached the end
+								if rd.StartPoint == MostRecent && msg.Offset >= readingOffsets.end {
+									return
+								}
 								continue
 							}
 						}
@@ -447,6 +451,13 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 						}
 
 						if msg.Offset == readingOffsets.end && rd.StartPoint != Live {
+							// For MostRecent + filter, exit when we've consumed all available records
+							if rd.StartPoint == MostRecent && rd.Filter != nil {
+								// Continue only if we haven't reached the newest offset yet
+								if msg.Offset < readingOffsets.end {
+									continue
+								}
+							}
 							return
 						}
 					}
