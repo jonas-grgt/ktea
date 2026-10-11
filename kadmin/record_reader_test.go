@@ -2,6 +2,7 @@ package kadmin
 
 import (
 	"context"
+	"github.com/IBM/sarama"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"
 	"ktea/serdes"
@@ -730,6 +731,217 @@ func TestReadRecords(t *testing.T) {
 		})
 
 	})
+
+	t.Run("Transactional topic where last offset is a control record", func(t *testing.T) {
+		topic := topicName()
+		createSinglePartitionTopic(t, topic)
+		produceTransactionally(t, topic, 10)
+
+		for _, sp := range []StartPoint{Beginning, MostRecent} {
+			// when
+			rsm := ka.ReadRecords(context.Background(), ReadDetails{
+				TopicName:       topic,
+				PartitionToRead: []int{0},
+				StartPoint:      sp,
+				Limit:           50,
+				Filter:          &Filter{},
+			}).(*ReadingStartedMsg)
+
+			// then
+			started := time.Now()
+			records := consumeUntilEnded(t, rsm, 10*time.Second)
+			assert.Len(t, records, 10)
+			assert.Less(t, time.Since(started), idleConsumptionTimeout/2,
+				"consumption should end on the last delivered record without waiting")
+		}
+
+		// clean up
+		ka.DeleteTopic(topic)
+	})
+
+	t.Run("Read from beginning with filter not matching the last record", func(t *testing.T) {
+		topic := topicName()
+		createSinglePartitionTopic(t, topic)
+
+		for i := 0; i < 5; i++ {
+			psm := ka.PublishRecord(&ProducerRecord{
+				Topic: topic,
+				Key:   strconv.Itoa(i),
+				Value: []byte("value"),
+			})
+			select {
+			case err := <-psm.Err:
+				t.Fatal("Unable to publish", err)
+			case <-psm.Published:
+			}
+		}
+
+		// when
+		rsm := ka.ReadRecords(context.Background(), ReadDetails{
+			TopicName:       topic,
+			PartitionToRead: []int{0},
+			StartPoint:      Beginning,
+			Limit:           50,
+			Filter: &Filter{
+				KeyFilter:     ContainsFilterType,
+				KeySearchTerm: "1",
+			},
+		}).(*ReadingStartedMsg)
+
+		// then
+		records := consumeUntilEnded(t, rsm, 10*time.Second)
+		assert.Len(t, records, 1)
+
+		// clean up
+		ka.DeleteTopic(topic)
+	})
+}
+
+func createSinglePartitionTopic(t *testing.T, topic string) {
+	msg := ka.CreateTopic(TopicCreationDetails{
+		Name:              topic,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	}).(TopicCreationStartedMsg)
+
+	switch msg.AwaitCompletion().(type) {
+	case TopicCreatedMsg:
+	case TopicCreationErrMsg:
+		t.Fatal("Unable to create topic", msg.Err)
+	}
+}
+
+func TestLastDataOffset(t *testing.T) {
+	sk := ka.(*SaramaKafkaAdmin)
+
+	t.Run("skips trailing commit marker", func(t *testing.T) {
+		topic := topicName()
+		createSinglePartitionTopic(t, topic)
+		produceTransactionally(t, topic, 10)
+
+		end, err := sk.client.GetOffset(topic, 0, sarama.OffsetNewest)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(11), end)
+
+		last, err := sk.lastDataOffset(topic, 0, 0, end)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(9), last)
+
+		ka.DeleteTopic(topic)
+	})
+
+	t.Run("includes aborted records when reading uncommitted", func(t *testing.T) {
+		topic := topicName()
+		createSinglePartitionTopic(t, topic)
+		produceTransactionally(t, topic, 5)
+		produceAbortedTransaction(t, topic, 3)
+
+		// 5 records + commit marker + 3 records + abort marker
+		var end int64
+		assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			var err error
+			end, err = sk.client.GetOffset(topic, 0, sarama.OffsetNewest)
+			assert.NoError(c, err)
+			assert.Equal(c, int64(10), end)
+		}, 5*time.Second, 50*time.Millisecond)
+
+		last, err := sk.lastDataOffset(topic, 0, 0, end)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(8), last)
+
+		ka.DeleteTopic(topic)
+	})
+
+	t.Run("no delivered records in range", func(t *testing.T) {
+		topic := topicName()
+		createSinglePartitionTopic(t, topic)
+		produceTransactionally(t, topic, 2)
+
+		// only the commit marker at offset 2
+		last, err := sk.lastDataOffset(topic, 0, 2, 3)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(-1), last)
+
+		ka.DeleteTopic(topic)
+	})
+}
+
+func produceTransactionally(t *testing.T, topic string, count int) {
+	producer := newTransactionalProducer(t, topic)
+	defer producer.Close()
+
+	sendInTransaction(t, producer, topic, count)
+	if err := producer.CommitTxn(); err != nil {
+		t.Fatal("Unable to commit transaction", err)
+	}
+}
+
+func produceAbortedTransaction(t *testing.T, topic string, count int) {
+	producer := newTransactionalProducer(t, topic)
+	defer producer.Close()
+
+	sendInTransaction(t, producer, topic, count)
+	if err := producer.AbortTxn(); err != nil {
+		t.Fatal("Unable to abort transaction", err)
+	}
+}
+
+func newTransactionalProducer(t *testing.T, topic string) sarama.SyncProducer {
+	cfg := sarama.NewConfig()
+	cfg.Producer.Return.Successes = true
+	cfg.Producer.Idempotent = true
+	cfg.Producer.RequiredAcks = sarama.WaitForAll
+	cfg.Producer.Transaction.ID = "txn-" + topic
+	cfg.Net.MaxOpenRequests = 1
+
+	producer, err := sarama.NewSyncProducer(brokers, cfg)
+	if err != nil {
+		t.Fatal("Unable to create transactional producer", err)
+	}
+	return producer
+}
+
+func sendInTransaction(t *testing.T, producer sarama.SyncProducer, topic string, count int) {
+	if err := producer.BeginTxn(); err != nil {
+		t.Fatal("Unable to begin transaction", err)
+	}
+	for i := 0; i < count; i++ {
+		_, _, err := producer.SendMessage(&sarama.ProducerMessage{
+			Topic: topic,
+			Key:   sarama.StringEncoder(strconv.Itoa(i)),
+			Value: sarama.StringEncoder("value"),
+		})
+		if err != nil {
+			t.Fatal("Unable to send message", err)
+		}
+	}
+}
+
+// consumeUntilEnded collects records until the record channel is closed,
+// failing the test when consumption does not end within the timeout.
+func consumeUntilEnded(t *testing.T, rsm *ReadingStartedMsg, timeout time.Duration) []ConsumerRecord {
+	var records []ConsumerRecord
+	deadline := time.After(timeout)
+	for {
+		select {
+		case r, ok := <-rsm.ConsumerRecord:
+			if !ok {
+				return records
+			}
+			records = append(records, r)
+		case err, ok := <-rsm.Err:
+			if !ok {
+				// closed on shutdown, keep draining the records
+				rsm.Err = nil
+				continue
+			}
+			rsm.CancelFunc()
+			t.Fatal("unexpected error during consumption", err)
+		case <-deadline:
+			rsm.CancelFunc()
+			t.Fatal("timed out waiting for consumption to end")
+		}
+	}
 }
 
 type want struct {
@@ -955,4 +1167,37 @@ func TestConsumerRecordPayloadType(t *testing.T) {
 
 		assert.Equal(t, "Plain Text", record.PayloadType())
 	})
+}
+
+func TestAwaitRecordsEndsAfterShutdown(t *testing.T) {
+	for i := 0; i < 200; i++ {
+		_, cancel := context.WithCancel(context.Background())
+		rsm := &ReadingStartedMsg{
+			ConsumerRecord: make(chan ConsumerRecord, 3),
+			Err:            make(chan error, 1),
+			EmptyTopic:     make(chan bool, 1),
+			NoRecordsFound: make(chan bool, 1),
+			CancelFunc:     cancel,
+		}
+		for o := 0; o < 3; o++ {
+			rsm.ConsumerRecord <- ConsumerRecord{Offset: int64(o)}
+		}
+		rsm.shutdown()
+
+		var received int
+		next := rsm.AwaitRecord
+		for {
+			msg := next()
+			if r, ok := msg.(ConsumerRecordReceived); ok {
+				received += len(r.Records)
+				next = r.AwaitNextRecord
+				continue
+			}
+			if _, ok := msg.(ConsumptionEndedMsg); !ok {
+				t.Fatalf("expected ConsumptionEndedMsg, got %T (%v)", msg, msg)
+			}
+			break
+		}
+		assert.Equal(t, 3, received)
+	}
 }

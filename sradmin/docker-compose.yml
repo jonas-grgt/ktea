@@ -16,7 +16,8 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://broker:29099
       SCHEMA_REGISTRY_DEBUG: 'true'
     healthcheck:
-      test: [ "CMD", "curl", "schema-registry:8081" ]
+      # curl is no longer shipped with the image, use bash's /dev/tcp instead
+      test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/schema-registry/8081 && printf 'GET /subjects HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q ' 200 '" ]
       interval: 10s
       timeout: 10s
       retries: 10
