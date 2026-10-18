@@ -42,29 +42,20 @@ func TestStatusbar(t *testing.T) {
 		assert.Contains(t, render, "\n  test provider  \ue0b4           \ue0b4\n")
 	})
 
-	t.Run("toggle shortcuts", func(t *testing.T) {
+	t.Run("exposes global and provider shortcuts", func(t *testing.T) {
 		sb := statusbar.New()
 		sb.SetProvider(TestProvider{})
 
+		assert.Equal(t, []statusbar.Shortcut{
+			{Name: "Switch Tabs", Keybinding: "C-←/→/h/l"},
+			{Name: "Open", Keybinding: "C-o"},
+		}, sb.Shortcuts())
+		assert.Equal(t, "test provider", sb.Title())
+
 		render := ansi.Strip(sb.View(tests.NewKontext(
 			tests.WithWindowWidth(30),
-			tests.WithConfig(&config.Config{
-				Clusters: []config.Cluster{},
-				ConfigIO: nil,
-			})), tests.Renderer))
-
-		assert.Contains(t, render, "\n  test provider  \ue0b4           \ue0b4\n")
-
-		sb.ToggleShortcuts()
-
-		render = ansi.Strip(sb.View(tests.NewKontext(
-			tests.WithWindowWidth(30),
-			tests.WithConfig(&config.Config{
-				Clusters: []config.Cluster{},
-				ConfigIO: nil,
-			})), tests.Renderer))
-
-		assert.Contains(t, render, "\n  Switch Tabs: ≪ C-←/→/h/l »   Open: ≪ C-o »        \n", render)
+			tests.WithConfig(&config.Config{})), tests.Renderer))
+		assert.NotContains(t, render, "Open")
 	})
 
 	t.Run("with active cluster", func(t *testing.T) {

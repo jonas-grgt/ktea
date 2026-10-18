@@ -370,7 +370,6 @@ func TestClustersTab(t *testing.T) {
 		t.Run("c-e opens edit page", func(t *testing.T) {
 			// given
 			stsBar := statusbar.New()
-			stsBar.ToggleShortcuts()
 			var clustersTab, _ = New(programKtx, kadmin.MockConnChecker, sradmin.MockConnChecker, stsBar)
 			// and table has been initialized
 			clustersTab.View(programKtx, tests.Renderer)
@@ -385,7 +384,7 @@ func TestClustersTab(t *testing.T) {
 			assert.Contains(t, render, "> TLS")
 
 			t.Run("updates shortcuts", func(t *testing.T) {
-				assert.Contains(t, render, "Prev. Field:")
+				assert.Contains(t, stsBar.Shortcuts(), statusbar.Shortcut{Name: "Prev. Field", Keybinding: "s-tab"})
 			})
 
 			t.Run("c-e on edit page does nothing", func(t *testing.T) {
