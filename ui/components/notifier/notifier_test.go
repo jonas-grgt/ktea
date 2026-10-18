@@ -1,7 +1,7 @@
 package notifier
 
 import (
-	"github.com/charmbracelet/bubbles/spinner"
+	"charm.land/bubbles/v2/spinner"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

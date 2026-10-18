@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 func JoinVertical(position lipgloss.Position, views ...string) string {
 	return join(views, position)

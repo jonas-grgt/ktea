@@ -5,7 +5,7 @@ import (
 	"ktea/config"
 	"ktea/sradmin"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 type MockKadmin struct{}

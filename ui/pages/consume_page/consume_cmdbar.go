@@ -1,7 +1,7 @@
 package consume_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/ui"
@@ -38,7 +38,7 @@ func (c *ConsumptionCmdBar) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "/":
 			active, _, cmd := c.searchCBar.Update(msg)

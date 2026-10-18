@@ -1,7 +1,8 @@
 package cmdbar
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/tests"
 	"testing"
@@ -36,7 +37,7 @@ func TestSortByCmdBar(t *testing.T) {
 	t.Run("Renders all options", func(t *testing.T) {
 		bar := newTestBar(func(label SortLabel) {})
 
-		render := bar.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(bar.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓

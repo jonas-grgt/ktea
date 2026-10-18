@@ -1,7 +1,7 @@
 package cgroups_topics_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"ktea/kontext"
 	"ktea/ui"
 	"ktea/ui/components/cmdbar"
@@ -49,7 +49,7 @@ func (m *CGroupCmdbar[T]) Update(msg tea.Msg) (tea.Msg, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "/":
 			active, pmsg, cmd := m.searchWidget.Update(msg)

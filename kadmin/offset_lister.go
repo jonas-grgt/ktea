@@ -4,8 +4,8 @@ import (
 	"math"
 	"sync"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/IBM/sarama"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 const (

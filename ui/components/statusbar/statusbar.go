@@ -1,8 +1,8 @@
 package statusbar
 
 import (
+	lg "charm.land/lipgloss/v2"
 	"fmt"
-	lg "github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"

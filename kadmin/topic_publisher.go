@@ -1,9 +1,9 @@
 package kadmin
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"github.com/IBM/sarama"
 	"github.com/burdiyan/kafkautil"
-	tea "github.com/charmbracelet/bubbletea"
 	"time"
 )
 

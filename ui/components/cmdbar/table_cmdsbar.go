@@ -5,7 +5,7 @@ import (
 	"ktea/ui"
 	"ktea/ui/components/statusbar"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 type TableCmdsBar[T any] struct {
@@ -52,7 +52,7 @@ func (m *TableCmdsBar[T]) Update(msg tea.Msg, selection *T) (tea.Msg, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "/":
 			return m.handleSlash(msg)

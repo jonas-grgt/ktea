@@ -1,7 +1,8 @@
 package publish_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -200,11 +201,11 @@ func TestPublish(t *testing.T) {
 
 		m.Update(kadmin.PublicationSucceeded{})
 
-		render := m.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 		assert.Regexp(t, "Key\\W+Payload\\W+\n.*1.*\n\\W+>\\W+\n", render)
-		assert.Regexp(t, "Partition\\W+\n.*\n\\W+>\\W+\n", render)
-		assert.Regexp(t, "Headers\\W+\n.*\\n\\W+1\\W+\n", render)
+		assert.Regexp(t, "Partition\\W+\n(?:.*\n)+?\\W+>\\W+\n", render)
+		assert.Regexp(t, "Headers\\W+\n(?:.*\n)+?\\W+1\\W+\n", render)
 	})
 
 	t.Run("publish without partition info", func(t *testing.T) {
@@ -266,7 +267,7 @@ func TestPublish(t *testing.T) {
 		msgs := executeBatchCmd(cmds)
 
 		t.Run("displays success notification", func(t *testing.T) {
-			render := m.View(tests.Kontext, tests.Renderer)
+			render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 			assert.Contains(t, render, "🎉 Record published!")
 			assert.Contains(t, msgs, notifier.HideNotificationMsg{})
 		})
@@ -275,7 +276,7 @@ func TestPublish(t *testing.T) {
 			cmds := m.Update(notifier.HideNotificationMsg{})
 			executeBatchCmd(cmds)
 
-			render := m.View(tests.Kontext, tests.Renderer)
+			render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 			assert.NotContains(t, render, "🎉 Record published!")
 		})
 	})
@@ -317,13 +318,13 @@ func TestPublish(t *testing.T) {
 		cmd = m.Update(tests.Key(tea.KeyEnter))
 		tests.NextGroup(m, cmd)
 
-		m.Update(tests.Key(tea.KeyCtrlR))
+		m.Update(tests.Ctrl('r'))
 
-		render := m.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 		assert.Regexp(t, "Key\\W+Payload\\W+\n.*1.*\n\\W+>\\W+\n", render)
-		assert.Regexp(t, "Partition\\W+\n.*\n\\W+>\\W+\n", render)
-		assert.Regexp(t, "Headers\\W+\n.*\\n\\W+1\\W+\n", render)
+		assert.Regexp(t, "Partition\\W+\n(?:.*\n)+?\\W+>\\W+\n", render)
+		assert.Regexp(t, "Headers\\W+\n(?:.*\n)+?\\W+1\\W+\n", render)
 	})
 
 	t.Run("Validate", func(t *testing.T) {
@@ -347,10 +348,10 @@ func TestPublish(t *testing.T) {
 			tests.UpdateKeys(m, "a1")
 			m.Update(tests.Key(tea.KeyEnter))
 
-			render := m.View(&kontext.ProgramKtx{
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.Renderer)
+			}, tests.Renderer))
 			assert.Contains(t, render, "'a1' is not a valid numeric partition value")
 		})
 
@@ -373,10 +374,10 @@ func TestPublish(t *testing.T) {
 			tests.UpdateKeys(m, "-1")
 			m.Update(tests.Key(tea.KeyEnter))
 
-			render := m.View(&kontext.ProgramKtx{
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.Renderer)
+			}, tests.Renderer))
 			assert.Contains(t, render, "value must be at least zero")
 		})
 
@@ -399,12 +400,12 @@ func TestPublish(t *testing.T) {
 			tests.UpdateKeys(m, "0")
 			m.Update(tests.Key(tea.KeyEnter))
 
-			render := m.View(&kontext.ProgramKtx{
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.Renderer)
+			}, tests.Renderer))
 
-			assert.Regexp(t, "┃ Partition.\\W+\n.*\n\\W+┃ > 0", render)
+			assert.Regexp(t, "┃ Partition.\\W+\n(?:.*\n)+?\\W+┃ > 0", render)
 			assert.NotContains(t, render, "value must be at least zero")
 		})
 
@@ -427,11 +428,11 @@ func TestPublish(t *testing.T) {
 			tests.UpdateKeys(m, "10")
 			m.Update(tests.Key(tea.KeyEnter))
 
-			render := m.View(&kontext.ProgramKtx{
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
 				WindowHeight: 100,
-			}, tests.Renderer)
-			assert.Contains(t, render, "partition index 10 is invalid, valid range is 0-4")
+			}, tests.Renderer))
+			assert.Regexp(t, "partition index 10 is invalid, valid range is\\s+0-4", render)
 		})
 	})
 }

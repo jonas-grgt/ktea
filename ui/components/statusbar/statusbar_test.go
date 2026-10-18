@@ -1,6 +1,7 @@
 package statusbar_test
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"ktea/config"
 	"ktea/styles"
 	"ktea/tests"
@@ -31,12 +32,12 @@ func TestStatusbar(t *testing.T) {
 		sb := statusbar.New()
 		sb.SetProvider(TestProvider{})
 
-		render := sb.View(tests.NewKontext(
+		render := ansi.Strip(sb.View(tests.NewKontext(
 			tests.WithWindowWidth(30),
 			tests.WithConfig(&config.Config{
 				Clusters: []config.Cluster{},
 				ConfigIO: nil,
-			})), tests.Renderer)
+			})), tests.Renderer))
 
 		assert.Contains(t, render, "\n  test provider  \ue0b4           \ue0b4\n")
 	})
@@ -45,23 +46,23 @@ func TestStatusbar(t *testing.T) {
 		sb := statusbar.New()
 		sb.SetProvider(TestProvider{})
 
-		render := sb.View(tests.NewKontext(
+		render := ansi.Strip(sb.View(tests.NewKontext(
 			tests.WithWindowWidth(30),
 			tests.WithConfig(&config.Config{
 				Clusters: []config.Cluster{},
 				ConfigIO: nil,
-			})), tests.Renderer)
+			})), tests.Renderer))
 
 		assert.Contains(t, render, "\n  test provider  \ue0b4           \ue0b4\n")
 
 		sb.ToggleShortcuts()
 
-		render = sb.View(tests.NewKontext(
+		render = ansi.Strip(sb.View(tests.NewKontext(
 			tests.WithWindowWidth(30),
 			tests.WithConfig(&config.Config{
 				Clusters: []config.Cluster{},
 				ConfigIO: nil,
-			})), tests.Renderer)
+			})), tests.Renderer))
 
 		assert.Contains(t, render, "\n  Switch Tabs: ≪ C-←/→/h/l »   Open: ≪ C-o »        \n", render)
 	})
@@ -70,7 +71,7 @@ func TestStatusbar(t *testing.T) {
 		sb := statusbar.New()
 		sb.SetProvider(TestProvider{})
 
-		render := sb.View(tests.NewKontext(
+		render := ansi.Strip(sb.View(tests.NewKontext(
 			tests.WithWindowWidth(30),
 			tests.WithConfig(&config.Config{
 				Clusters: []config.Cluster{
@@ -100,7 +101,7 @@ func TestStatusbar(t *testing.T) {
 					},
 				},
 				ConfigIO: nil,
-			})), tests.Renderer)
+			})), tests.Renderer))
 
 		assert.Contains(t, render, "dev")
 		assert.NotContains(t, render, "prd")
@@ -110,13 +111,13 @@ func TestStatusbar(t *testing.T) {
 		sb := statusbar.New()
 		sb.SetProvider(TestProvider{})
 
-		render := sb.View(tests.NewKontext(
+		render := ansi.Strip(sb.View(tests.NewKontext(
 			tests.WithWindowWidth(30),
 			tests.WithConfig(&config.Config{
 				PlainFonts: true,
 				Clusters:   []config.Cluster{},
 				ConfigIO:   nil,
-			})), tests.Renderer)
+			})), tests.Renderer))
 
 		assert.NotContains(t, render, "\uE0B4")
 		assert.NotContains(t, render, "\uE0B0")

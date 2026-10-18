@@ -1,6 +1,6 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import tea "charm.land/bubbletea/v2"
 
 // Navigate to a new page
 type Navigate func() tea.Cmd

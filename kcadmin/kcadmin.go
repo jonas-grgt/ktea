@@ -1,10 +1,10 @@
 package kcadmin
 
 import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 	"encoding/json"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 	"io"
 	"ktea/config"
 	"ktea/kadmin"

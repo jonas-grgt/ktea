@@ -10,6 +10,7 @@ import (
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
+	ktable "ktea/ui/components/table"
 	"ktea/ui/pages/nav"
 	"reflect"
 	"slices"
@@ -17,11 +18,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	lg "github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	lg "charm.land/lipgloss/v2"
 	"github.com/dustin/go-humanize"
 )
 
@@ -88,6 +89,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		{Title: "Lag", Width: lagColumnWidth},
 	})
 	m.offsetsTable.SetRows(m.offsetRows)
+	m.offsetsTable.SetWidth(ktable.RowWidth(m.offsetsTable.Columns()))
 
 	topicTableStyle := styles.Table.Blur
 	offsetTableStyle := styles.Table.Blur
@@ -145,7 +147,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
 			// only accept when the table is focussed

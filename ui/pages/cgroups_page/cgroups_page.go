@@ -1,8 +1,8 @@
 package cgroups_page
 
 import (
+	"charm.land/log/v2"
 	"fmt"
-	"github.com/charmbracelet/log"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -19,9 +19,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type state int
@@ -77,7 +77,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "enter":
 			// only accept enter when the table is focussed

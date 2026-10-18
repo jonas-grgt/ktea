@@ -1,7 +1,8 @@
 package create_schema_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/sradmin"
 	"ktea/tests"
@@ -106,7 +107,7 @@ func TestCreateSubjectsPage(t *testing.T) {
 
 		subjectPage.Update(tests.Key(tea.KeyEnter))
 
-		render := subjectPage.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(subjectPage.View(tests.Kontext, tests.Renderer))
 
 		assert.Contains(t, render, "subject cannot be empty")
 	})
@@ -123,7 +124,7 @@ func TestCreateSubjectsPage(t *testing.T) {
 
 		subjectPage.Update(tests.Key(tea.KeyEnter))
 
-		render := subjectPage.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(subjectPage.View(tests.Kontext, tests.Renderer))
 
 		assert.Contains(t, render, "schema cannot be empty")
 	})

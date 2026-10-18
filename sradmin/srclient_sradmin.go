@@ -1,11 +1,11 @@
 package sradmin
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/riferrei/srclient"
 	"ktea/config"
 	"net/http"

@@ -1,10 +1,10 @@
 package consume_form_page
 
 import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -139,8 +139,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
+	case tea.KeyPressMsg:
+		switch msg.Code {
 		case tea.KeyEsc:
 			return ui.PublishMsg(nav.LoadTopicsPageMsg{})
 		}
@@ -242,7 +242,9 @@ func (m *Model) newForm(partitions int, ktx *kontext.ProgramKtx) *huh.Form {
 
 	filterGroup := m.createFilterGroup()
 	form := huh.NewForm(
-		topicGroup.WithWidth(ktx.WindowWidth/2),
+		// huh v2 group widths include the field frame; +4 keeps the v1 column width
+		// so the padded partition description stays on one line.
+		topicGroup.WithWidth(ktx.WindowWidth/2+4),
 		filterGroup,
 	)
 	form.WithLayout(huh.LayoutColumns(2))

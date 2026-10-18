@@ -1,7 +1,8 @@
 package cmdbar
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/tests"
 	"ktea/ui/components/statusbar"
@@ -179,7 +180,7 @@ func TestDeleteCmdBar(t *testing.T) {
 		cmdBar.Update(tests.Key(tea.KeyF2))
 		cmdBar.Delete("subjectX")
 
-		render := cmdBar.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(cmdBar.View(tests.Kontext, tests.Renderer))
 
 		assert.Contains(t, render, `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃┃ 🗑️  subjectX    Delete!     Cancel.                                                             ┃

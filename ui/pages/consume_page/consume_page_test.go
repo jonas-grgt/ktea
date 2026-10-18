@@ -2,6 +2,7 @@ package consume_page
 
 import (
 	"fmt"
+	"github.com/charmbracelet/x/ansi"
 	"ktea/kadmin"
 	"ktea/serdes"
 	"ktea/tests"
@@ -11,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +28,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(kadmin.EmptyTopicMsg{})
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "Empty topic")
 
@@ -83,7 +84,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(kadmin.NoRecordsFound{})
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "No records found for the given criteria")
 
@@ -118,7 +119,7 @@ func TestConsumptionPage(t *testing.T) {
 			Records: records,
 		})
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		count := strings.Count(render, "<null>")
 		assert.Equal(t, 10, count, "expected <null> to appear 10 times")
@@ -150,7 +151,7 @@ func TestConsumptionPage(t *testing.T) {
 			Records: records,
 		})
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▼ Timestamp")
 
@@ -382,7 +383,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(tests.Key(tea.KeyF3))
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▼ Timestamp")
 	})
@@ -417,7 +418,7 @@ func TestConsumptionPage(t *testing.T) {
 		m.Update(tests.Key(tea.KeyLeft))
 		m.Update(tests.Key(tea.KeyEnter))
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▲ Key")
 
@@ -434,7 +435,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(tests.Key(tea.KeyEnter))
 
-		render = m.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▼ Key")
 
@@ -480,7 +481,7 @@ func TestConsumptionPage(t *testing.T) {
 		m.Update(tests.Key(tea.KeyRight))
 		m.Update(tests.Key(tea.KeyEnter))
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▼ Partition")
 
@@ -497,7 +498,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(tests.Key(tea.KeyEnter))
 
-		render = m.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▲ Partition")
 
@@ -544,7 +545,7 @@ func TestConsumptionPage(t *testing.T) {
 		m.Update(tests.Key(tea.KeyRight))
 		m.Update(tests.Key(tea.KeyEnter))
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▼ Offset")
 
@@ -561,7 +562,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		m.Update(tests.Key(tea.KeyEnter))
 
-		render = m.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▲ Offset")
 
@@ -710,7 +711,7 @@ func TestConsumptionPage(t *testing.T) {
 		m.Update(tests.Key('/'))
 		m.Update(tests.Key('0'))
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "key-0")
 		for i := 1; i < 10; i++ {

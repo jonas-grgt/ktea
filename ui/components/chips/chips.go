@@ -1,9 +1,9 @@
 package chips
 
 import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -24,7 +24,7 @@ func (m *Model) View(_ *kontext.ProgramKtx, _ *ui.Renderer) string {
 	for i, elem := range m.elems {
 		var (
 			style   lipgloss.Style
-			bgColor lipgloss.Color
+			bgColor string
 		)
 
 		if m.activateElem == i {
@@ -34,7 +34,7 @@ func (m *Model) View(_ *kontext.ProgramKtx, _ *ui.Renderer) string {
 				bgColor = styles.ColorWhite
 			}
 			style = lipgloss.NewStyle().
-				Background(bgColor).
+				Background(lipgloss.Color(bgColor)).
 				Foreground(lipgloss.Color(styles.ColorBlack)).
 				Bold(true)
 			elem = fmt.Sprintf("«%s»", elem)
@@ -64,7 +64,7 @@ func (m *Model) View(_ *kontext.ProgramKtx, _ *ui.Renderer) string {
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "h", "left":
 			m.prevElem()

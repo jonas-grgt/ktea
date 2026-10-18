@@ -1,8 +1,8 @@
 package kcadmin
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 	"net/http"
 )
 

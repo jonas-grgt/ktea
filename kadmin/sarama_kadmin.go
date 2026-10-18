@@ -11,10 +11,10 @@ import (
 	"os"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 	"github.com/IBM/sarama"
 	"github.com/burdiyan/kafkautil"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 	"github.com/xdg-go/scram"
 )
 

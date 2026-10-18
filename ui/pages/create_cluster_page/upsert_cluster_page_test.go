@@ -2,6 +2,7 @@ package create_cluster_page
 
 import (
 	"fmt"
+	"github.com/charmbracelet/x/ansi"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -12,7 +13,7 @@ import (
 	"ktea/ui/tabs"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -114,7 +115,7 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 		page, ktx := createClusterPage()
 
 		// then
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "No clusters configured. Please create your first cluster!")
 	})
 
@@ -136,7 +137,7 @@ func TestCreateInitialMessageWhenNoClusters(t *testing.T) {
 			),
 		)
 
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 
 		assert.NotContains(t, render, "No clusters configured. Please create your first cluster!")
 	})
@@ -151,7 +152,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF5))
 
 		// then: schema-registry tab is visible
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "Schema Registry URL")
 		assert.Contains(t, render, "Schema Registry Username")
 		assert.Contains(t, render, "Schema Registry Password")
@@ -165,7 +166,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF6))
 
 		// then: kafka connect tab is visible
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "Kafka Connect URL")
 		assert.Contains(t, render, "Kafka Connect Username")
 		assert.Contains(t, render, "Kafka Connect Password")
@@ -192,12 +193,12 @@ func TestTabs(t *testing.T) {
 
 		// when
 		page.Update(tests.Key(tea.KeyF5))
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "Schema Registry URL")
 		page.Update(tests.Key(tea.KeyF4))
 
 		// then: previously entered details are visible
-		render = page.View(ktx, tests.Renderer)
+		render = ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, "localhost:9092")
 	})
@@ -210,7 +211,7 @@ func TestTabs(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF5))
 
 		// then
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "create a cluster before adding a schema registry")
 	})
 }
@@ -224,7 +225,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "name cannot be empty")
 	})
 
@@ -260,7 +261,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(tests.NewKontext(
+		render := ansi.Strip(page.View(tests.NewKontext(
 			tests.WithConfig(&config.Config{
 				Clusters: []config.Cluster{
 					{
@@ -283,7 +284,7 @@ func TestValidation(t *testing.T) {
 					},
 				},
 			}),
-		), tests.Renderer)
+		), tests.Renderer))
 		assert.Contains(t, render, "cluster prd already exists, name most be unique")
 	})
 
@@ -302,7 +303,7 @@ func TestValidation(t *testing.T) {
 		page.Update(tests.Key(tea.KeyEnter))
 
 		// then
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "host cannot be empty")
 	})
 
@@ -352,7 +353,7 @@ func TestValidation(t *testing.T) {
 		kb.Backspace().Backspace().Backspace().Type("prod").Enter()
 
 		// then
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "prod already exists, name most be unique")
 	})
 }
@@ -494,7 +495,7 @@ func TestCreateCluster(t *testing.T) {
 		)
 
 		// then
-		render := page.View(
+		render := ansi.Strip(page.View(
 			tests.NewKontext(
 				tests.WithConfig(
 					&config.Config{
@@ -502,7 +503,7 @@ func TestCreateCluster(t *testing.T) {
 					},
 				),
 			),
-			tests.Renderer)
+			tests.Renderer))
 
 		assert.Contains(t, render, "Cluster registered! <ESC> to go back or <F5> to add a schema registry.")
 	})
@@ -534,7 +535,7 @@ func TestClusterForm(t *testing.T) {
 			// and: Host is entered
 			kb.Type("localhost:9092").Enter()
 			// verify
-			render := page.View(ktx, tests.Renderer)
+			render := ansi.Strip(page.View(ktx, tests.Renderer))
 			assert.NotContains(t, render, "> TLS")
 			assert.NotContains(t, render, "Verification")
 			assert.NotContains(t, render, "> Verify Broker Certificate")
@@ -544,7 +545,7 @@ func TestClusterForm(t *testing.T) {
 			kb.Down()
 
 			// then
-			render = page.View(ktx, tests.Renderer)
+			render = ansi.Strip(page.View(ktx, tests.Renderer))
 			assert.Contains(t, render, "> TLS")
 			assert.Contains(t, render, "Verification")
 			assert.Contains(t, render, "> Verify Broker Certificate")
@@ -556,7 +557,7 @@ func TestClusterForm(t *testing.T) {
 				kb.Up()
 
 				// then
-				render = page.View(ktx, tests.Renderer)
+				render = ansi.Strip(page.View(ktx, tests.Renderer))
 				assert.Contains(t, render, "> Plaintext")
 				assert.NotContains(t, render, "> TLS")
 				assert.NotContains(t, render, "Verification")
@@ -573,12 +574,12 @@ func TestClusterForm(t *testing.T) {
 					kb.Enter()
 					kb.Type("localhost:9092").Enter()
 					kb.Down().Enter() // Select TLS
-					kb.Enter() // Confirm Verify Broker
-					
-					render := page.View(ktx, tests.Renderer)
+					kb.Enter()        // Confirm Verify Broker
+
+					render := ansi.Strip(page.View(ktx, tests.Renderer))
 					assert.Contains(t, render, "Path to Broker CA Certificate")
 				})
-				
+
 				t.Run("Skip verification hides CA cert field", func(t *testing.T) {
 					page, _ := createClusterPage(withContext(ktx))
 					kb := tests.NewKeyboard(page)
@@ -587,8 +588,8 @@ func TestClusterForm(t *testing.T) {
 					kb.Type("localhost:9092").Enter()
 					kb.Down().Enter() // Select TLS
 					kb.Down().Enter() // Select Skip verification
-					
-					render := page.View(ktx, tests.Renderer)
+
+					render := ansi.Strip(page.View(ktx, tests.Renderer))
 					assert.NotContains(t, render, "Path to Broker CA Certificate")
 				})
 			})
@@ -624,7 +625,7 @@ func TestClusterForm(t *testing.T) {
 			kb.Down()
 
 			// then
-			render := page.View(ktx, tests.Renderer)
+			render := ansi.Strip(page.View(ktx, tests.Renderer))
 			assert.Contains(t, render, "SASL_PLAINTEXT")
 			assert.Contains(t, render, "SASL username")
 			assert.Contains(t, render, "SASL password")
@@ -665,7 +666,7 @@ func TestClusterForm(t *testing.T) {
 				kb.Up()
 
 				// then
-				render := page.View(tests.NewKontext(tests.WithConfig(&config.Config{
+				render := ansi.Strip(page.View(tests.NewKontext(tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
 						{
 							Name:             "PRD",
@@ -675,7 +676,7 @@ func TestClusterForm(t *testing.T) {
 							},
 						},
 					},
-				})), tests.Renderer)
+				})), tests.Renderer))
 				// then: Auth Method NONE is still selected
 				assert.Contains(t, render, "> NONE")
 				assert.NotContains(t, render, "SASL username")
@@ -714,7 +715,7 @@ func TestClusterForm(t *testing.T) {
 				// and: Auth Method SASL_PLAINTEXT
 				kb.Down()
 
-				render := page.View(tests.NewKontext(tests.WithConfig(&config.Config{
+				render := ansi.Strip(page.View(tests.NewKontext(tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
 						{
 							Name:             "PRD",
@@ -724,7 +725,7 @@ func TestClusterForm(t *testing.T) {
 							},
 						},
 					},
-				})), tests.Renderer)
+				})), tests.Renderer))
 
 				assert.Contains(t, render, "SASL username")
 				assert.Contains(t, render, "SASL password")
@@ -732,7 +733,7 @@ func TestClusterForm(t *testing.T) {
 				kb.Up()
 
 				// then
-				render = page.View(tests.NewKontext(tests.WithConfig(&config.Config{
+				render = ansi.Strip(page.View(tests.NewKontext(tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
 						{
 							Name:             "PRD",
@@ -742,7 +743,7 @@ func TestClusterForm(t *testing.T) {
 							},
 						},
 					},
-				})), tests.Renderer)
+				})), tests.Renderer))
 				assert.Contains(t, render, "> NONE")
 				assert.NotContains(t, render, "SASL username")
 				assert.NotContains(t, render, "SASL password")
@@ -771,7 +772,7 @@ func TestClusterForm(t *testing.T) {
 				// and: Auth Method SASL_PLAINTEXT
 				kb.Down()
 
-				render = page.View(tests.NewKontext(tests.WithConfig(&config.Config{
+				render = ansi.Strip(page.View(tests.NewKontext(tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
 						{
 							Name:             "PRD",
@@ -781,14 +782,14 @@ func TestClusterForm(t *testing.T) {
 							},
 						},
 					},
-				})), tests.Renderer)
+				})), tests.Renderer))
 
 				assert.Contains(t, render, "SASL username")
 				assert.Contains(t, render, "SASL password")
 
 				kb.Up()
 
-				render = page.View(tests.NewKontext(tests.WithConfig(&config.Config{
+				render = ansi.Strip(page.View(tests.NewKontext(tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
 						{
 							Name:             "PRD",
@@ -798,7 +799,7 @@ func TestClusterForm(t *testing.T) {
 							},
 						},
 					},
-				})), tests.Renderer)
+				})), tests.Renderer))
 				assert.Contains(t, render, "> Plaintext")
 				assert.Contains(t, render, "┃ > NONE")
 			})
@@ -899,7 +900,7 @@ func TestClusterForm(t *testing.T) {
 		// and: username is entered
 		kb.Type("SASL password").Enter()
 
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "TST")
 		assert.Contains(t, render, "blue")
 		assert.Contains(t, render, "localhost:9092")
@@ -909,10 +910,10 @@ func TestClusterForm(t *testing.T) {
 		assert.Contains(t, render, "********")
 
 		// when
-		page.Update(tests.Key(tea.KeyCtrlR))
+		page.Update(tests.Ctrl('r'))
 
 		// then
-		render = page.View(ktx, tests.Renderer)
+		render = ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "┃ Name")
 		assert.NotContains(t, render, "TST")
 		assert.NotContains(t, render, "blue")
@@ -932,7 +933,7 @@ func TestClusterForm(t *testing.T) {
 		page.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 }
@@ -1006,8 +1007,8 @@ func TestEditClusterForm(t *testing.T) {
 		)
 
 		// when
-		page.Update(tests.Key(tea.KeyCtrlE))
-		render := page.View(ktx, tests.Renderer)
+		page.Update(tests.Ctrl('e'))
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 
 		// then
 		assert.Contains(t, render, "┃ Name")
@@ -1124,7 +1125,7 @@ func TestEditClusterForm(t *testing.T) {
 			withClusterToEdit(&cluster),
 		)
 
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "> NONE")
 	})
 
@@ -1159,7 +1160,7 @@ func TestEditClusterForm(t *testing.T) {
 			withClusterToEdit(&cluster),
 		)
 
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "> TLS")
 		assert.Contains(t, render, "> Verify Broker Certificate")
 		assert.Contains(t, render, "> path/to/ca.cert")
@@ -1271,7 +1272,7 @@ func TestEditClusterForm(t *testing.T) {
 		page.Update(kadmin.ConnCheckStartedMsg{})
 
 		// then
-		render := page.View(
+		render := ansi.Strip(page.View(
 			tests.NewKontext(
 				tests.WithConfig(&config.Config{
 					Clusters: []config.Cluster{
@@ -1296,7 +1297,7 @@ func TestEditClusterForm(t *testing.T) {
 					},
 				})),
 			tests.Renderer,
-		)
+		))
 		assert.Contains(t, render, "Testing cluster connectivity")
 	})
 
@@ -1390,14 +1391,14 @@ func TestEditClusterForm(t *testing.T) {
 		page.Update(kadmin.ConnCheckErrMsg{Err: fmt.Errorf("kafka: client has run out of available brokers to talk to")})
 
 		// then
-		render := page.View(
+		render := ansi.Strip(page.View(
 			tests.NewKontext(
 				tests.WithConfig(
 					&config.Config{Clusters: clusters},
 				),
 			),
 			tests.Renderer,
-		)
+		))
 		assert.Contains(t, render, "Failed to Update Cluster: kafka: client has run out of available brokers to talk to")
 	})
 
@@ -1450,7 +1451,7 @@ func TestEditClusterForm(t *testing.T) {
 		})
 
 		// then
-		render := page.View(tests.NewKontext(tests.WithConfig(&config.Config{
+		render := ansi.Strip(page.View(tests.NewKontext(tests.WithConfig(&config.Config{
 			Clusters: []config.Cluster{
 				{
 					Name:             "prd",
@@ -1471,7 +1472,7 @@ func TestEditClusterForm(t *testing.T) {
 					},
 				},
 			},
-		})), tests.Renderer)
+		})), tests.Renderer))
 		assert.Contains(t, render, "Cluster updated!")
 	})
 }
@@ -1532,16 +1533,16 @@ func TestCreateSchemaRegistry(t *testing.T) {
 		assert.Len(t, msgs, 1)
 		assert.IsType(t, sradmin.MockConnectionCheckedMsg{}, msgs[0])
 		assert.EqualValues(t, &config.SchemaRegistryConfig{
-			Url:      "sr-url",
-			Username: "sr-username",
-			Password: "sr-password",
+			Url:       "sr-url",
+			Username:  "sr-username",
+			Password:  "sr-password",
 			TLSConfig: config.TLSConfig{},
 		}, msgs[0].(sradmin.MockConnectionCheckedMsg).Config)
 
 		t.Run("Display error notification when connection cannot be made", func(t *testing.T) {
 			page.Update(sradmin.ConnCheckErrMsg{Err: fmt.Errorf("cannot connect")})
 
-			render := page.View(ktx, tests.Renderer)
+			render := ansi.Strip(page.View(ktx, tests.Renderer))
 
 			assert.Contains(t, render, "Failed to register schema registry")
 		})
@@ -1551,7 +1552,7 @@ func TestCreateSchemaRegistry(t *testing.T) {
 				Cluster: &cluster,
 			})
 
-			render := page.View(ktx, tests.Renderer)
+			render := ansi.Strip(page.View(ktx, tests.Renderer))
 
 			assert.Contains(t, render, "Schema registry registered! <ESC> to go back.")
 		})

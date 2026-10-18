@@ -1,11 +1,11 @@
 package configs_page
 
 import (
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -50,11 +50,11 @@ func (m *CmdBarModel) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) strin
 	var views []string
 
 	if m.state == SEARCHING || m.state == SEARCHED {
-		views = append(views, renderer.RenderWithStyle(m.searchInput.View(), styles.CmdBar.Width(ktx.WindowWidth-2)))
+		views = append(views, renderer.RenderWithStyle(m.searchInput.View(), styles.CmdBarWithWidth(ktx.WindowWidth-2)))
 	} else if m.state == EDITING {
-		views = append(views, renderer.RenderWithStyle(m.editInput.View(), styles.CmdBar.Width(ktx.WindowWidth-2)))
+		views = append(views, renderer.RenderWithStyle(m.editInput.View(), styles.CmdBarWithWidth(ktx.WindowWidth-2)))
 	} else if m.state == UPDATING || m.state == UPDATE_FAILED || m.state == UPDATE_SUCCEEDED || m.state == LOADING {
-		views = append(views, renderer.RenderWithStyle(m.notifier.View(ktx, renderer), styles.CmdBar.Width(ktx.WindowWidth-2)))
+		views = append(views, renderer.RenderWithStyle(m.notifier.View(ktx, renderer), styles.CmdBarWithWidth(ktx.WindowWidth-2)))
 	}
 
 	return ui.JoinVertical(lipgloss.Top, views...)
@@ -65,7 +65,7 @@ func (m *CmdBarModel) Update(msg tea.Msg, stc SelectedTopicConfig) (tea.Msg, tea
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
 		return nil, m.notifier.Update(msg)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if msg.String() == "/" {
 			m.state = SEARCHING
 			m.searchInput.Focus()

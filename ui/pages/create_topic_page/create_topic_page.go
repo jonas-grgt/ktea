@@ -15,10 +15,10 @@ import (
 	"strconv"
 	"strings"
 
-	bsp "github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
+	bsp "charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type formState int
@@ -84,7 +84,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		return tea.Batch(cmds...)
 	case bsp.TickMsg:
 		return tea.Batch(cmds...)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if msg.String() == "esc" && m.formState != loading {
 			return ui.PublishMsg(nav.LoadTopicsPageMsg{Refresh: m.createdAtLeastOneTopic})
 		} else if msg.String() == "ctrl+r" {
@@ -270,7 +270,6 @@ func (m *Model) initForm(fs formState) {
 		cleanupPolicySelect,
 		configInput,
 	))
-	form.QuitAfterSubmit = false
 	if m.formState == configEntered {
 		form.NextField()
 		form.NextField()

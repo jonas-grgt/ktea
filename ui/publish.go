@@ -1,7 +1,7 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func PublishMsg(msg tea.Msg) tea.Cmd {

@@ -1,6 +1,6 @@
 package tests
 
-import tea "github.com/charmbracelet/bubbletea"
+import tea "charm.land/bubbletea/v2"
 
 func ExecuteBatchCmd(cmd tea.Cmd) []tea.Msg {
 	var msgs []tea.Msg

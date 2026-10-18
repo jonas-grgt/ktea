@@ -19,9 +19,9 @@ import (
 	"ktea/ui/tabs"
 	"reflect"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 )
 
 type Model struct {

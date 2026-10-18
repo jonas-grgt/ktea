@@ -8,12 +8,13 @@ import (
 	"ktea/ui"
 	"ktea/ui/components/border"
 	"ktea/ui/components/statusbar"
+	ktable "ktea/ui/components/table"
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type Model struct {
@@ -38,6 +39,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		{Title: "Value", Width: int(float64(ktx.WindowWidth-5) * 0.5)},
 	})
 	m.table.SetHeight(ktx.AvailableTableHeight())
+	m.table.SetWidth(ktable.RowWidth(m.table.Columns()))
 	m.table.SetRows(m.rows)
 	m.table.Focus()
 
@@ -47,7 +49,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if m.cmdBar.IsLoading() {
 			return nil
 		}

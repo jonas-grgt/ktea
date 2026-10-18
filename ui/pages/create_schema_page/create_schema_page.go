@@ -1,10 +1,10 @@
 package create_schema_page
 
 import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
@@ -75,7 +75,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		{
 			switch msg.String() {
 			case "esc":
@@ -148,7 +148,6 @@ func newForm(model *Model) *huh.Form {
 		schemaInput,
 	))
 	form.Init()
-	form.QuitAfterSubmit = false
 	return form
 }
 

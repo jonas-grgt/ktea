@@ -1,6 +1,7 @@
 package create_cluster_page
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"ktea/config"
 	"ktea/kcadmin"
 	"ktea/tests"
@@ -8,7 +9,7 @@ import (
 	"ktea/ui/tabs"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +28,7 @@ func TestUpsertKcModel(t *testing.T) {
 			mockKafkaConnectRegisterer,
 		)
 
-		render := m.View(ktx, tests.Renderer)
+		render := ansi.Strip(m.View(ktx, tests.Renderer))
 
 		assert.Contains(t, render, "Kafka Connect Name")
 		assert.Contains(t, render, "Kafka Connect URL")
@@ -136,7 +137,7 @@ func TestUpsertKcModel(t *testing.T) {
 			mockKafkaConnectRegisterer,
 		)
 
-		render := m.View(ktx, tests.Renderer)
+		render := ansi.Strip(m.View(ktx, tests.Renderer))
 
 		assert.NotContains(t, render, "Kafka Connect URL")
 		assert.NotContains(t, render, "Kafka Connect Username")

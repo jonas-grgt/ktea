@@ -1,8 +1,8 @@
 package subjects_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
@@ -35,7 +35,7 @@ func (m *TableCmdsBar) Update(msg tea.Msg, selection *sradmin.Subject) (tea.Msg,
 
 	// Check for the F4 key press to activate the hardDeleteCBar.
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if msg.String() == "f4" && selection != nil {
 			// Toggle the hardDeleteCBar.
 			active, pmsg, cmd := m.hardDeleteCBar.Update(msg)
