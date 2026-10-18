@@ -36,6 +36,35 @@ func TestKtea(t *testing.T) {
 		})
 	})
 
+	t.Run("Help modal", func(t *testing.T) {
+		model := NewModel(&disableNerdFonts, kadmin.NewMockKadminInstantiator(), config.NewInMemoryConfigIO(&config.Config{}))
+		model.Update(config.LoadedMsg{Config: &config.Config{}})
+		model.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+
+		assert.NotContains(t, ansi.Strip(model.View().Content), "Keybindings")
+
+		model.Update(tea.KeyPressMsg{Code: tea.KeyF1})
+		view := ansi.Strip(model.View().Content)
+		assert.Contains(t, view, "Keybindings")
+		assert.Contains(t, view, "Switch Tabs")
+
+		t.Run("captures keys while open", func(t *testing.T) {
+			model.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+			assert.NotContains(t, ansi.Strip(model.View().Content), "> x")
+		})
+
+		t.Run("esc closes", func(t *testing.T) {
+			model.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
+			assert.NotContains(t, ansi.Strip(model.View().Content), "Keybindings")
+		})
+
+		t.Run("F1 toggles", func(t *testing.T) {
+			model.Update(tea.KeyPressMsg{Code: tea.KeyF1})
+			model.Update(tea.KeyPressMsg{Code: tea.KeyF1})
+			assert.NotContains(t, ansi.Strip(model.View().Content), "Keybindings")
+		})
+	})
+
 	t.Run("Tabs", func(t *testing.T) {
 		t.Run("Cycle through tabs", func(t *testing.T) {
 			io := config.NewInMemoryConfigIO(

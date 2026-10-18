@@ -9,6 +9,7 @@ import (
 var Env EnvStyle
 var Tab TabStyle
 var Statusbar StatusBarStyle
+var Help HelpStyle
 var Table TableStyle
 var CmdBar lipgloss.Style
 var Form = lipgloss.NewStyle().
@@ -57,14 +58,18 @@ type TableStyle struct {
 }
 
 type StatusBarStyle struct {
-	style       lipgloss.Style
-	Indicator   lipgloss.Style
-	Text        lipgloss.Style
-	BindingName lipgloss.Style
-	Shortcuts   lipgloss.Style
-	Key         lipgloss.Style
-	Spacer      lipgloss.Style
-	cluster     lipgloss.Style
+	style     lipgloss.Style
+	Indicator lipgloss.Style
+	Spacer    lipgloss.Style
+	cluster   lipgloss.Style
+}
+
+type HelpStyle struct {
+	Modal  lipgloss.Style
+	Title  lipgloss.Style
+	Key    lipgloss.Style
+	Desc   lipgloss.Style
+	Footer lipgloss.Style
 }
 
 type BorderPosition int
@@ -245,25 +250,31 @@ func init() {
 			Bold(true).
 			Padding(0, 4)
 
-		statusBarStyle.Text = lipgloss.NewStyle().
-			MarginTop(1).
-			PaddingLeft(0).
-			PaddingRight(5)
-
-		statusBarStyle.BindingName = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorYellow))
-
-		statusBarStyle.Key = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorWhite))
-
 		statusBarStyle.Spacer = lipgloss.NewStyle().
 			Inherit(statusBarStyle.style).
 			PaddingLeft(1)
 
-		statusBarStyle.Shortcuts = lipgloss.NewStyle().
-			PaddingLeft(2)
-
 		Statusbar = statusBarStyle
+	}
+
+	{
+		Help = HelpStyle{
+			Modal: lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color(ColorPink)).
+				Padding(1, 2),
+			Title: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(ColorPink)).
+				Bold(true),
+			Key: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(ColorYellow)).
+				Bold(true),
+			Desc: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(ColorWhite)),
+			Footer: lipgloss.NewStyle().
+				Foreground(lipgloss.Color(ColorGrey)).
+				Faint(true),
+		}
 	}
 
 	{

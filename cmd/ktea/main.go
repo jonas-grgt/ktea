@@ -8,6 +8,7 @@ import (
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/ui"
+	"ktea/ui/components/help"
 	"ktea/ui/components/statusbar"
 	"ktea/ui/components/tab"
 	"ktea/ui/pages/clusters_page"
@@ -63,6 +64,7 @@ type Model struct {
 	switchingCluster      bool
 	startupConnErr        bool
 	statusbar             *statusbar.Model
+	showHelp              bool
 }
 
 // RetryClusterConnectionMsg is an internal Msg
@@ -78,7 +80,11 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) View() tea.View {
-	v := tea.NewView(m.render())
+	content := m.render()
+	if m.showHelp && m.statusbar != nil {
+		content = m.withHelpModal(content)
+	}
+	v := tea.NewView(content)
 	v.AltScreen = true
 	return v
 }
@@ -104,6 +110,17 @@ func (m *Model) render() string {
 	return ui.JoinVertical(lipgloss.Top, views...)
 }
 
+// withHelpModal draws the keybindings modal centered on top of content.
+func (m *Model) withHelpModal(content string) string {
+	modal := help.View(m.statusbar.Title(), m.statusbar.Shortcuts(), m.ktx.WindowHeight)
+	x := max(0, (m.ktx.WindowWidth-lipgloss.Width(modal))/2)
+	y := max(0, (m.ktx.WindowHeight-lipgloss.Height(modal))/2)
+	return lipgloss.NewCompositor(
+		lipgloss.NewLayer(content),
+		lipgloss.NewLayer(modal).X(x).Y(y).Z(1),
+	).Render()
+}
+
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
@@ -113,7 +130,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "f1":
-			m.statusbar.ToggleShortcuts()
+			m.showHelp = !m.showHelp && m.statusbar != nil
+			return m, nil
+		}
+
+		// the help modal captures all key presses while open
+		if m.showHelp {
+			if msg.String() == "esc" || msg.String() == "q" {
+				m.showHelp = false
+			}
 			return m, nil
 		}
 
