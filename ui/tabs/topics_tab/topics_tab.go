@@ -9,7 +9,6 @@ import (
 	"ktea/ui/components/statusbar"
 	"ktea/ui/pages"
 	"ktea/ui/pages/configs_page"
-	"ktea/ui/pages/consume_form_page"
 	"ktea/ui/pages/consume_page"
 	"ktea/ui/pages/create_topic_page"
 	"ktea/ui/pages/nav"
@@ -94,7 +93,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.ka,
 			readDetails,
 			msg.Topic,
-			tabs.OriginTopicsPage,
+			false,
 			m,
 		)
 		m.consumptionPage = m.active
@@ -123,29 +122,11 @@ func (m *Model) ToConsumePage(msg tabs.ConsumePageDetails) tea.Cmd {
 		m.ka,
 		msg.ReadDetails,
 		msg.Topic,
-		msg.Origin,
+		msg.OpenSearch,
 		m,
 	)
 	m.consumptionPage = m.active
 	return cmd
-}
-
-func (m *Model) ToConsumeFormPage(d tabs.ConsumeFormPageDetails) tea.Cmd {
-	if d.ReadDetails != nil {
-		m.active = consume_form_page.NewWithDetails(
-			d.ReadDetails,
-			d.Topic,
-			m,
-			m.ktx,
-		)
-	} else {
-		m.active = consume_form_page.New(
-			d.Topic,
-			m,
-			m.ktx,
-		)
-	}
-	return nil
 }
 
 func (m *Model) ToRecordDetailsPage(msg tabs.LoadRecordDetailPageMsg) tea.Cmd {

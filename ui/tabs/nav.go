@@ -6,8 +6,6 @@ import (
 )
 
 type TopicsTabNavigator interface {
-	ToConsumeFormPage(ConsumeFormPageDetails) tea.Cmd
-
 	ToConsumePage(ConsumePageDetails) tea.Cmd
 
 	ToTopicsPage() tea.Cmd
@@ -15,23 +13,11 @@ type TopicsTabNavigator interface {
 	ToRecordDetailsPage(LoadRecordDetailPageMsg) tea.Cmd
 }
 
-type ConsumeFormPageDetails struct {
-	Topic *kadmin.ListedTopic
-	// ReadDetails is used to pre-fill the consume form with the provided - previous - details.
-	ReadDetails *kadmin.ReadDetails
-}
-
-type Origin int
-
-const (
-	OriginTopicsPage Origin = iota
-	OriginConsumeFormPage
-)
-
 type ConsumePageDetails struct {
-	Origin      Origin
 	ReadDetails kadmin.ReadDetails
 	Topic       *kadmin.ListedTopic
+	// OpenSearch opens the expanded search and only starts reading once it is submitted.
+	OpenSearch bool
 }
 
 type LoadRecordDetailPageMsg struct {

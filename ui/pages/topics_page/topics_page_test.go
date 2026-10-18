@@ -297,7 +297,7 @@ func TestTopicsPage(t *testing.T) {
 		assert.Greater(t, t2Idx, t1Idx)
 	})
 
-	t.Run("C-g navigates to consume form page", func(t *testing.T) {
+	t.Run("C-f opens the records page with advanced search", func(t *testing.T) {
 		page, _ := New(
 			kadmin.NewMockKadmin(),
 			tabs.NewMockTopicsTabNavigator(),
@@ -325,25 +325,27 @@ func TestTopicsPage(t *testing.T) {
 
 		page.View(tests.NewKontext(), tests.Renderer)
 
-		cmd := page.Update(tests.Ctrl('g'))
+		cmd := page.Update(tests.Ctrl('f'))
 
 		msgs := tests.ExecuteBatchCmd(cmd)
 
 		assert.Len(t, msgs, 1)
 
-		assert.IsType(t, msgs[0], tabs.ToConsumeFormPageCalledMsg{})
+		assert.IsType(t, msgs[0], tabs.ToConsumePageCalledMsg{})
 
+		topic := &kadmin.ListedTopic{
+			Name:           "b-topic1",
+			PartitionCount: 1,
+			Replicas:       1,
+		}
 		assert.Equal(
 			t,
-			tabs.ConsumeFormPageDetails{
-				Topic: &kadmin.ListedTopic{
-					Name:           "b-topic1",
-					PartitionCount: 1,
-					Replicas:       1,
-				},
-				ReadDetails: nil,
+			tabs.ConsumePageDetails{
+				Topic:       topic,
+				ReadDetails: kadmin.NewDefaultReadDetails(topic),
+				OpenSearch:  true,
 			},
-			msgs[0].(tabs.ToConsumeFormPageCalledMsg).Details,
+			msgs[0].(tabs.ToConsumePageCalledMsg).Details,
 		)
 	})
 
@@ -386,7 +388,6 @@ func TestTopicsPage(t *testing.T) {
 		assert.Equal(
 			t,
 			tabs.ConsumePageDetails{
-				Origin: tabs.OriginTopicsPage,
 				ReadDetails: kadmin.ReadDetails{
 					TopicName:       "b-topic1",
 					PartitionToRead: []int{0},

@@ -1201,3 +1201,32 @@ func TestAwaitRecordsEndsAfterShutdown(t *testing.T) {
 		assert.Equal(t, 3, received)
 	}
 }
+
+func TestFilterMatches(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter *Filter
+		key    string
+		value  string
+		want   bool
+	}{
+		{"nil filter matches all", nil, "k", "v", true},
+		{"term matches key ignoring case", &Filter{Term: "ORDER"}, "order-1", "{}", true},
+		{"term matches value", &Filter{Term: "paid"}, "order-1", `{"status":"PAID"}`, true},
+		{"term matches neither", &Filter{Term: "nope"}, "order-1", "{}", false},
+		{"key starts with", &Filter{KeyFilter: StartsWithFilterType, KeySearchTerm: "ord"}, "order-1", "", true},
+		{"key starts with mismatch", &Filter{KeyFilter: StartsWithFilterType, KeySearchTerm: "der"}, "order-1", "", false},
+		{"value starts with applies type", &Filter{ValueFilter: StartsWithFilterType, ValueSearchTerm: "paid"}, "k", "unpaid", false},
+		{
+			"key and value are combined",
+			&Filter{KeyFilter: ContainsFilterType, KeySearchTerm: "order", ValueFilter: ContainsFilterType, ValueSearchTerm: "paid"},
+			"order-1", "open", false,
+		},
+		{"no filter type ignores term", &Filter{KeyFilter: NoFilterType, KeySearchTerm: "x"}, "k", "v", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.filter.Matches(tt.key, tt.value))
+		})
+	}
+}

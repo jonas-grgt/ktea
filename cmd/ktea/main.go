@@ -113,12 +113,7 @@ func (m *Model) render() string {
 // withHelpModal draws the keybindings modal centered on top of content.
 func (m *Model) withHelpModal(content string) string {
 	modal := help.View(m.statusbar.Title(), m.statusbar.Shortcuts(), m.ktx.WindowHeight)
-	x := max(0, (m.ktx.WindowWidth-lipgloss.Width(modal))/2)
-	y := max(0, (m.ktx.WindowHeight-lipgloss.Height(modal))/2)
-	return lipgloss.NewCompositor(
-		lipgloss.NewLayer(content),
-		lipgloss.NewLayer(modal).X(x).Y(y).Z(1),
-	).Render()
+	return ui.Overlay(content, modal, m.ktx.WindowWidth, m.ktx.WindowHeight)
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -1,6 +1,7 @@
 package consume_page
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/x/ansi"
 	"ktea/kadmin"
@@ -22,7 +23,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -32,7 +33,11 @@ func TestConsumptionPage(t *testing.T) {
 
 		assert.Contains(t, render, "Empty topic")
 
-		assert.Equal(t, []statusbar.Shortcut{{"Go Back", "esc"}}, m.Shortcuts())
+		assert.Equal(t, []statusbar.Shortcut{
+			{"Search", "/"},
+			{"Advanced Search", "C-f"},
+			{"Go Back", "esc"},
+		}, m.Shortcuts())
 	})
 
 	t.Run("Display adjusted shortcuts when consuming", func(t *testing.T) {
@@ -40,7 +45,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -64,7 +69,7 @@ func TestConsumptionPage(t *testing.T) {
 				Filter:          nil,
 			},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -78,7 +83,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -88,7 +93,11 @@ func TestConsumptionPage(t *testing.T) {
 
 		assert.Contains(t, render, "No records found for the given criteria")
 
-		assert.Equal(t, []statusbar.Shortcut{{"Go Back", "esc"}}, m.Shortcuts())
+		assert.Equal(t, []statusbar.Shortcut{
+			{"Search", "/"},
+			{"Advanced Search", "C-f"},
+			{"Go Back", "esc"},
+		}, m.Shortcuts())
 	})
 
 	t.Run("null keys are rendered as <null>", func(t *testing.T) {
@@ -96,7 +105,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -130,7 +139,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -172,7 +181,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -221,7 +230,7 @@ func TestConsumptionPage(t *testing.T) {
 					Filter:          &kadmin.Filter{},
 				},
 				&kadmin.ListedTopic{},
-				tabs.OriginTopicsPage,
+				false,
 				tabs.NewMockTopicsTabNavigator(),
 			)
 
@@ -269,7 +278,7 @@ func TestConsumptionPage(t *testing.T) {
 					Filter:          &kadmin.Filter{},
 				},
 				&kadmin.ListedTopic{},
-				tabs.OriginTopicsPage,
+				false,
 				tabs.NewMockTopicsTabNavigator(),
 			)
 
@@ -305,54 +314,6 @@ func TestConsumptionPage(t *testing.T) {
 			assert.Len(t, msgs, 1)
 			assert.IsType(t, tabs.ToTopicsPageCalledMsg{}, msgs[0])
 		})
-
-		t.Run("goes back to consume form page when origin was consume form page", func(t *testing.T) {
-			m, _ := New(
-				kadmin.NewMockKadmin(),
-				kadmin.ReadDetails{
-					TopicName:       "topic1",
-					PartitionToRead: []int{0},
-					StartPoint:      kadmin.Yesterday,
-					Limit:           500,
-					Filter:          &kadmin.Filter{},
-				},
-				&kadmin.ListedTopic{},
-				tabs.OriginConsumeFormPage,
-				tabs.NewMockTopicsTabNavigator(),
-			)
-
-			originalCancel := m.(*Model).cancelConsumption
-			var cancelCalled bool
-			m.(*Model).cancelConsumption = func() {
-				cancelCalled = true
-				originalCancel()
-			}
-
-			var records []kadmin.ConsumerRecord
-			now := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-			for i := 0; i < 10; i++ {
-				records = append(records, kadmin.ConsumerRecord{
-					Key:       fmt.Sprintf("key-%d", i),
-					Payload:   serdes.DesData{},
-					Err:       nil,
-					Partition: 0,
-					Offset:    int64(i),
-					Headers:   nil,
-					Timestamp: now.Add(time.Duration(i) * time.Second),
-				})
-			}
-			m.Update(kadmin.ConsumerRecordReceived{
-				Records: records,
-			})
-
-			cmd := m.Update(tests.Key(tea.KeyEsc))
-
-			msgs := tests.ExecuteBatchCmd(cmd)
-
-			assert.True(t, cancelCalled, "expected cancelConsumption to be called")
-			assert.Len(t, msgs, 1)
-			assert.IsType(t, tabs.ToConsumeFormPageCalledMsg{}, msgs[0])
-		})
 	})
 
 	t.Run("F3 shows sort bar", func(t *testing.T) {
@@ -360,7 +321,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -393,7 +354,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -456,7 +417,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -519,7 +480,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -583,7 +544,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -606,6 +567,8 @@ func TestConsumptionPage(t *testing.T) {
 
 		assert.Equal(t, []statusbar.Shortcut{
 			{"View Record", "enter"},
+			{"Search", "/"},
+			{"Advanced Search", "C-f"},
 			{"Sort", "F3"},
 			{"Go Back", "esc"},
 		}, m.Shortcuts())
@@ -626,7 +589,7 @@ func TestConsumptionPage(t *testing.T) {
 				TopicName: "topic1",
 			},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -678,49 +641,62 @@ func TestConsumptionPage(t *testing.T) {
 		assert.Equal(t, 9, msg.Index)
 	})
 
-	t.Run("Search by key", func(t *testing.T) {
-		m, _ := New(
-			kadmin.NewMockKadmin(),
-			kadmin.ReadDetails{
-				TopicName: "topic1",
-			},
-			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
-			tabs.NewMockTopicsTabNavigator(),
-		)
+	t.Run("/ searches the topic for a key or value", func(t *testing.T) {
+		reader := &recordingReader{}
+		topic := &kadmin.ListedTopic{Name: "topic1", PartitionCount: 2}
+		m, cmd := New(reader, kadmin.NewDefaultReadDetails(topic), topic, false, tabs.NewMockTopicsTabNavigator())
+		cmd()
 
-		var records []kadmin.ConsumerRecord
-		now := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-		for i := 0; i < 50; i++ {
-			records = append(records, kadmin.ConsumerRecord{
-				Key:       fmt.Sprintf("key-%d", i),
-				Payload:   serdes.DesData{},
-				Err:       nil,
-				Partition: int64(i),
-				Offset:    int64(i),
-				Headers:   nil,
-				Timestamp: now.Add(time.Duration(i) * time.Second),
-			})
-		}
-		m.Update(kadmin.ConsumerRecordReceived{
-			Records: records,
-		})
-
+		m.Update(kadmin.ConsumerRecordReceived{Records: []kadmin.ConsumerRecord{{Key: "key-1"}}})
 		m.View(tests.NewKontext(), tests.Renderer)
 
 		m.Update(tests.Key('/'))
-		m.Update(tests.Key('0'))
-
 		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
+		assert.Contains(t, render, "Key or Value")
+		assert.Contains(t, render, "ctrl+f more options")
+		assert.NotContains(t, render, "Partitions")
 
-		assert.Contains(t, render, "key-0")
-		for i := 1; i < 10; i++ {
-			assert.NotContains(t, render, fmt.Sprintf("key-%d ", i))
+		tests.UpdateKeys(m, "order")
+		submitted := m.Update(tests.Key(tea.KeyEnter))()
+		m.Update(submitted)()
+
+		assert.Len(t, reader.details, 2)
+		assert.Equal(t, &kadmin.Filter{Term: "order"}, reader.details[1].Filter)
+		assert.Equal(t, []int{0, 1}, reader.details[1].PartitionToRead)
+		assert.Equal(t, kadmin.MostRecent, reader.details[1].StartPoint)
+
+		render = ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
+		assert.Contains(t, render, "Records:  0", "previous records are cleared")
+		assert.NotContains(t, render, "Key or Value", "modal is closed")
+	})
+
+	t.Run("ctrl+f opens the expanded search and esc closes it", func(t *testing.T) {
+		topic := &kadmin.ListedTopic{Name: "topic1", PartitionCount: 2}
+		m, _ := New(&recordingReader{}, kadmin.NewDefaultReadDetails(topic), topic, false, tabs.NewMockTopicsTabNavigator())
+
+		m.Update(tests.Ctrl('f'))
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
+		for _, tab := range []string{"Key or Value", "Key", "Value", "Start", "Partitions", "Limit"} {
+			assert.Contains(t, render, tab)
 		}
-		assert.Contains(t, render, "key-10")
-		assert.Contains(t, render, "key-20")
-		assert.Contains(t, render, "key-30")
-		assert.Contains(t, render, "key-40")
+		assert.Contains(t, render, "ctrl+f fewer options")
+
+		msg := m.Update(tests.Key(tea.KeyEsc))()
+		assert.Nil(t, m.Update(msg), "stays on the records page")
+		assert.NotContains(t, ansi.Strip(m.View(tests.NewKontext(), tests.Renderer)), "Partitions")
+	})
+
+	t.Run("OpenSearch waits for the search before reading", func(t *testing.T) {
+		reader := &recordingReader{}
+		topic := &kadmin.ListedTopic{Name: "topic1", PartitionCount: 1}
+		m, cmd := New(reader, kadmin.NewDefaultReadDetails(topic), topic, true, tabs.NewMockTopicsTabNavigator())
+
+		assert.Nil(t, cmd)
+		assert.Contains(t, ansi.Strip(m.View(tests.NewKontext(), tests.Renderer)), "Partitions")
+
+		closed := m.Update(tests.Key(tea.KeyEsc))()
+		assert.IsType(t, tabs.ToTopicsPageCalledMsg{}, m.Update(closed)())
+		assert.Empty(t, reader.details)
 	})
 
 	t.Run("Select record with multiple keys on the same partition", func(t *testing.T) {
@@ -728,7 +704,7 @@ func TestConsumptionPage(t *testing.T) {
 			kadmin.NewMockKadmin(),
 			kadmin.ReadDetails{},
 			&kadmin.ListedTopic{},
-			tabs.OriginTopicsPage,
+			false,
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
@@ -766,4 +742,13 @@ func TestConsumptionPage(t *testing.T) {
 
 	})
 
+}
+
+type recordingReader struct {
+	details []kadmin.ReadDetails
+}
+
+func (r *recordingReader) ReadRecords(_ context.Context, rd kadmin.ReadDetails) tea.Msg {
+	r.details = append(r.details, rd)
+	return nil
 }
