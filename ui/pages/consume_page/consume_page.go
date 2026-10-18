@@ -14,7 +14,6 @@ import (
 	"ktea/ui/tabs"
 	"sort"
 	"strconv"
-	"strings"
 
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -34,8 +33,26 @@ type Model struct {
 	noRecordsAvailable bool
 	noRecordsFound     bool
 	topic              *kadmin.ListedTopic
-	origin             tabs.Origin
 	navigator          tabs.TopicsTabNavigator
+	search             *searchModal
+	// readStarted is false while the page waits for a search to be submitted
+	readStarted bool
+	// source identifies the current consumption, see isStale
+	source  chan kadmin.ConsumerRecord
+	goToTop bool
+}
+
+// isStale reports whether msg belongs to a consumption that has been replaced
+// by a newer search.
+func (m *Model) isStale(msg tea.Msg) bool {
+	var source chan kadmin.ConsumerRecord
+	switch msg := msg.(type) {
+	case kadmin.ConsumerRecordReceived:
+		source = msg.Source()
+	case kadmin.ConsumptionEndedMsg:
+		source = msg.Source()
+	}
+	return source != nil && source != m.source
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -60,33 +77,60 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 			{Title: m.cmdBar.sortByCBar.PrefixSortIcon("Offset"), Width: oCol},
 		})
 		m.table.SetRows(m.rows)
+		// a new search starts at the top; the cursor needs rows to move
+		if m.goToTop && len(m.rows) > 0 {
+			m.table.GotoTop()
+			m.goToTop = false
+		}
 		m.table.SetWidth(ktx.WindowWidth - 2)
 		m.table.SetHeight(ktx.AvailableTableHeight())
 
 		views = append(views, m.border.View(m.table.View()))
 	}
 
-	return ui.JoinVertical(lipgloss.Top, views...)
+	content := ui.JoinVertical(lipgloss.Top, views...)
+	if m.search != nil {
+		content = ui.Overlay(content, m.search.View(ktx.WindowWidth), ktx.WindowWidth, ktx.AvailableHeight)
+	}
+	return content
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case searchClosedMsg:
+		m.search = nil
+		if !m.readStarted {
+			return m.navigator.ToTopicsPage()
+		}
+		return nil
+	case searchSubmittedMsg:
+		m.search = nil
+		return m.startReading(msg.details)
+	}
+
+	if m.isStale(msg) {
+		return nil
+	}
+
+	// the search modal captures all key presses while open, other messages
+	// still reach the page so a running consumption keeps going
+	if m.search != nil {
+		if _, ok := msg.(tea.KeyPressMsg); ok {
+			return m.search.Update(msg)
+		}
+		cmds = append(cmds, m.search.Update(msg))
+	}
+
+	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if msg.String() == "esc" {
 			m.cancelConsumption()
-
-			if m.readDetails.StartPoint == kadmin.Live || m.origin == tabs.OriginTopicsPage {
-				return m.navigator.ToTopicsPage()
-			}
-
-			return m.navigator.ToConsumeFormPage(
-				tabs.ConsumeFormPageDetails{
-					ReadDetails: &m.readDetails,
-					Topic:       m.topic,
-				},
-			)
+			return m.navigator.ToTopicsPage()
+		} else if (msg.String() == "/" || msg.String() == "ctrl+f") && !m.cmdBar.IsFocussed() {
+			m.search = newSearchModal(m.topic, m.readDetails, msg.String() == "ctrl+f")
+			return nil
 		} else if msg.String() == "f2" {
 			m.cancelConsumption()
 			m.consuming = false
@@ -115,6 +159,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		m.noRecordsFound = true
 		m.consuming = false
 	case *kadmin.ReadingStartedMsg:
+		m.source = msg.Source()
 		m.consuming = true
 		cmds = append(cmds, msg.AwaitRecord)
 	case kadmin.ConsumptionEndedMsg:
@@ -174,30 +219,15 @@ func (m *Model) createRows() []table.Row {
 			key = rec.Key
 		}
 
-		if m.cmdBar.GetSearchTerm() != "" {
-			if strings.Contains(strings.ToLower(rec.Key), strings.ToLower(m.cmdBar.GetSearchTerm())) ||
-				strings.Contains(strings.ToLower(rec.Payload.Value), strings.ToLower(m.cmdBar.GetSearchTerm())) {
-				rows = append(
-					rows,
-					table.Row{
-						key,
-						rec.Timestamp.Format("2006-01-02 15:04:05"),
-						strconv.FormatInt(rec.Partition, 10),
-						strconv.FormatInt(rec.Offset, 10),
-					},
-				)
-			}
-		} else {
-			rows = append(
-				rows,
-				table.Row{
-					key,
-					rec.Timestamp.Format("2006-01-02 15:04:05"),
-					strconv.FormatInt(rec.Partition, 10),
-					strconv.FormatInt(rec.Offset, 10),
-				},
-			)
-		}
+		rows = append(
+			rows,
+			table.Row{
+				key,
+				rec.Timestamp.Format("2006-01-02 15:04:05"),
+				strconv.FormatInt(rec.Partition, 10),
+				strconv.FormatInt(rec.Offset, 10),
+			},
+		)
 	}
 
 	sort.SliceStable(rows, func(i, j int) bool {
@@ -225,6 +255,9 @@ func (m *Model) createRows() []table.Row {
 }
 
 func (m *Model) Shortcuts() []statusbar.Shortcut {
+	if m.search != nil {
+		return m.search.Shortcuts()
+	}
 	if m.consuming {
 		return []statusbar.Shortcut{
 			{"View Record", "enter"},
@@ -233,6 +266,8 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 		}
 	} else if m.noRecordsAvailable || m.noRecordsFound {
 		return []statusbar.Shortcut{
+			{"Search", "/"},
+			{"Advanced Search", "C-f"},
 			{"Go Back", "esc"},
 		}
 	} else if m.cmdBar.IsSorting() {
@@ -245,6 +280,8 @@ func (m *Model) Shortcuts() []statusbar.Shortcut {
 
 	return []statusbar.Shortcut{
 		{"View Record", "enter"},
+		{"Search", "/"},
+		{"Advanced Search", "C-f"},
 		{"Sort", "F3"},
 		{"Go Back", "esc"},
 	}
@@ -254,11 +291,13 @@ func (m *Model) Title() string {
 	return "Topics / " + m.readDetails.TopicName + " / Records"
 }
 
+// New creates the records page. With openSearch it opens the expanded search
+// modal and waits for it to be submitted instead of reading right away.
 func New(
 	reader kadmin.RecordReader,
 	readDetails kadmin.ReadDetails,
 	topic *kadmin.ListedTopic,
-	origin tabs.Origin,
+	openSearch bool,
 	navigator tabs.TopicsTabNavigator,
 ) (pages.Page, tea.Cmd) {
 	m := &Model{}
@@ -273,17 +312,42 @@ func New(
 	m.readDetails = readDetails
 	m.topic = topic
 	m.navigator = navigator
-	m.origin = origin
-
-	ctx, cancelFn := context.WithCancel(context.Background())
-	m.cancelConsumption = cancelFn
+	m.cancelConsumption = func() {}
 
 	m.border = border.New(
 		border.WithInnerPaddingTop(),
 		border.WithTitleFn(func() string {
 			return border.KeyValueTitle("Records", fmt.Sprintf(" %d", len(m.rows)), true)
 		}))
-	return m, func() tea.Msg {
-		return m.reader.ReadRecords(ctx, readDetails)
+
+	if openSearch {
+		m.search = newSearchModal(topic, readDetails, true)
+		return m, nil
+	}
+	return m, m.startReading(readDetails)
+}
+
+// startReading cancels any running consumption and reads the topic anew.
+func (m *Model) startReading(details kadmin.ReadDetails) tea.Cmd {
+	m.cancelConsumption()
+	ctx, cancelFn := context.WithCancel(context.Background())
+	m.cancelConsumption = cancelFn
+
+	m.readDetails = details
+	m.readStarted = true
+	m.source = nil
+	m.records = nil
+	m.rows = nil
+	m.noRecordsAvailable = false
+	m.noRecordsFound = false
+	m.goToTop = true
+
+	return func() tea.Msg {
+		msg := m.reader.ReadRecords(ctx, details)
+		if ctx.Err() != nil {
+			// replaced by a newer search while starting
+			return nil
+		}
+		return msg
 	}
 }

@@ -22,12 +22,28 @@ import (
 
 type FilterType string
 
-func (filterDetails *Filter) Filter(value string) bool {
-	switch filterDetails.KeyFilter {
+// Matches reports whether a record satisfies every criterion set on the filter.
+func (f *Filter) Matches(key, value string) bool {
+	if f == nil {
+		return true
+	}
+	if f.Term != "" {
+		term := strings.ToLower(f.Term)
+		if !strings.Contains(strings.ToLower(key), term) &&
+			!strings.Contains(strings.ToLower(value), term) {
+			return false
+		}
+	}
+	return f.KeyFilter.matches(key, f.KeySearchTerm) &&
+		f.ValueFilter.matches(value, f.ValueSearchTerm)
+}
+
+func (t FilterType) matches(value, term string) bool {
+	switch t {
 	case ContainsFilterType:
-		return strings.Contains(value, filterDetails.KeySearchTerm)
+		return strings.Contains(value, term)
 	case StartsWithFilterType:
-		return strings.HasPrefix(value, filterDetails.KeySearchTerm)
+		return strings.HasPrefix(value, term)
 	default:
 		return true
 	}
@@ -93,7 +109,7 @@ func (m *ReadingStartedMsg) AwaitRecord() tea.Msg {
 	select {
 	case record, ok := <-m.ConsumerRecord:
 		if !ok {
-			return ConsumptionEndedMsg{}
+			return ConsumptionEndedMsg{source: m.ConsumerRecord}
 		}
 
 		return ConsumerRecordReceived{
@@ -147,7 +163,7 @@ func (m *ConsumerRecordReceived) AwaitNextRecord() tea.Msg {
 	select {
 	case record, ok := <-m.consumerRecord:
 		if !ok {
-			return ConsumptionEndedMsg{}
+			return ConsumptionEndedMsg{source: m.consumerRecord}
 		}
 
 		records := []ConsumerRecord{record}
@@ -200,9 +216,21 @@ type NoRecordsFound struct {
 	cancelFunc     context.CancelFunc
 }
 
-type ConsumptionEndedMsg struct{}
+type ConsumptionEndedMsg struct {
+	source chan ConsumerRecord
+}
+
+// Source identifies the consumption a message belongs to. It is nil for
+// messages not tied to a specific consumption.
+func (m ConsumptionEndedMsg) Source() chan ConsumerRecord { return m.source }
+
+func (m ConsumerRecordReceived) Source() chan ConsumerRecord { return m.consumerRecord }
+
+func (m *ReadingStartedMsg) Source() chan ConsumerRecord { return m.ConsumerRecord }
 
 type Filter struct {
+	// Term matches records whose key or value contains it, ignoring case.
+	Term            string
 	KeyFilter       FilterType
 	KeySearchTerm   string
 	ValueFilter     FilterType
@@ -481,7 +509,7 @@ func (ka *SaramaKafkaAdmin) doReadRecords(
 						desData, err = ka.deserialize(msg)
 
 						if rd.Filter != nil && err == nil {
-							if !ka.matchesFilter(key, desData.Value, rd.Filter) {
+							if !rd.Filter.Matches(key, desData.Value) {
 								if reachedEnd {
 									return
 								}
@@ -551,22 +579,6 @@ func noRecordsFound(offsets map[int]offsets) bool {
 			return false
 		}
 	}
-	return true
-}
-
-func (ka *SaramaKafkaAdmin) matchesFilter(key, value string, filterDetails *Filter) bool {
-	if filterDetails == nil {
-		return true
-	}
-
-	if filterDetails.KeyFilter != NoFilterType {
-		return filterDetails.Filter(key)
-	}
-
-	if filterDetails.ValueSearchTerm != "" && !strings.Contains(value, filterDetails.ValueSearchTerm) {
-		return false
-	}
-
 	return true
 }
 

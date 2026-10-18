@@ -122,12 +122,14 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				return nil
 			}
 			return ui.PublishMsg(nav.LoadLiveConsumePageMsg{Topic: m.SelectedTopic()})
-		case "ctrl+g":
+		case "ctrl+f":
 			// only accept enter when the table is focussed
 			if !m.tcb.IsFocussed() {
 				if m.SelectedTopic() != nil {
-					return m.navigator.ToConsumeFormPage(tabs.ConsumeFormPageDetails{
-						Topic: m.SelectedTopic(),
+					return m.navigator.ToConsumePage(tabs.ConsumePageDetails{
+						Topic:       m.SelectedTopic(),
+						ReadDetails: kadmin.NewDefaultReadDetails(m.SelectedTopic()),
+						OpenSearch:  true,
 					})
 				}
 			}
@@ -136,7 +138,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			if !m.tcb.IsFocussed() {
 				if m.SelectedTopic() != nil {
 					return m.navigator.ToConsumePage(tabs.ConsumePageDetails{
-						Origin:      tabs.OriginTopicsPage,
 						Topic:       m.SelectedTopic(),
 						ReadDetails: kadmin.NewDefaultReadDetails(m.SelectedTopic()),
 					})
@@ -298,7 +299,7 @@ func New(
 	m.navigator = navigator
 	m.shortcuts = []statusbar.Shortcut{
 		{"Quick Consume", "enter"},
-		{"Granular Consume", "C-g"},
+		{"Advanced Search", "C-f"},
 		{"Live Consume", "S-l"},
 		{"Search", "/"},
 		{"Produce", "C-p"},

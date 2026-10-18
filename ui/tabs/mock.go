@@ -7,10 +7,6 @@ import (
 type MockTopicsTabNavigator struct {
 }
 
-type ToConsumeFormPageCalledMsg struct {
-	Details ConsumeFormPageDetails
-}
-
 type ToConsumePageCalledMsg struct {
 	Details ConsumePageDetails
 }
@@ -49,12 +45,6 @@ func (m *MockKConTabNavigator) ToKConsPage() tea.Cmd {
 func (m *MockClustersTabNavigator) ToClustersPage() tea.Cmd {
 	return func() tea.Msg {
 		return ToClustersPageCalledMsg{}
-	}
-}
-
-func (m *MockTopicsTabNavigator) ToConsumeFormPage(d ConsumeFormPageDetails) tea.Cmd {
-	return func() tea.Msg {
-		return ToConsumeFormPageCalledMsg{d}
 	}
 }
 

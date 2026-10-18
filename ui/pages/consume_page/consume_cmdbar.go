@@ -15,7 +15,6 @@ type ConsumptionCmdBar struct {
 	notifierWidget cmdbar.CmdBar
 	active         cmdbar.CmdBar
 	sortByCBar     *cmdbar.SortByCmdBar
-	searchCBar     *cmdbar.SearchCmdBar
 }
 
 func (c *ConsumptionCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -40,22 +39,12 @@ func (c *ConsumptionCmdBar) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "/":
-			active, _, cmd := c.searchCBar.Update(msg)
-			if !active {
-				c.active = nil
-			} else {
-				c.active = c.searchCBar
-				c.sortByCBar.Active = false
-			}
-			return cmd
 		case "f3":
 			active, _, cmd := c.sortByCBar.Update(msg)
 			if !active {
 				c.active = nil
 			} else {
 				c.active = c.sortByCBar
-				c.searchCBar.Hide()
 			}
 			return cmd
 		default:
@@ -88,10 +77,6 @@ func (c *ConsumptionCmdBar) Shortcuts() []statusbar.Shortcut {
 		return nil
 	}
 	return c.active.Shortcuts()
-}
-
-func (c *ConsumptionCmdBar) GetSearchTerm() string {
-	return c.searchCBar.GetSearchTerm()
 }
 
 func (c *ConsumptionCmdBar) IsSorting() bool {
@@ -149,6 +134,5 @@ func NewConsumptionCmdbar() *ConsumptionCmdBar {
 	return &ConsumptionCmdBar{
 		notifierWidget: notifierCmdBar,
 		sortByCBar:     sortByCmdBar,
-		searchCBar:     cmdbar.NewSearchCmdBar("Search by key or record value"),
 	}
 }
