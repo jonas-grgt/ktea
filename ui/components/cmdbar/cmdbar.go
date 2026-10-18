@@ -1,7 +1,7 @@
 package cmdbar
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"ktea/kontext"
 	"ktea/ui"
 	"ktea/ui/components/statusbar"

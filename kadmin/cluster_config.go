@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sort"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 	"github.com/IBM/sarama"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 )
 
 type ClusterConfigLister interface {

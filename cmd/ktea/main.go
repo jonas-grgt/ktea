@@ -22,9 +22,9 @@ import (
 	"slices"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 )
 
 var version string
@@ -74,10 +74,16 @@ type RetryClusterConnectionMsg struct {
 func (m *Model) Init() tea.Cmd {
 	return tea.Batch(func() tea.Msg {
 		return config.LoadedMsg{Config: config.New(m.configIO)}
-	}, tea.WindowSize())
+	}, tea.RequestWindowSize)
 }
 
-func (m *Model) View() string {
+func (m *Model) View() tea.View {
+	v := tea.NewView(m.render())
+	v.AltScreen = true
+	return v
+}
+
+func (m *Model) render() string {
 	m.ktx = kontext.WithNewAvailableDimensions(m.ktx)
 	if m.renderer == nil {
 		m.renderer = ui.NewRenderer(m.ktx)
@@ -102,11 +108,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "ctrl+c":
 			return m, tea.Quit
-		case tea.KeyF1:
+		case "f1":
 			m.statusbar.ToggleShortcuts()
 			return m, nil
 		}
@@ -360,7 +366,6 @@ func main() {
 			kadmin.SaramaInstantiator(),
 			config.NewDefaultIO(),
 		),
-		tea.WithAltScreen(),
 	)
 
 	if debugParam {

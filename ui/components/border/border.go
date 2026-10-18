@@ -1,8 +1,8 @@
 package border
 
 import (
+	"charm.land/lipgloss/v2"
 	"fmt"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/styles"
 	"strings"
 )
@@ -22,8 +22,8 @@ type Model struct {
 	onTabChanged  OnTabChangedFunc
 	textByPos     map[Position]TextFunc
 	activeTabIdx  int
-	activeColor   lipgloss.Color
-	inActiveColor lipgloss.Color
+	activeColor   string
+	inActiveColor string
 	paddingTop    string
 }
 
@@ -164,7 +164,7 @@ func (m *Model) GoTo(label TabLabel) {
 	}
 }
 
-func (m *Model) WithInActiveColor(c lipgloss.Color) {
+func (m *Model) WithInActiveColor(c string) {
 	m.inActiveColor = c
 }
 
@@ -181,8 +181,8 @@ func KeyValueTitle(
 	active bool,
 ) string {
 	var (
-		colorLabel lipgloss.Color
-		colorCount lipgloss.Color
+		colorLabel string
+		colorCount string
 	)
 	if active {
 		colorLabel = styles.ColorWhite
@@ -197,17 +197,17 @@ func KeyValueTitle(
 		renderedValueLabel = ""
 	} else {
 		renderedValueLabel = ":" + lipgloss.NewStyle().
-			Foreground(colorCount).
+			Foreground(lipgloss.Color(colorCount)).
 			Bold(true).
 			Render(fmt.Sprintf(" %s", valueLabel))
 	}
 
 	return lipgloss.NewStyle().
-		Foreground(colorLabel).
+		Foreground(lipgloss.Color(colorLabel)).
 		Bold(true).
 		Render(fmt.Sprintf("[ %s", keyLabel)) + renderedValueLabel +
 		lipgloss.NewStyle().
-			Foreground(colorLabel).
+			Foreground(lipgloss.Color(colorLabel)).
 			Bold(true).
 			Render(" ]")
 }
@@ -251,13 +251,13 @@ func WithTabs(tabs ...Tab) Option {
 				if m.activeTabIdx == i {
 					renderedTabs += lipgloss.NewStyle().
 						Bold(true).
-						Background(m.activeColor).
+						Background(lipgloss.Color(m.activeColor)).
 						Padding(0, 1).
 						Render(tab.Title)
 				} else {
 					renderedTabs += lipgloss.NewStyle().
 						Padding(0, 1).
-						Foreground(m.inActiveColor).
+						Foreground(lipgloss.Color(m.inActiveColor)).
 						Render(tab.Title)
 				}
 			}
@@ -266,7 +266,7 @@ func WithTabs(tabs ...Tab) Option {
 	}
 }
 
-func WithInactiveColor(c lipgloss.Color) Option {
+func WithInactiveColor(c string) Option {
 	return func(m *Model) {
 		m.inActiveColor = c
 	}

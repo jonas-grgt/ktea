@@ -10,7 +10,7 @@ import (
 	"ktea/ui/components/statusbar"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 )
@@ -229,7 +229,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			tests.NewKontext(),
 		)
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "No headers present")
 	})
@@ -504,7 +504,7 @@ func TestRecordDetailsPage(t *testing.T) {
 		)
 
 		// init ui
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "deserialization error")
 		assert.Contains(t, render, "Unable to render payload")
@@ -517,8 +517,8 @@ func TestRecordDetailsPage(t *testing.T) {
 }
 
 func TestRecordNavigation(t *testing.T) {
-	ctrlN := tea.KeyMsg{Type: tea.KeyCtrlN, Runes: []rune{}, Alt: false}
-	ctrlP := tea.KeyMsg{Type: tea.KeyCtrlP, Runes: []rune{}, Alt: false}
+	ctrlN := tea.KeyPressMsg{Code: 'n', Mod: tea.ModCtrl}
+	ctrlP := tea.KeyPressMsg{Code: 'p', Mod: tea.ModCtrl}
 
 	t.Run("Ctrl+n navigates to next record", func(t *testing.T) {
 		record1 := &kadmin.ConsumerRecord{

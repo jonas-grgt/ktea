@@ -1,6 +1,6 @@
 package kadmin
 
-import tea "github.com/charmbracelet/bubbletea"
+import tea "charm.land/bubbletea/v2"
 
 type TopicDeleter interface {
 	DeleteTopic(topic string) tea.Msg

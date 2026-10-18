@@ -1,8 +1,8 @@
 package tab
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	lg "github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	lg "charm.land/lipgloss/v2"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -56,11 +56,11 @@ func (m *Model) lastTab(i int) bool {
 
 func (m *Model) Update(msg tea.Msg) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlLeft, tea.KeyCtrlH:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "ctrl+left", "ctrl+h":
 			m.Prev()
-		case tea.KeyCtrlRight, tea.KeyCtrlL:
+		case "ctrl+right", "ctrl+l":
 			m.Next()
 		}
 	}

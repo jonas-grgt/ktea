@@ -1,11 +1,11 @@
 package create_cluster_page
 
 import (
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"ktea/config"
 	"ktea/kcadmin"
 	"ktea/kontext"
@@ -88,9 +88,9 @@ func (m *UpsertKcModel) Update(msg tea.Msg) tea.Cmd {
 	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEsc:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "esc":
 			if m.state == entering {
 				if len(m.connectClusters) > 0 {
 					m.state = listing
@@ -99,16 +99,16 @@ func (m *UpsertKcModel) Update(msg tea.Msg) tea.Cmd {
 				m.navigator.ToClustersPage()
 			}
 			return nil
-		case tea.KeyF2:
+		case "f2":
 			clusterName := m.table.SelectedRow()[0]
 			m.deleteCmdbar.Delete(clusterName)
 			_, _, cmd := m.deleteCmdbar.Update(msg)
 			return cmd
-		case tea.KeyCtrlN:
+		case "ctrl+n":
 			m.state = entering
 			m.resetFormValues()
 			m.form = m.createKcForm()
-		case tea.KeyCtrlE:
+		case "ctrl+e":
 			if m.state == entering {
 				break
 			}
@@ -281,7 +281,6 @@ func (m *UpsertKcModel) createKcForm() *huh.Form {
 		huh.NewGroup(fields...).
 			Title("Kafka Connect"),
 	)
-	form.QuitAfterSubmit = false
 	form.Init()
 
 	return form

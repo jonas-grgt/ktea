@@ -1,10 +1,10 @@
 package schema_details_page
 
 import (
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
@@ -47,7 +47,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 
 	if m.schemas != nil {
 		if m.vp == nil {
-			vp := viewport.New(ktx.WindowWidth-3, ktx.AvailableHeight-4)
+			vp := viewport.New(viewport.WithWidth(ktx.WindowWidth-3), viewport.WithHeight(ktx.AvailableHeight-4))
 			m.vp = &vp
 			m.createVersionChipsView()
 		}
@@ -56,8 +56,8 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 				m.schemas = m.updatedSchemas
 				m.createVersionChipsView()
 			}
-			m.vp.Height = ktx.AvailableHeight - 5
-			m.vp.Width = ktx.WindowWidth - 3
+			m.vp.SetHeight(ktx.AvailableHeight - 5)
+			m.vp.SetWidth(ktx.WindowWidth - 3)
 			views = append(views, lipgloss.NewStyle().
 				PaddingTop(1).
 				PaddingLeft(1).
@@ -99,7 +99,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
 			if m.cmdbar.active != nil {

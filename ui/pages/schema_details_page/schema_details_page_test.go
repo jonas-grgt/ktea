@@ -1,7 +1,7 @@
 package schema_details_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/kontext"
@@ -79,7 +79,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 		t.Run("visible when fetching schemas", func(t *testing.T) {
 			page.Update(sradmin.SchemaListingStarted{})
 
-			render := page.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 			assert.Contains(t, render, "Loading schema")
 		})
@@ -96,7 +96,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 				},
 			})
 
-			render := page.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 			assert.NotContains(t, render, "Loading schema")
 		})
@@ -267,7 +267,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			page.Update(tests.Key(tea.KeyDown))
 			page.Update(tests.Key(tea.KeyF2))
 
-			render := page.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 			assert.Regexp(t, "┃ 🗑️  Delete version 2 of schema?\\W+Delete!\\W+Cancel.", render)
 		})
@@ -275,7 +275,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 		t.Run("esc cancels deletion", func(t *testing.T) {
 			page.Update(tests.Key(tea.KeyEsc))
 
-			render := page.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 			assert.NotRegexp(t, "┃ 🗑️  Delete version 2 of schema?\\W+Delete!\\W+Cancel.", render)
 			assert.Contains(t, render, "ID      : 123")
@@ -286,7 +286,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			page.Update(tests.Key(tea.KeyF2))
 			page.Update(tests.Key(tea.KeyEnter))
 
-			render := page.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 			assert.NotRegexp(t, "┃ 🗑️  Delete version 2 of schema?\\W+Delete!\\W+Cancel.", render)
 			assert.Contains(t, render, "ID      : 123")
@@ -305,7 +305,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 				Version: 1,
 			})
 
-			render := page.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 			assert.Contains(t, render, "Versions:  «2»                                                                                     \n")
 			assert.IsType(t, notifier.HideNotificationMsg{}, cmd())

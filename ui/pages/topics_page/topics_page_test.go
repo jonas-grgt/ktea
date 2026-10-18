@@ -2,13 +2,14 @@ package topics_page
 
 import (
 	"fmt"
+	"github.com/charmbracelet/x/ansi"
 	"ktea/kadmin"
 	"ktea/tests"
 	"ktea/ui/tabs"
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,13 +20,13 @@ func TestTopicsPage(t *testing.T) {
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
-		cmd := page.Update(tests.Key(tea.KeyCtrlN))
+		cmd := page.Update(tests.Ctrl('n'))
 		assert.NotNil(t, cmd)
 
-		cmd = page.Update(tests.Key(tea.KeyCtrlI))
+		cmd = page.Update(tests.Key(tea.KeyTab))
 		assert.Nil(t, cmd)
 
-		cmd = page.Update(tests.Key(tea.KeyCtrlP))
+		cmd = page.Update(tests.Ctrl('p'))
 		assert.Nil(t, cmd)
 	})
 
@@ -69,12 +70,12 @@ func TestTopicsPage(t *testing.T) {
 		page.Update(tests.Key('/'))
 		tests.UpdateKeys(page, "topic2")
 
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 		assert.Contains(t, render, "> topic2")
 
 		page.Update(kadmin.TopicsListedMsg{})
 
-		render = page.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 		assert.NotContains(t, render, "> topic2")
 	})
 
@@ -135,7 +136,7 @@ func TestTopicsPage(t *testing.T) {
 			},
 		})
 
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▲ Name")
 	})
@@ -168,9 +169,9 @@ func TestTopicsPage(t *testing.T) {
 
 		page.Update(tests.Key(tea.KeyF3))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
-		render = page.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▼ Name")
 
@@ -212,7 +213,7 @@ func TestTopicsPage(t *testing.T) {
 		page.Update(tests.Key(tea.KeyF3))
 		page.Update(tests.Key(tea.KeyRight))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.NotContains(t, render, "▲ Name")
 		assert.Contains(t, render, "▼ Part")
@@ -226,7 +227,7 @@ func TestTopicsPage(t *testing.T) {
 		assert.Less(t, t2Idx, t1Idx)
 
 		page.Update(tests.Key(tea.KeyEnter))
-		render = page.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▲ Part")
 
@@ -269,7 +270,7 @@ func TestTopicsPage(t *testing.T) {
 		page.Update(tests.Key(tea.KeyRight))
 		page.Update(tests.Key(tea.KeyRight))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.NotContains(t, render, "▲ Name")
 		assert.Contains(t, render, "▼ Repl")
@@ -283,7 +284,7 @@ func TestTopicsPage(t *testing.T) {
 		assert.Less(t, t2Idx, t1Idx)
 
 		page.Update(tests.Key(tea.KeyEnter))
-		render = page.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▲ Repl")
 
@@ -324,7 +325,7 @@ func TestTopicsPage(t *testing.T) {
 
 		page.View(tests.NewKontext(), tests.Renderer)
 
-		cmd := page.Update(tests.Key(tea.KeyCtrlG))
+		cmd := page.Update(tests.Ctrl('g'))
 
 		msgs := tests.ExecuteBatchCmd(cmd)
 
@@ -446,7 +447,7 @@ func TestTopicsPage(t *testing.T) {
 		kb := tests.NewKeyboard(page)
 		kb.F2()
 
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 		assert.NotContains(t, render, "will be deleted permanently")
 	})
 
@@ -456,7 +457,7 @@ func TestTopicsPage(t *testing.T) {
 			tabs.NewMockTopicsTabNavigator(),
 		)
 
-		cmd := page.Update(tests.Key(tea.KeyCtrlO))
+		cmd := page.Update(tests.Ctrl('o'))
 
 		assert.Nil(t, cmd)
 	})

@@ -1,8 +1,8 @@
 package kadmin
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"github.com/IBM/sarama"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type TopicConfigLister interface {

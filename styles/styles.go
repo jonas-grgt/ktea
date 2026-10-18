@@ -1,9 +1,9 @@
 package styles
 
 import (
+	"charm.land/bubbles/v2/table"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/lipgloss"
 )
 
 var Env EnvStyle
@@ -86,8 +86,8 @@ func EmbeddedBorderText(
 ) EmbeddedTextFunc {
 	return func(active bool) string {
 		var (
-			colorLabel lipgloss.Color
-			colorCount lipgloss.Color
+			colorLabel string
+			colorCount string
 		)
 		if active {
 			colorLabel = ColorWhite
@@ -102,17 +102,17 @@ func EmbeddedBorderText(
 			renderedValueLabel = ""
 		} else {
 			renderedValueLabel = ":" + lipgloss.NewStyle().
-				Foreground(colorCount).
+				Foreground(lipgloss.Color(colorCount)).
 				Bold(true).
 				Render(fmt.Sprintf(" %s", valueLabel))
 		}
 
 		return lipgloss.NewStyle().
-			Foreground(colorLabel).
+			Foreground(lipgloss.Color(colorLabel)).
 			Bold(true).
 			Render(fmt.Sprintf("[ %s", keyLabel)) + renderedValueLabel +
 			lipgloss.NewStyle().
-				Foreground(colorLabel).
+				Foreground(lipgloss.Color(colorLabel)).
 				Bold(true).
 				Render(" ]")
 	}
@@ -129,12 +129,13 @@ func CenterText(width int, height int) lipgloss.Style {
 }
 
 func CmdBarWithWidth(width int) lipgloss.Style {
-	return CmdBar.Width(width)
+	// lipgloss v2 widths include the border; keep width as the content+padding width.
+	return CmdBar.Width(width + CmdBar.GetHorizontalBorderSize())
 }
 
-func FG(color lipgloss.Color) lipgloss.Style {
+func FG(color string) lipgloss.Style {
 	return lipgloss.NewStyle().
-		Foreground(color)
+		Foreground(lipgloss.Color(color))
 }
 
 func (s *StatusBarStyle) Cluster(color string) lipgloss.Style {

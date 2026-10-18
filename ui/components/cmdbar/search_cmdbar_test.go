@@ -1,6 +1,7 @@
 package cmdbar
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/tests"
 	"testing"
@@ -10,14 +11,14 @@ func TestSearchCmdBar(t *testing.T) {
 	t.Run("Is hidden by default", func(t *testing.T) {
 		model := NewSearchCmdBar(">")
 
-		render := model.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(model.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Empty(t, render)
 
 		t.Run("/ activates search", func(t *testing.T) {
 			model.Update(tests.Key('/'))
 
-			render = model.View(tests.NewKontext(), tests.Renderer)
+			render = ansi.Strip(model.View(tests.NewKontext(), tests.Renderer))
 
 			assert.Contains(t, render, ">")
 		})
@@ -35,13 +36,13 @@ func TestSearchCmdBar(t *testing.T) {
 		model.Update(tests.Key('c'))
 		model.Update(tests.Key('h'))
 
-		render := model.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(model.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "> search")
 
 		model.Update(tests.Key('/'))
 
-		render = model.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(model.View(tests.NewKontext(), tests.Renderer))
 
 		assert.NotContains(t, render, "> search")
 	})

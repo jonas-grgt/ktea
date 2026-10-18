@@ -3,7 +3,7 @@ package kadmin
 import (
 	"ktea/config"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 const (

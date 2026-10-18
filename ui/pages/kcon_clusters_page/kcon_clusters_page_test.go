@@ -1,13 +1,14 @@
 package kcon_clusters_page
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"ktea/config"
 	"ktea/styles"
 	"ktea/tests"
 	"ktea/ui/pages/kcon_page"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +46,7 @@ func TestKConsPage(t *testing.T) {
 			},
 		}))
 
-		render := page.View(ktx, tests.Renderer)
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
 
 		assert.Contains(t, render, "s3-sink")
 	})

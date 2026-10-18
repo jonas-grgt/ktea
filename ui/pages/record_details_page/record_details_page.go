@@ -19,10 +19,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/table"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -106,7 +106,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	cmds = append(cmds, cmd)
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
 			return ui.PublishMsg(nav.LoadCachedConsumptionPageMsg{})
@@ -151,7 +151,7 @@ func (m *Model) mainView(width int, height int) string {
 
 func (m *Model) schemaView(width int, height int) string {
 	if m.schemaVp == nil {
-		schemaVp := viewport.New(width, height)
+		schemaVp := viewport.New(viewport.WithWidth(width), viewport.WithHeight(height))
 		m.schemaVp = &schemaVp
 		if m.err == nil {
 			m.schemaVp.SetContent(lipgloss.NewStyle().
@@ -159,8 +159,8 @@ func (m *Model) schemaView(width int, height int) string {
 				Render(ui.PrettyPrintJson(m.record.Payload.Schema)))
 		}
 	} else {
-		m.schemaVp.Height = height
-		m.schemaVp.Width = width
+		m.schemaVp.SetHeight(height)
+		m.schemaVp.SetWidth(width)
 	}
 	return m.schemaVp.View()
 }
@@ -179,12 +179,13 @@ func (m *Model) sidebarView(ktx *kontext.ProgramKtx, payloadWidth int, height in
 	} else {
 		headerValueTableHeight := len(m.record.Headers) + 4
 
-		headerValueVp := viewport.New(sideBarWidth, height-headerValueTableHeight-4)
+		headerValueVp := viewport.New(viewport.WithWidth(sideBarWidth), viewport.WithHeight(height-headerValueTableHeight-4))
 		m.headerValueVp = &headerValueVp
 		m.headerKeyTable.SetColumns([]table.Column{
 			{"Header Key", sideBarWidth},
 		})
 		m.headerKeyTable.SetHeight(headerValueTableHeight)
+		m.headerKeyTable.SetWidth(ktable.RowWidth(m.headerKeyTable.Columns()))
 		m.headerKeyTable.SetRows(m.headerRows)
 
 		headerValueLine := strings.Builder{}
@@ -218,7 +219,7 @@ func (m *Model) selectedHeaderValue() string {
 
 func (m *Model) recordView(payloadWidth int, height int) string {
 	if m.recordVp == nil {
-		recordVp := viewport.New(payloadWidth, height)
+		recordVp := viewport.New(viewport.WithWidth(payloadWidth), viewport.WithHeight(height))
 		m.recordVp = &recordVp
 		if m.err == nil {
 			m.recordVp.SetContent(lipgloss.NewStyle().
@@ -237,8 +238,8 @@ func (m *Model) recordView(payloadWidth int, height int) string {
 					Render("Unable to render payload")))
 		}
 	} else {
-		m.recordVp.Height = height
-		m.recordVp.Width = payloadWidth
+		m.recordVp.SetHeight(height)
+		m.recordVp.SetWidth(payloadWidth)
 	}
 	return m.recordVp.View()
 }

@@ -1,11 +1,11 @@
 package clusters_page
 
 import (
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"fmt"
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -68,7 +68,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			m.rows = m.createRows()
 			return ClusterSwitchedMsg{activeCluster}
 		})
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "enter":
 			if !m.cmdBar.IsFocussed() {

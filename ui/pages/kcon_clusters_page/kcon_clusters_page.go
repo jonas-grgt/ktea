@@ -1,10 +1,10 @@
 package kcon_clusters_page
 
 import (
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 	"fmt"
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 	"ktea/config"
 	"ktea/kontext"
 	"ktea/ui"
@@ -49,8 +49,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
+	case tea.KeyPressMsg:
+		switch msg.Code {
 		case tea.KeyEnter:
 			var name = m.table.SelectedRow()[0]
 			for _, cluster := range m.cluster.KafkaConnectClusters {

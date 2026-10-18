@@ -1,9 +1,9 @@
 package cmdbar
 
 import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -50,7 +50,7 @@ func (m *SortByCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) stri
 	for i, sort := range m.sorts {
 		var (
 			style   lipgloss.Style
-			bgColor lipgloss.Color
+			bgColor string
 			render  string
 			arrow   string
 		)
@@ -68,7 +68,7 @@ func (m *SortByCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) stri
 				bgColor = styles.ColorWhite
 			}
 			style = lipgloss.NewStyle().
-				Background(bgColor).
+				Background(lipgloss.Color(bgColor)).
 				Foreground(lipgloss.Color(styles.ColorBlack))
 
 			render = fmt.Sprintf(" %s %s ", sort.Label, arrow)
@@ -98,7 +98,7 @@ func (m *SortByCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) stri
 
 func (m *SortByCmdBar) Update(msg tea.Msg) (bool, tea.Msg, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "f3":
 			m.Active = !m.Active

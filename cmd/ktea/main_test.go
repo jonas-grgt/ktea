@@ -1,12 +1,13 @@
 package main
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +26,7 @@ func TestKtea(t *testing.T) {
 			model.Update(config.LoadedMsg{
 				Config: &config.Config{},
 			})
-			view := model.View()
+			view := ansi.Strip(model.View().Content)
 
 			assert.Contains(t, view, "┃ Name")
 			// do not show cluster upsert tabs
@@ -75,14 +76,9 @@ func TestKtea(t *testing.T) {
 				Height: 100,
 			})
 
-			model.Update(tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'2'},
-				Alt:   true,
-				Paste: false,
-			})
+			model.Update(tea.KeyPressMsg{Code: '2', Mod: tea.ModAlt})
 
-			view := model.View()
+			view := ansi.Strip(model.View().Content)
 
 			var expectedLayout = "" +
 				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
@@ -90,21 +86,11 @@ func TestKtea(t *testing.T) {
 				"┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────"
 			assert.Contains(t, view, expectedLayout)
 
-			model.Update(tea.KeyMsg{
-				Type:  tea.KeyCtrlRight,
-				Runes: []rune{},
-				Alt:   false,
-				Paste: false,
-			})
+			model.Update(tea.KeyPressMsg{Code: tea.KeyRight, Mod: tea.ModCtrl})
 
-			model.Update(tea.KeyMsg{
-				Type:  tea.KeyCtrlL,
-				Runes: []rune{},
-				Alt:   false,
-				Paste: false,
-			})
+			model.Update(tea.KeyPressMsg{Code: 'l', Mod: tea.ModCtrl})
 
-			view = model.View()
+			view = ansi.Strip(model.View().Content)
 
 			expectedLayout = "" +
 				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
@@ -112,14 +98,9 @@ func TestKtea(t *testing.T) {
 				"┴────────┴┴─────────────────┴┘                 └┴──────────┴────────────────────────────────────────\n"
 			assert.Contains(t, view, expectedLayout)
 
-			model.Update(tea.KeyMsg{
-				Type:  tea.KeyCtrlL,
-				Runes: []rune{},
-				Alt:   false,
-				Paste: false,
-			})
+			model.Update(tea.KeyPressMsg{Code: 'l', Mod: tea.ModCtrl})
 
-			view = model.View()
+			view = ansi.Strip(model.View().Content)
 
 			expectedLayout = "" +
 				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
@@ -127,28 +108,13 @@ func TestKtea(t *testing.T) {
 				"┴────────┴┴─────────────────┴┴─────────────────┴┘          └────────────────────────────────────────\n"
 			assert.Contains(t, view, expectedLayout)
 
-			model.Update(tea.KeyMsg{
-				Type:  tea.KeyCtrlLeft,
-				Runes: []rune{},
-				Alt:   false,
-				Paste: false,
-			})
+			model.Update(tea.KeyPressMsg{Code: tea.KeyLeft, Mod: tea.ModCtrl})
 
-			model.Update(tea.KeyMsg{
-				Type:  tea.KeyCtrlLeft,
-				Runes: []rune{},
-				Alt:   false,
-				Paste: false,
-			})
+			model.Update(tea.KeyPressMsg{Code: tea.KeyLeft, Mod: tea.ModCtrl})
 
-			model.Update(tea.KeyMsg{
-				Type:  tea.KeyCtrlH,
-				Runes: []rune{},
-				Alt:   false,
-				Paste: false,
-			})
+			model.Update(tea.KeyPressMsg{Code: 'h', Mod: tea.ModCtrl})
 
-			view = model.View()
+			view = ansi.Strip(model.View().Content)
 
 			expectedLayout = "" +
 				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +

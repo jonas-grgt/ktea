@@ -1,11 +1,11 @@
 package cmdbar
 
 import (
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -51,7 +51,7 @@ func (s *DeleteCmdBar[any]) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer)
 		WithButtonAlignment(lipgloss.Left).
 		Focus()
 
-	s.deleteConfirm.WithTheme(huh.ThemeCharm())
+	s.deleteConfirm.WithTheme(huh.ThemeFunc(huh.ThemeCharm))
 
 	return renderer.RenderWithStyle(s.deleteConfirm.View(), styles.CmdBarWithWidth(ktx.WindowWidth-BorderedPadding))
 }
@@ -74,7 +74,7 @@ func (s *DeleteCmdBar[any]) Shortcuts() []statusbar.Shortcut {
 
 func (s *DeleteCmdBar[any]) Update(msg tea.Msg) (bool, tea.Msg, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case s.deleteKey:
 			s.active = !s.active

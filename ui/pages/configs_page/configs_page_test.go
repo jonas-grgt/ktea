@@ -1,7 +1,7 @@
 package configs_page
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
@@ -131,11 +131,11 @@ func TestConfigsPage_Table(t *testing.T) {
 			},
 		})
 
-		render := section.View(&kontext.ProgramKtx{
+		render := ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowHeight:    50,
 			WindowWidth:     100,
 			AvailableHeight: 100,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		cleanupIdx := strings.Index(render, "cleanup.policy")
 		deleteRetIdx := strings.Index(render, "delete.retention.ms")
@@ -157,26 +157,26 @@ func TestConfigsPage_Searching(t *testing.T) {
 
 	t.Run("/ triggers search", func(t *testing.T) {
 		section := newSection()
-		render := section.View(ktx, tests.Renderer)
+		render := ansi.Strip(section.View(ktx, tests.Renderer))
 		assert.NotContains(t, render, "┃ >\n")
 
 		section.Update(tests.Key('/'))
-		render = section.View(ktx, tests.Renderer)
+		render = ansi.Strip(section.View(ktx, tests.Renderer))
 
 		assert.Contains(t, render, "┃ >")
 	})
 
 	t.Run("esc cancels search", func(t *testing.T) {
 		section := newSection()
-		render := section.View(ktx, tests.Renderer)
+		render := ansi.Strip(section.View(ktx, tests.Renderer))
 		assert.NotContains(t, render, "┃ >")
 
 		section.Update(tests.Key('/'))
-		render = section.View(ktx, tests.Renderer)
+		render = ansi.Strip(section.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "┃ > ")
 
 		section.Update(tests.Key(tea.KeyEsc))
-		render = section.View(ktx, tests.Renderer)
+		render = ansi.Strip(section.View(ktx, tests.Renderer))
 		assert.NotContains(t, render, "┃ > \n")
 	})
 
@@ -184,17 +184,17 @@ func TestConfigsPage_Searching(t *testing.T) {
 		section := newSection()
 
 		section.Update(tests.Key('/'))
-		render := section.View(ktx, tests.Renderer)
+		render := ansi.Strip(section.View(ktx, tests.Renderer))
 		section.Update(tests.Key('a'))
-		render = section.View(ktx, tests.Renderer)
+		render = ansi.Strip(section.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "┃ > a ")
 
 		section.Update(tests.Key(tea.KeyEsc))
-		render = section.View(ktx, tests.Renderer)
+		render = ansi.Strip(section.View(ktx, tests.Renderer))
 		assert.NotContains(t, render, "┃ > \n")
 
 		section.Update(tests.Key('/'))
-		render = section.View(ktx, tests.Renderer)
+		render = ansi.Strip(section.View(ktx, tests.Renderer))
 		assert.Contains(t, render, "┃ > ")
 
 	})
@@ -213,36 +213,36 @@ func TestConfigsPage_Searching(t *testing.T) {
 func TestConfigsPage_Editing(t *testing.T) {
 	t.Run("e prompt edit input field", func(t *testing.T) {
 		section := newSection()
-		render := section.View(&kontext.ProgramKtx{
+		render := ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		section.Update(tests.Key('e'))
 
-		render = section.View(&kontext.ProgramKtx{
+		render = ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.Renderer)
+		}, tests.Renderer))
 		assert.Contains(t, render, "┃ > delete")
 	})
 
 	t.Run("enter updates config", func(t *testing.T) {
 		section := newSection()
-		render := section.View(&kontext.ProgramKtx{
+		render := ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		section.Update(tests.Key('e'))
-		section.Update(tests.Key(tea.KeyCtrlU))
+		section.Update(tests.Ctrl('u'))
 		section.Update(tests.Key('f'))
 		section.Update(tests.Key(tea.KeyEnter))
 
-		render = section.View(&kontext.ProgramKtx{
+		render = ansi.Strip(section.View(&kontext.ProgramKtx{
 			WindowHeight: 19,
 			WindowWidth:  100,
-		}, tests.Renderer)
+		}, tests.Renderer))
 		assert.NotContains(t, render, "┃ > delete \n")
 		assert.Contains(t, render, "Updating Topic Config")
 	})

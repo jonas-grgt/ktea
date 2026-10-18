@@ -1,13 +1,13 @@
 package publish_page
 
 import (
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"errors"
 	"fmt"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/styles"
@@ -89,14 +89,14 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				time.Sleep(5 * time.Second)
 				return notifier.HideNotificationMsg{}
 			})
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEsc:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "esc":
 			if m.state == publishing {
 				return nil
 			}
 			return ui.PublishMsg(nav.LoadTopicsPageMsg{})
-		case tea.KeyCtrlR:
+		case "ctrl+r":
 			m.resetForm()
 		}
 	}
@@ -219,7 +219,6 @@ func (m *Model) newForm(ktx *kontext.ProgramKtx) *huh.Form {
 		),
 	)
 	form.WithLayout(huh.LayoutGrid(4, 2))
-	form.QuitAfterSubmit = false
 	form.Init()
 	return form
 }

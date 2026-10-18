@@ -1,8 +1,8 @@
 package config
 
 import (
+	"charm.land/log/v2"
 	"fmt"
-	"github.com/charmbracelet/log"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"

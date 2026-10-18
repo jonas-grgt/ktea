@@ -14,10 +14,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/IBM/sarama"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type FilterType string

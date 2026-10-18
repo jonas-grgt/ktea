@@ -1,9 +1,9 @@
 package schema_details_page
 
 import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
@@ -47,7 +47,7 @@ func (c *CmdBar) Update(msg tea.Msg, selection string) (tea.Msg, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "f2":
 			active, pmsg, cmd := c.deleteCmdBar.Update(msg)

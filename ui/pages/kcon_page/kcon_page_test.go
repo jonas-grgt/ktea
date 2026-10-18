@@ -1,9 +1,10 @@
 package kcon_page
 
 import (
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
 	"fmt"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/kcadmin"
 	"ktea/tests"
@@ -107,7 +108,7 @@ func TestKconsPage(t *testing.T) {
 			},
 		})
 
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▲ Name")
 
@@ -167,9 +168,9 @@ func TestKconsPage(t *testing.T) {
 
 		page.Update(tests.Key(tea.KeyF3))
 		page.Update(tests.Key(tea.KeyEnter))
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
-		render = page.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "▼ Name")
 
@@ -229,13 +230,13 @@ func TestKconsPage(t *testing.T) {
 
 		page.Update(tests.Key(tea.KeyF3))
 
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 		assert.Contains(t, render, "Name ▲")
 
 		cmd := page.Update(tests.Key(tea.KeyEsc))
 
 		assert.Nil(t, cmd)
-		render = page.View(tests.NewKontext(), tests.Renderer)
+		render = ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 		assert.NotContains(t, render, "Name ▲")
 	})
 
@@ -287,7 +288,7 @@ func TestKconsPage(t *testing.T) {
 		page.Update(tests.Key('/'))
 		page.Update(tests.Key('a'))
 
-		render := page.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(page.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "1/3")
 		assert.Greater(t, strings.Index(render, "a-my-connector"), -1)
@@ -366,7 +367,7 @@ func TestKconsPage(t *testing.T) {
 
 			page.Update(kcadmin.ResumingStartedMsg{})
 
-			render := page.View(tests.Kontext, tests.Renderer)
+			render := ansi.Strip(page.View(tests.Kontext, tests.Renderer))
 			assert.Contains(t, render, "RESUMING")
 
 			page.Update(ConnectorStateChanged{
@@ -407,7 +408,7 @@ func TestKconsPage(t *testing.T) {
 				},
 			})
 
-			render = page.View(tests.Kontext, tests.Renderer)
+			render = ansi.Strip(page.View(tests.Kontext, tests.Renderer))
 			assert.NotContains(t, render, "RESUMING")
 		})
 	})

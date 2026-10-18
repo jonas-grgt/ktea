@@ -1,7 +1,7 @@
 package kcadmin
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"ktea/config"
 	"net/http"
 )

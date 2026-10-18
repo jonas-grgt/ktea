@@ -1,10 +1,10 @@
 package cmdbar
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -53,14 +53,14 @@ func (s *SearchCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) stri
 
 func (s *SearchCmdBar) Update(msg tea.Msg) (bool, tea.Msg, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return s.handleKeyMsg(msg)
 	}
 
 	return s.isActive(), msg, nil
 }
 
-func (s *SearchCmdBar) handleKeyMsg(msg tea.KeyMsg) (bool, tea.Msg, tea.Cmd) {
+func (s *SearchCmdBar) handleKeyMsg(msg tea.KeyPressMsg) (bool, tea.Msg, tea.Cmd) {
 	switch msg.String() {
 	case "/":
 		s.toggleSearch()

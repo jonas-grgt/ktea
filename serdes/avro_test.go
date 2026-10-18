@@ -2,8 +2,8 @@ package serdes
 
 import (
 	"bytes"
+	tea "charm.land/bubbletea/v2"
 	"encoding/binary"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/linkedin/goavro/v2"
 	"github.com/stretchr/testify/assert"
 	"ktea/sradmin"

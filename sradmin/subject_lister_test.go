@@ -1,8 +1,8 @@
 package sradmin
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 	"ktea/config"
 	"sort"

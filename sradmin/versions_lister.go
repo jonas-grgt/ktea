@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"sync"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 type Schema struct {

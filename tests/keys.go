@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"ktea/ui"
 	"ktea/ui/pages"
+	"unicode"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 type AKey interface{}
 
-func KeyWithAlt(key tea.KeyType) tea.Msg {
+func KeyWithAlt(key rune) tea.Msg {
 	return keyMsg(key, true)
 }
 
@@ -18,32 +19,28 @@ func Key(key AKey) tea.Msg {
 	return keyMsg(key, false)
 }
 
+// Ctrl returns a ctrl+<key> press, e.g. Ctrl('r') for ctrl+r.
+func Ctrl(key rune) tea.Msg {
+	return tea.KeyPressMsg{Code: key, Mod: tea.ModCtrl}
+}
+
 func keyMsg(key AKey, altKey bool) tea.Msg {
+	var code rune
 	switch key := key.(type) {
 	case rune:
-		return tea.KeyMsg{
-			Type:  tea.KeyRunes,
-			Runes: []rune{key},
-			Alt:   altKey,
-			Paste: false,
-		}
+		code = key
 	case int:
-		return tea.KeyMsg{
-			Type:  tea.KeyRunes,
-			Runes: []rune{rune(key)},
-			Alt:   altKey,
-			Paste: false,
-		}
-	case tea.KeyType:
-		return tea.KeyMsg{
-			Type:  key,
-			Runes: []rune{},
-			Alt:   altKey,
-			Paste: false,
-		}
+		code = rune(key)
 	default:
 		panic(fmt.Sprintf("Cannot handle %v", key))
 	}
+	msg := tea.KeyPressMsg{Code: code}
+	if altKey {
+		msg.Mod = tea.ModAlt
+	} else if unicode.IsPrint(code) {
+		msg.Text = string(code)
+	}
+	return msg
 }
 
 type Input struct {

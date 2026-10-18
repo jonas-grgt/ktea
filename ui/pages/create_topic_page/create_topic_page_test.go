@@ -3,13 +3,14 @@ package create_topic_page
 import (
 	"errors"
 	"fmt"
+	"github.com/charmbracelet/x/ansi"
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
 	"ktea/ui/pages/nav"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,32 +26,22 @@ func batchUpdate(m *Model, cmd tea.Cmd) {
 
 func CreateTopicSectionWithCursorAtPartitionsField() *Model {
 	m := New(&MockTopicCreator{})
-	cmd := m.Update(tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune{'a'},
-		Alt:   false,
-		Paste: false,
-	})
+	cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: string('a')})
 	batchUpdate(m, cmd)
-	cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	batchUpdate(m, cmd)
 	return m
 }
 
 func CreateTopicSectionWithCursorAtReplicationFactor() *Model {
 	m := New(&MockTopicCreator{})
-	cmd := m.Update(tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune{'a'},
-		Alt:   false,
-		Paste: false,
-	})
-	cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: string('a')})
+	cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	// next field
 	m.Update(cmd())
 	// number of partitions
 	tests.UpdateKeys(m, "2")
-	cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	// next field
 	m.Update(cmd())
 	return m
@@ -122,20 +113,20 @@ func TestCreateTopic(t *testing.T) {
 		cmd = m.Update(cmd())
 		// topic config
 		tests.UpdateKeys(m, "foo=bar")
-		cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		// next field
 		cmd = m.Update(cmd())
 		// next group
 		cmd = m.Update(cmd())
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "Custom Topic configurations:")
 		assert.Contains(t, render, "2")
 		assert.Contains(t, render, "1")
 
-		m.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
-		render = m.View(tests.NewKontext(), tests.Renderer)
+		m.Update(tea.KeyPressMsg{Code: 'r', Mod: tea.ModCtrl})
+		render = ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.NotContains(t, render, "Custom Topic configurations:")
 		assert.NotContains(t, render, "2")
@@ -154,7 +145,7 @@ func TestCreateTopic(t *testing.T) {
 			Err: fmt.Errorf("Topic with this name already exists - Topic 'topic-0' already exists."),
 		})
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "Failed to create Topic: Topic with this name already exists - Topic 'topic-0' already exists.")
 
@@ -288,10 +279,10 @@ func TestCreateTopic_Validation(t *testing.T) {
 		t.Run("When field is empty", func(t *testing.T) {
 			m := New(&MockTopicCreator{})
 
-			cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "* topic Name cannot be empty")
 		})
@@ -302,10 +293,10 @@ func TestCreateTopic_Validation(t *testing.T) {
 		t.Run("When field is empty", func(t *testing.T) {
 			m := CreateTopicSectionWithCursorAtPartitionsField()
 
-			cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "* number of Partitions cannot be empty")
 		})
@@ -313,17 +304,12 @@ func TestCreateTopic_Validation(t *testing.T) {
 		t.Run("When field is zero", func(t *testing.T) {
 			m := CreateTopicSectionWithCursorAtPartitionsField()
 
-			cmd := m.Update(tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'0'},
-				Alt:   false,
-				Paste: false,
-			})
+			cmd := m.Update(tea.KeyPressMsg{Code: '0', Text: string('0')})
 			batchUpdate(m, cmd)
-			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -331,23 +317,13 @@ func TestCreateTopic_Validation(t *testing.T) {
 		t.Run("When field is negative", func(t *testing.T) {
 			m := CreateTopicSectionWithCursorAtPartitionsField()
 
-			cmd := m.Update(tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'-'},
-				Alt:   false,
-				Paste: false,
-			})
+			cmd := m.Update(tea.KeyPressMsg{Code: '-', Text: string('-')})
 			batchUpdate(m, cmd)
-			cmd = m.Update(tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'1'},
-				Alt:   false,
-				Paste: false,
-			})
-			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd = m.Update(tea.KeyPressMsg{Code: '1', Text: string('1')})
+			cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -357,10 +333,10 @@ func TestCreateTopic_Validation(t *testing.T) {
 
 			cmd := m.Update(tests.Key('a'))
 			batchUpdate(m, cmd)
-			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "'a' is not a valid numeric partition count value")
 		})
@@ -370,9 +346,9 @@ func TestCreateTopic_Validation(t *testing.T) {
 		t.Run("When field is empty", func(t *testing.T) {
 			m := CreateTopicSectionWithCursorAtReplicationFactor()
 
-			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "* replication factory cannot be empty")
 		})
@@ -380,15 +356,10 @@ func TestCreateTopic_Validation(t *testing.T) {
 		t.Run("When field is zero", func(t *testing.T) {
 			m := CreateTopicSectionWithCursorAtReplicationFactor()
 
-			m.Update(tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'0'},
-				Alt:   false,
-				Paste: false,
-			})
-			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			m.Update(tea.KeyPressMsg{Code: '0', Text: string('0')})
+			m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -396,22 +367,12 @@ func TestCreateTopic_Validation(t *testing.T) {
 		t.Run("When field is negative", func(t *testing.T) {
 			m := CreateTopicSectionWithCursorAtReplicationFactor()
 
-			cmd := m.Update(tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'-'},
-				Alt:   false,
-				Paste: false,
-			})
+			cmd := m.Update(tea.KeyPressMsg{Code: '-', Text: string('-')})
 			batchUpdate(m, cmd)
-			cmd = m.Update(tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'1'},
-				Alt:   false,
-				Paste: false,
-			})
-			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd = m.Update(tea.KeyPressMsg{Code: '1', Text: string('1')})
+			m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "value must be greater than zero")
 		})
@@ -420,9 +381,9 @@ func TestCreateTopic_Validation(t *testing.T) {
 			m := CreateTopicSectionWithCursorAtPartitionsField()
 
 			m.Update(tests.Key('a'))
-			m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
-			render := m.View(&kontext.ProgramKtx{}, tests.Renderer)
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{}, tests.Renderer))
 
 			assert.Contains(t, render, "'a' is not a valid numeric partition count value")
 		})
@@ -451,9 +412,9 @@ func TestCreateTopic_Validation(t *testing.T) {
 			m.Update(cmd())
 			// next field
 			tests.UpdateKeys(m, "foo:bar")
-			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
-			render := m.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 			assert.Contains(t, render, "please enter configurations in the format \"config=value\"")
 		})
@@ -478,10 +439,10 @@ func TestCreateTopic_Validation(t *testing.T) {
 			cmd = m.Update(tests.Key(tea.KeyEnter))
 			// next field
 			tests.UpdateKeys(m, "foo=bar")
-			cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 			batchUpdate(m, cmd)
 
-			render := m.View(tests.NewKontext(), tests.Renderer)
+			render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 			assert.NotContains(t, render, "please enter configurations in the format \"config=value\"")
 		})

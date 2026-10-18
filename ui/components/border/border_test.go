@@ -1,7 +1,8 @@
 package border
 
 import (
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/tests"
 	"testing"
@@ -13,7 +14,7 @@ func TestBorderTab(t *testing.T) {
 			WithOnTabChanged(func(t string, m *Model) {}),
 		)
 
-		render := bt.View(content())
+		render := ansi.Strip(bt.View(content()))
 
 		tests.TrimAndEqual(t, render, `
 ╭──────────────────────────────────────────────────╮
@@ -27,7 +28,7 @@ func TestBorderTab(t *testing.T) {
 			WithTitle("My Title"),
 		)
 
-		render := bt.View(content())
+		render := ansi.Strip(bt.View(content()))
 
 		tests.TrimAndEqual(t, render, `
 ╭──────────────────────────────────────── My Title ╮
@@ -44,7 +45,7 @@ func TestBorderTab(t *testing.T) {
 			}),
 		)
 
-		render := bt.View(content())
+		render := ansi.Strip(bt.View(content()))
 
 		tests.TrimAndEqual(t, render, `
 ╭──────────────────────────────────────── My Title ╮
@@ -64,7 +65,7 @@ func TestBorderTab(t *testing.T) {
 			),
 		)
 
-		render := bt.View(content())
+		render := ansi.Strip(bt.View(content()))
 
 		tests.TrimAndEqual(t, render, `
 ╭ | tab1  tab2  tab3  tab4  tab5 | ────────────────╮
@@ -78,7 +79,7 @@ func TestBorderTab(t *testing.T) {
 			WithTabs([]Tab{}...),
 		)
 
-		render := bt.View(content())
+		render := ansi.Strip(bt.View(content()))
 
 		tests.TrimAndEqual(t, render, `
 ╭──────────────────────────────────────────────────╮
@@ -96,7 +97,7 @@ func TestBorderTab(t *testing.T) {
 			),
 		)
 
-		render := bt.View(content())
+		render := ansi.Strip(bt.View(content()))
 
 		tests.TrimAndEqual(t, render, `
 ╭ | tab1  tab2 | ──────────────────────── My Title ╮
@@ -156,7 +157,7 @@ func TestBorderTab(t *testing.T) {
 			),
 		)
 
-		render := bt.View(content())
+		render := ansi.Strip(bt.View(content()))
 
 		tests.TrimAndEqual(t, render, `
 ╭ | tab1  tab2  tab3  tab4  tab5 | ────────────────╮

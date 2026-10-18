@@ -18,10 +18,10 @@ import (
 	"reflect"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 )
 
 type authSelection int
@@ -88,25 +88,25 @@ const (
 )
 
 type clusterFormValues struct {
-	name                      string
-	color                     string
-	host                      string
-	authMethod                config.AuthMethod
-	transportOption           transportOption
-	verificationOption        verificationOption
-	brokerCACertPath          string
-	clientCertPath            string
-	clientKeyPath             string
-	username                  string
-	password                  string
-	srURL                     string
-	srUsername                string
-	srPassword                string
-	srTransportOption         transportOption
-	srVerificationOption      verificationOption
-	srCACertPath              string
-	srClientCertPath          string
-	srClientKeyPath           string
+	name                 string
+	color                string
+	host                 string
+	authMethod           config.AuthMethod
+	transportOption      transportOption
+	verificationOption   verificationOption
+	brokerCACertPath     string
+	clientCertPath       string
+	clientKeyPath        string
+	username             string
+	password             string
+	srURL                string
+	srUsername           string
+	srPassword           string
+	srTransportOption    transportOption
+	srVerificationOption verificationOption
+	srCACertPath         string
+	srClientCertPath     string
+	srClientKeyPath      string
 }
 
 func (cv *clusterFormValues) toTLSConfig() config.TLSConfig {
@@ -173,7 +173,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	activeTab := m.border.ActiveTab()
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
 			if activeTab == kcTab {
@@ -652,7 +652,6 @@ func (m *Model) createCForm() *huh.Form {
 			Title("Cluster").
 			WithWidth(m.ktx.WindowWidth - 3),
 	)
-	form.QuitAfterSubmit = false
 	form.Init()
 	return form
 }
@@ -717,7 +716,6 @@ func (m *Model) createSrForm() *huh.Form {
 			Title("Schema Registry").
 			WithWidth(m.ktx.WindowWidth - 3),
 	)
-	form.QuitAfterSubmit = false
 	form.Init()
 
 	return form

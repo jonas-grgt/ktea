@@ -1,9 +1,10 @@
 package consume_form_page
 
 import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/kontext"
@@ -47,7 +48,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// make sure form has been initialized
 		m.View(tests.Kontext, tests.Renderer)
 
-		render := m.View(tests.NewKontext(), tests.Renderer)
+		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
 
 		assert.Contains(t, render, "> • 0")
 		for i := 1; i < 10; i++ {
@@ -73,7 +74,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// make sure form has been initialized
 		m.View(ktx, tests.Renderer)
 
-		render := m.View(ktx, tests.Renderer)
+		render := ansi.Strip(m.View(ktx, tests.Renderer))
 
 		assert.Contains(t, render, `> • 0`)
 		assert.Contains(t, render, `• 1`)
@@ -104,7 +105,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
-		render := m.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 		assert.Contains(t, render, "> Most Recent")
 		assert.NotContains(t, render, "> Beginning")
@@ -135,7 +136,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			// make sure form has been initialized
 			m.View(tests.NewKontext(), tests.Renderer)
 
-			render := m.View(tests.Kontext, tests.Renderer)
+			render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 			for i := 0; i < 10; i++ {
 				assert.NotContains(t, render, fmt.Sprintf("✓ %d", i))
@@ -159,7 +160,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			// make sure form has been initialized
 			m.View(tests.NewKontext(), tests.Renderer)
 
-			render := m.View(tests.Kontext, tests.Renderer)
+			render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 			assert.Contains(t, render, "> Absolute Date")
 			assert.NotContains(t, render, "> Relative Date")
@@ -185,7 +186,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				// make sure form has been initialized
 				m.View(tests.NewKontext(), tests.Renderer)
 
-				render := m.View(tests.Kontext, tests.Renderer)
+				render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 				assert.Contains(t, render, "> Relative Date")
 				assert.NotContains(t, render, "> Absolute Date")
@@ -213,7 +214,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				// make sure form has been initialized
 				m.View(tests.NewKontext(), tests.Renderer)
 
-				render := m.View(tests.Kontext, tests.Renderer)
+				render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 				assert.Contains(t, render, "> Relative Date")
 				assert.NotContains(t, render, "> Absolute Date")
@@ -241,7 +242,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 				// make sure form has been initialized
 				m.View(tests.NewKontext(), tests.Renderer)
 
-				render := m.View(tests.Kontext, tests.Renderer)
+				render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 				assert.Contains(t, render, "> Relative Date")
 				assert.NotContains(t, render, "> Absolute Date")
@@ -409,11 +410,11 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 		m.Update(tests.Key(tea.KeyDown))
 
-		render := m.View(&kontext.ProgramKtx{
+		render := ansi.Strip(m.View(&kontext.ProgramKtx{
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		assert.Contains(t, render, "Key Filter Term")
 
@@ -421,11 +422,11 @@ func TestConsumeForm_Navigation(t *testing.T) {
 			m.Update(tests.Key(tea.KeyUp))
 			m.Update(tests.Key(tea.KeyUp))
 
-			render := m.View(&kontext.ProgramKtx{
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, tests.Renderer)
+			}, tests.Renderer))
 
 			assert.NotContains(t, render, "Key Filter Value")
 		})
@@ -571,11 +572,11 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 		m.Update(tests.Key(tea.KeyDown))
 
-		render := m.View(&kontext.ProgramKtx{
+		render := ansi.Strip(m.View(&kontext.ProgramKtx{
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		assert.Contains(t, render, "Value Filter Term")
 
@@ -591,18 +592,18 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		assert.Contains(t, field.View(), "Value Filter Term")
 
 		t.Run("selecting no value filter type hides key filter value field again", func(t *testing.T) {
-			cmd = m.Update(tests.Key(tea.KeyShiftTab))
+			cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
 			// prev field
 			cmd = m.Update(cmd())
 
 			m.Update(tests.Key(tea.KeyUp))
 			m.Update(tests.Key(tea.KeyUp))
 
-			render := m.View(&kontext.ProgramKtx{
+			render := ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, tests.Renderer)
+			}, tests.Renderer))
 
 			assert.NotContains(t, render, "Value Filter Term")
 		})
@@ -669,7 +670,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		tests.UpdateKeys(m, "2024-06- 01F 12:34:56Z")
 		cmd = m.Update(tests.Key(tea.KeyEnter))
 
-		render := m.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 		assert.Contains(t, render, "invalid date time format")
 	})
@@ -698,7 +699,7 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// next field
 		m.Update(cmd())
 
-		render := m.View(tests.Kontext, tests.Renderer)
+		render := ansi.Strip(m.View(tests.Kontext, tests.Renderer))
 
 		assert.NotContains(t, render, "invalid date time format")
 		assert.Contains(t, render, "┃ Partitions")
@@ -750,11 +751,11 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
-		render := m.View(&kontext.ProgramKtx{
+		render := ansi.Strip(m.View(&kontext.ProgramKtx{
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		assert.NotContains(t, render, "Relatively Start from")
 
@@ -762,22 +763,22 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 		m.Update(tests.Key(tea.KeyDown))
 
-		render = m.View(&kontext.ProgramKtx{
+		render = ansi.Strip(m.View(&kontext.ProgramKtx{
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		assert.Contains(t, render, "Relatively Start from")
 
 		t.Run("Deselecting hides it", func(t *testing.T) {
 			m.Update(tests.Key(tea.KeyDown))
 
-			render = m.View(&kontext.ProgramKtx{
+			render = ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, tests.Renderer)
+			}, tests.Renderer))
 
 			assert.NotContains(t, render, "Relatively Start from")
 		})
@@ -795,11 +796,11 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		// make sure form has been initialized
 		m.View(tests.NewKontext(), tests.Renderer)
 
-		render := m.View(&kontext.ProgramKtx{
+		render := ansi.Strip(m.View(&kontext.ProgramKtx{
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		assert.NotContains(t, render, "Absolutely Start from")
 
@@ -808,22 +809,22 @@ func TestConsumeForm_Navigation(t *testing.T) {
 		m.Update(tests.Key(tea.KeyDown))
 		m.Update(tests.Key(tea.KeyDown))
 
-		render = m.View(&kontext.ProgramKtx{
+		render = ansi.Strip(m.View(&kontext.ProgramKtx{
 			WindowWidth:     100,
 			WindowHeight:    20,
 			AvailableHeight: 20,
-		}, tests.Renderer)
+		}, tests.Renderer))
 
 		assert.Contains(t, render, "Absolutely Start from")
 
 		t.Run("Deselecting hides it", func(t *testing.T) {
 			m.Update(tests.Key(tea.KeyUp))
 
-			render = m.View(&kontext.ProgramKtx{
+			render = ansi.Strip(m.View(&kontext.ProgramKtx{
 				WindowWidth:     100,
 				WindowHeight:    20,
 				AvailableHeight: 20,
-			}, tests.Renderer)
+			}, tests.Renderer))
 
 			assert.NotContains(t, render, "Absolutely Start from")
 		})
