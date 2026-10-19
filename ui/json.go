@@ -7,13 +7,14 @@ import (
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"
 	chrome_styles "github.com/alecthomas/chroma/v2/styles"
+	"ktea/styles"
 	"strings"
 )
 
 func PrettyPrintJson(text string) string {
 	builder := &strings.Builder{}
 	formatter := formatters.TTY256
-	style := chrome_styles.Get("github-dark")
+	style := chrome_styles.Get(styles.Current.Syntax)
 
 	lexer := lexers.Fallback
 	var prettyJSON bytes.Buffer

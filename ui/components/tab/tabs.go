@@ -22,7 +22,12 @@ type Model struct {
 	activeTab int
 }
 
-var helpTab = Tab{Title: lg.NewStyle().Foreground(lg.Color(styles.ColorYellow)).Render("≪ F1 »") + " help", Label: "help"}
+var helpTab = Tab{Title: "≪ F1 » help", Label: "help"}
+
+// helpTitle colors the F1 key at render time so it follows theme changes.
+func helpTitle() string {
+	return lg.NewStyle().Foreground(styles.Current.Highlight).Render("≪ F1 »") + " help"
+}
 
 func (m *Model) View(ctx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	if len(m.tabs) == 0 {
@@ -34,7 +39,7 @@ func (m *Model) View(ctx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		if i == m.activeTab {
 			tab = styles.Tab.Active.Render(t.Title)
 		} else if m.lastTab(i) {
-			tab = styles.Tab.Help.Render(t.Title)
+			tab = styles.Tab.Help.Render(helpTitle())
 		} else {
 			tab = styles.Tab.Tab.Render(t.Title)
 		}

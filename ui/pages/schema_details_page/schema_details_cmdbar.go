@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"fmt"
+	"image/color"
 	"ktea/kontext"
 	"ktea/sradmin"
 	"ktea/styles"
@@ -104,9 +105,9 @@ func NewCmdBar(deleteFunc cmdbar.DeleteFn[int], schemaDeletedNotifier cmdbar.Not
 	})
 
 	deleteMsgFunc := func(schemaId int) string {
-		return renderFG("Delete version ", styles.ColorIndigo) +
-			renderFG(fmt.Sprintf("%d", schemaId), styles.ColorWhite) +
-			renderFG(" of schema?", styles.ColorIndigo)
+		return renderFG("Delete version ", styles.Current.Accent) +
+			renderFG(fmt.Sprintf("%d", schemaId), styles.Current.Text) +
+			renderFG(" of schema?", styles.Current.Accent)
 	}
 
 	return &CmdBar{
@@ -116,9 +117,9 @@ func NewCmdBar(deleteFunc cmdbar.DeleteFn[int], schemaDeletedNotifier cmdbar.Not
 	}
 }
 
-func renderFG(value string, color string) string {
+func renderFG(value string, c color.Color) string {
 	return lipgloss.NewStyle().
-		Foreground(lipgloss.Color(color)).
+		Foreground(c).
 		Bold(true).
 		Render(value)
 }

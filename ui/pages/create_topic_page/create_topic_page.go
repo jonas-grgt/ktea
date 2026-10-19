@@ -269,7 +269,7 @@ func (m *Model) initForm(fs formState) {
 		replicationFactorField,
 		cleanupPolicySelect,
 		configInput,
-	))
+	)).WithTheme(styles.Huh)
 	if m.formState == configEntered {
 		form.NextField()
 		form.NextField()

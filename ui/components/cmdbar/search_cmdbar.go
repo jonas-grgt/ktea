@@ -3,7 +3,6 @@ package cmdbar
 import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
-	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"ktea/kontext"
 	"ktea/styles"
@@ -42,9 +41,9 @@ func (s *SearchCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) stri
 	if s.state != hidden {
 		style := styles.CmdBarWithWidth(ktx.WindowWidth - BorderedPadding)
 		if s.state == searching {
-			style = style.BorderForeground(lipgloss.Color(styles.ColorFocusBorder))
+			style = style.BorderForeground(styles.Current.BorderFocus)
 		} else {
-			style = style.BorderForeground(lipgloss.Color(styles.ColorBlurBorder))
+			style = style.BorderForeground(styles.Current.BorderBlur)
 		}
 		return renderer.RenderWithStyle(s.searchInput.View(), style)
 	}
@@ -151,6 +150,7 @@ func (s *SearchCmdBar) Hide() {
 
 func newSearchInput(placeholder string) *huh.Input {
 	searchInput := huh.NewInput()
+	searchInput.WithTheme(styles.Huh)
 	searchInput.Init()
 	return searchInput
 }

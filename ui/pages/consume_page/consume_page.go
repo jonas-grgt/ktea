@@ -10,6 +10,7 @@ import (
 	"ktea/ui/components/border"
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/statusbar"
+	ktable "ktea/ui/components/table"
 	"ktea/ui/pages"
 	"ktea/ui/tabs"
 	"sort"
@@ -85,7 +86,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		m.table.SetWidth(ktx.WindowWidth - 2)
 		m.table.SetHeight(ktx.AvailableTableHeight())
 
-		views = append(views, m.border.View(m.table.View()))
+		views = append(views, m.border.View(ktable.View(m.table)))
 	}
 
 	content := ui.JoinVertical(lipgloss.Top, views...)

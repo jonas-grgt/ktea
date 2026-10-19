@@ -1,9 +1,12 @@
 package styles
 
 import (
-	"charm.land/bubbles/v2/table"
-	"charm.land/lipgloss/v2"
 	"fmt"
+	"image/color"
+
+	"charm.land/bubbles/v2/table"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var Env EnvStyle
@@ -28,22 +31,27 @@ var clusterColors = map[string]string{
 	ColorBlue:   ColorWhite,
 }
 
+// Current is the active color scheme. Set it through Apply.
+var Current Scheme
+
+// Huh is the form theme. huh reads it on every render, so forms follow Apply.
+var Huh huh.Theme = huh.ThemeFunc(func(bool) *huh.Styles {
+	t := *huhStyles // copy, so a form can't change the shared styles
+	return &t
+})
+
+var huhStyles *huh.Styles
+
+// Cluster environment colors. They are stored per cluster in config.yaml,
+// so they are fixed and not part of a theme.
 const ColorRed = "#FF0000"
 const ColorGreen = "#00FF00"
 const ColorBlue = "#0000FF"
 const ColorOrange = "#FFA500"
 const ColorPurple = "#800080"
-const ColorIndigo = "#7571F9"
 const ColorYellow = "#FFFF00"
 const ColorWhite = "#FFFFFF"
 const ColorBlack = "#000000"
-const ColorPink = "205"
-const ColorLightPink = "132"
-const ColorGrey = "#C1C1C1"
-const ColorDarkGrey = "#343433"
-const ColorFocusBorder = "#F5F5F5"
-const ColorBlurBorder = "235"
-const ColorMidGrey = "#353533"
 
 type NotifierStyle struct {
 	Spinner lipgloss.Style
@@ -90,16 +98,9 @@ func EmbeddedBorderText(
 	valueLabel string,
 ) EmbeddedTextFunc {
 	return func(active bool) string {
-		var (
-			colorLabel string
-			colorCount string
-		)
+		colorLabel, colorCount := Current.TextMuted, Current.PrimaryMuted
 		if active {
-			colorLabel = ColorWhite
-			colorCount = ColorPink
-		} else {
-			colorLabel = ColorGrey
-			colorCount = ColorLightPink
+			colorLabel, colorCount = Current.Text, Current.Primary
 		}
 
 		var renderedValueLabel string
@@ -107,17 +108,17 @@ func EmbeddedBorderText(
 			renderedValueLabel = ""
 		} else {
 			renderedValueLabel = ":" + lipgloss.NewStyle().
-				Foreground(lipgloss.Color(colorCount)).
+				Foreground(colorCount).
 				Bold(true).
 				Render(fmt.Sprintf(" %s", valueLabel))
 		}
 
 		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color(colorLabel)).
+			Foreground(colorLabel).
 			Bold(true).
 			Render(fmt.Sprintf("[ %s", keyLabel)) + renderedValueLabel +
 			lipgloss.NewStyle().
-				Foreground(lipgloss.Color(colorLabel)).
+				Foreground(colorLabel).
 				Bold(true).
 				Render(" ]")
 	}
@@ -130,7 +131,7 @@ func CenterText(width int, height int) lipgloss.Style {
 		AlignVertical(lipgloss.Center).
 		AlignHorizontal(lipgloss.Center).
 		Bold(true).
-		Foreground(lipgloss.Color(ColorPink))
+		Foreground(Current.Primary)
 }
 
 func CmdBarWithWidth(width int) lipgloss.Style {
@@ -138,9 +139,8 @@ func CmdBarWithWidth(width int) lipgloss.Style {
 	return CmdBar.Width(width + CmdBar.GetHorizontalBorderSize())
 }
 
-func FG(color string) lipgloss.Style {
-	return lipgloss.NewStyle().
-		Foreground(lipgloss.Color(color))
+func FG(c color.Color) lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(c)
 }
 
 func (s *StatusBarStyle) Cluster(color string) lipgloss.Style {
@@ -171,16 +171,14 @@ func (s *StatusBarStyle) Render(strs ...string) string {
 }
 
 func init() {
-	{
-		clusterColors = map[string]string{
-			ColorRed:    ColorWhite,
-			ColorGreen:  ColorBlack,
-			ColorBlue:   ColorWhite,
-			ColorOrange: ColorBlack,
-			ColorPurple: ColorWhite,
-			ColorYellow: ColorBlack,
-		}
-	}
+	Apply(themeDefault(true))
+}
+
+// Apply makes s the active scheme and rebuilds all shared styles from it.
+// Call it before building UI components; styles already rendered keep their colors.
+func Apply(s Scheme) {
+	Current = s
+	huhStyles = huhTheme(s)
 
 	{
 		tabStyle := TabStyle{}
@@ -216,17 +214,17 @@ func init() {
 		}
 		tabStyle.Tab = lipgloss.NewStyle().
 			Padding(0, 1).
-			Foreground(lipgloss.Color("#AAAAAA")).
+			Foreground(s.TextFaint).
 			Border(tabBorder)
 		tabStyle.Active = lipgloss.NewStyle().
 			Padding(0, 1).
 			Border(activeTabBorder).
-			Foreground(lipgloss.Color(ColorPink)).
+			Foreground(s.Primary).
 			Bold(true)
 		tabStyle.Help = lipgloss.NewStyle().
 			Padding(0, 1).
 			Border(helpBorder).
-			Foreground(lipgloss.Color(ColorWhite)).
+			Foreground(s.Text).
 			Bold(true)
 		Tab = tabStyle
 	}
@@ -234,12 +232,12 @@ func init() {
 	{
 		statusBarStyle := StatusBarStyle{}
 		statusBarStyle.style = lipgloss.NewStyle().
-			Background(lipgloss.Color("#353533"))
+			Background(s.Surface)
 
 		statusBarStyle.Indicator = lipgloss.NewStyle().
 			Inherit(statusBarStyle.style).
-			Foreground(lipgloss.Color(ColorBlack)).
-			Background(lipgloss.Color(ColorPink)).
+			Foreground(s.OnPrimary).
+			Background(s.Primary).
 			Bold(true).
 			Padding(0, 2)
 
@@ -261,18 +259,18 @@ func init() {
 		Help = HelpStyle{
 			Modal: lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color(ColorPink)).
+				BorderForeground(s.Primary).
 				Padding(1, 2),
 			Title: lipgloss.NewStyle().
-				Foreground(lipgloss.Color(ColorPink)).
+				Foreground(s.Primary).
 				Bold(true),
 			Key: lipgloss.NewStyle().
-				Foreground(lipgloss.Color(ColorYellow)).
+				Foreground(s.Highlight).
 				Bold(true),
 			Desc: lipgloss.NewStyle().
-				Foreground(lipgloss.Color(ColorWhite)),
+				Foreground(s.Text),
 			Footer: lipgloss.NewStyle().
-				Foreground(lipgloss.Color(ColorGrey)).
+				Foreground(s.TextMuted).
 				Faint(true),
 		}
 	}
@@ -295,7 +293,7 @@ func init() {
 			MarginBottom(0).
 			MarginLeft(2).
 			Height(1).
-			Foreground(lipgloss.Color(ColorGreen)).
+			Foreground(s.Success).
 			Bold(true)
 		Notifier.Error = lipgloss.NewStyle().
 			MarginTop(0).
@@ -362,8 +360,8 @@ func init() {
 			Padding(0).
 			Margin(0).
 			Inherit(blur)
-		styles := table.DefaultStyles()
-		styles.Header = styles.Header.
+		tableStyles := table.DefaultStyles()
+		tableStyles.Header = tableStyles.Header.
 			BorderBottom(true).
 			BorderTop(false).
 			BorderLeft(false).
@@ -372,14 +370,53 @@ func init() {
 				Bottom: "─",
 			}).
 			Bold(false)
-		styles.Selected = styles.Selected.
-			Foreground(lipgloss.Color("#000000")).
-			Background(lipgloss.Color(ColorPink)).
+		tableStyles.Selected = tableStyles.Selected.
+			Foreground(s.OnPrimary).
+			Background(s.Primary).
 			Bold(true)
 		Table = TableStyle{
 			Focus:  focus,
 			Blur:   blur,
-			Styles: styles,
+			Styles: tableStyles,
 		}
+	}
+}
+
+// huhTheme starts from huh's Charm theme (ktea's look so far) and swaps in
+// the scheme's colors.
+func huhTheme(s Scheme) *huh.Styles {
+	{
+		t := huh.ThemeCharm(s.IsDark)
+		f := &t.Focused
+		f.Title = f.Title.Foreground(s.Accent)
+		f.NoteTitle = f.NoteTitle.Foreground(s.Accent)
+		f.Directory = f.Directory.Foreground(s.Accent)
+		f.Description = f.Description.Foreground(s.TextMuted)
+		f.ErrorIndicator = f.ErrorIndicator.Foreground(s.Error)
+		f.ErrorMessage = f.ErrorMessage.Foreground(s.Error)
+		f.SelectSelector = f.SelectSelector.Foreground(s.Primary)
+		f.NextIndicator = f.NextIndicator.Foreground(s.Primary)
+		f.PrevIndicator = f.PrevIndicator.Foreground(s.Primary)
+		f.Option = f.Option.Foreground(s.Text)
+		f.MultiSelectSelector = f.MultiSelectSelector.Foreground(s.Primary)
+		f.SelectedOption = f.SelectedOption.Foreground(s.Success)
+		f.SelectedPrefix = f.SelectedPrefix.Foreground(s.Success)
+		f.UnselectedOption = f.UnselectedOption.Foreground(s.Text)
+		f.UnselectedPrefix = f.UnselectedPrefix.Foreground(s.TextFaint)
+		f.FocusedButton = f.FocusedButton.Foreground(s.OnPrimary).Background(s.Primary)
+		f.Next = f.FocusedButton
+		f.BlurredButton = f.BlurredButton.Foreground(s.Text).Background(s.SurfaceAlt)
+		f.TextInput.Cursor = f.TextInput.Cursor.Foreground(s.Success)
+		f.TextInput.Placeholder = f.TextInput.Placeholder.Foreground(s.TextFaint)
+		f.TextInput.Prompt = f.TextInput.Prompt.Foreground(s.Primary)
+
+		t.Blurred = t.Focused
+		t.Blurred.Base = t.Focused.Base.BorderStyle(lipgloss.HiddenBorder())
+		t.Blurred.Card = t.Blurred.Base
+		t.Blurred.NextIndicator = lipgloss.NewStyle()
+		t.Blurred.PrevIndicator = lipgloss.NewStyle()
+		t.Group.Title = t.Focused.Title
+		t.Group.Description = t.Focused.Description
+		return t
 	}
 }

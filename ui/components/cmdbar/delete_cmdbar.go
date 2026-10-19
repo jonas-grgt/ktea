@@ -46,12 +46,12 @@ func WithValidateFn[T any](vFn ValidateFn[T]) Option[T] {
 
 func (s *DeleteCmdBar[any]) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	s.deleteConfirm.Title(lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FAFAFA")).
+		Foreground(styles.Current.Text).
 		Render(lipgloss.NewStyle().MarginRight(2).Render("🗑️  " + s.deleteMsgFunc(s.deleteValue)))).
 		WithButtonAlignment(lipgloss.Left).
 		Focus()
 
-	s.deleteConfirm.WithTheme(huh.ThemeFunc(huh.ThemeCharm))
+	s.deleteConfirm.WithTheme(styles.Huh)
 
 	return renderer.RenderWithStyle(s.deleteConfirm.View(), styles.CmdBarWithWidth(ktx.WindowWidth-BorderedPadding))
 }

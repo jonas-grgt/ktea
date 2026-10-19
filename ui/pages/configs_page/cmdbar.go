@@ -177,6 +177,7 @@ func (m *CmdBarModel) IsLoading() bool {
 func newSearchInput() *huh.Input {
 	searchInput := huh.NewInput().
 		Placeholder("Search for Config")
+	searchInput.WithTheme(styles.Huh)
 	searchInput.Init()
 	return searchInput
 }
@@ -185,6 +186,7 @@ func newEditInput(v string) *huh.Input {
 	searchInput := huh.NewInput().
 		Value(&v).
 		Placeholder("New config value")
+	searchInput.WithTheme(styles.Huh)
 	searchInput.Init()
 	return searchInput
 }

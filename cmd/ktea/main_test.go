@@ -110,9 +110,9 @@ func TestKtea(t *testing.T) {
 			view := ansi.Strip(model.View().Content)
 
 			var expectedLayout = "" +
-				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
-				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
-				"┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────"
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮╭──────────╮                            \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters ││ Settings │  ≪ F1 » help               \n" +
+				"┘        └┴─────────────────┴┴─────────────────┴┴──────────┴┴──────────┴────────────────────────────"
 			assert.Contains(t, view, expectedLayout)
 
 			model.Update(tea.KeyPressMsg{Code: tea.KeyRight, Mod: tea.ModCtrl})
@@ -122,9 +122,9 @@ func TestKtea(t *testing.T) {
 			view = ansi.Strip(model.View().Content)
 
 			expectedLayout = "" +
-				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
-				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
-				"┴────────┴┴─────────────────┴┘                 └┴──────────┴────────────────────────────────────────\n"
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮╭──────────╮                            \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters ││ Settings │  ≪ F1 » help               \n" +
+				"┴────────┴┴─────────────────┴┘                 └┴──────────┴┴──────────┴────────────────────────────\n"
 			assert.Contains(t, view, expectedLayout)
 
 			model.Update(tea.KeyPressMsg{Code: 'l', Mod: tea.ModCtrl})
@@ -132,9 +132,9 @@ func TestKtea(t *testing.T) {
 			view = ansi.Strip(model.View().Content)
 
 			expectedLayout = "" +
-				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
-				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
-				"┴────────┴┴─────────────────┴┴─────────────────┴┘          └────────────────────────────────────────\n"
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮╭──────────╮                            \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters ││ Settings │  ≪ F1 » help               \n" +
+				"┴────────┴┴─────────────────┴┴─────────────────┴┘          └┴──────────┴────────────────────────────\n"
 			assert.Contains(t, view, expectedLayout)
 
 			model.Update(tea.KeyPressMsg{Code: tea.KeyLeft, Mod: tea.ModCtrl})
@@ -146,9 +146,9 @@ func TestKtea(t *testing.T) {
 			view = ansi.Strip(model.View().Content)
 
 			expectedLayout = "" +
-				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮                                        \n" +
-				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters │  ≪ F1 » help                           \n" +
-				"┘        └┴─────────────────┴┴─────────────────┴┴──────────┴────────────────────────────────────────\n"
+				"╭────────╮╭─────────────────╮╭─────────────────╮╭──────────╮╭──────────╮                            \n" +
+				"│ Topics ││ Consumer Groups ││ Schema Registry ││ Clusters ││ Settings │  ≪ F1 » help               \n" +
+				"┘        └┴─────────────────┴┴─────────────────┴┴──────────┴┴──────────┴────────────────────────────\n"
 
 			assert.Contains(t, view, expectedLayout)
 		})

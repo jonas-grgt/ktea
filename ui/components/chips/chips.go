@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"fmt"
+	"image/color"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -24,29 +25,29 @@ func (m *Model) View(_ *kontext.ProgramKtx, _ *ui.Renderer) string {
 	for i, elem := range m.elems {
 		var (
 			style   lipgloss.Style
-			bgColor string
+			bgColor color.Color
 		)
 
 		if m.activateElem == i {
 			if m.selectedIdx == i {
-				bgColor = styles.ColorPink
+				bgColor = styles.Current.Primary
 			} else {
-				bgColor = styles.ColorWhite
+				bgColor = styles.Current.Text
 			}
 			style = lipgloss.NewStyle().
-				Background(lipgloss.Color(bgColor)).
-				Foreground(lipgloss.Color(styles.ColorBlack)).
+				Background(bgColor).
+				Foreground(styles.Current.OnPrimary).
 				Bold(true)
 			elem = fmt.Sprintf("«%s»", elem)
 		} else if m.selectedIdx == i {
 			style = lipgloss.NewStyle().
-				Background(lipgloss.Color(styles.ColorPink)).
-				Foreground(lipgloss.Color(styles.ColorBlack))
+				Background(styles.Current.Primary).
+				Foreground(styles.Current.OnPrimary)
 			elem = fmt.Sprintf(" %s ", elem)
 		} else {
 			style = lipgloss.NewStyle().
-				Background(lipgloss.Color(styles.ColorGrey)).
-				Foreground(lipgloss.Color(styles.ColorBlack))
+				Background(styles.Current.TextMuted).
+				Foreground(styles.Current.OnPrimary)
 			elem = fmt.Sprintf(" %s ", elem)
 		}
 
