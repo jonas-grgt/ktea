@@ -63,12 +63,19 @@ func (c *defaultConfigIO) write(config *Config) error {
 }
 
 func configPath() string {
+	return filepath.Join(configDir(), "config.yaml")
+}
+
+// ThemesDir is where user themes live, one <name>.yaml per theme.
+func ThemesDir() string {
+	return filepath.Join(configDir(), "themes")
+}
+
+func configDir() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Println("Error getting home directory:", err)
 		os.Exit(-1)
 	}
-
-	configPath := filepath.Join(homeDir, ".config", "ktea", "config.yaml")
-	return configPath
+	return filepath.Join(homeDir, ".config", "ktea")
 }

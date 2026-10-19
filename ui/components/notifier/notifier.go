@@ -95,8 +95,8 @@ func (m *Model) ShowErrorMsg(msg string, error error) tea.Cmd {
 	if msg == "" {
 		s = ""
 	}
-	m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(msg+s) +
-		styles.FG(styles.ColorWhite).Render(strings.TrimSuffix(error.Error(), "\n"))
+	m.msg = "🚨 " + styles.FG(styles.Current.Error).Render(msg+s) +
+		styles.FG(styles.Current.Text).Render(strings.TrimSuffix(error.Error(), "\n"))
 	return nil
 }
 
@@ -106,10 +106,10 @@ func (m *Model) ShowError(error error) tea.Cmd {
 	msg := error.Error()
 	split := strings.SplitN(msg, ":", 2)
 	if len(split) > 1 {
-		m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(split[0]) + ": " +
-			styles.FG(styles.ColorWhite).Render(strings.TrimSuffix(split[1], "\n"))
+		m.msg = "🚨 " + styles.FG(styles.Current.Error).Render(split[0]) + ": " +
+			styles.FG(styles.Current.Text).Render(strings.TrimSuffix(split[1], "\n"))
 	} else {
-		m.msg = "🚨 " + styles.FG(styles.ColorRed).Render(msg)
+		m.msg = "🚨 " + styles.FG(styles.Current.Error).Render(msg)
 	}
 	return nil
 }

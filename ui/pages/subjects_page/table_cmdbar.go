@@ -108,7 +108,7 @@ func NewTableCmdsBar(
 	}
 	deleteMsgFn := func(subject sradmin.Subject) string {
 		message := subject.Name + lipgloss.NewStyle().
-			Foreground(lipgloss.Color(styles.ColorIndigo)).
+			Foreground(styles.Current.Accent).
 			Bold(true).
 			Render(" will be deleted permanently (hard)")
 		return message

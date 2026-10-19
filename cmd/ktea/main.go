@@ -2,11 +2,14 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"image/color"
 	"ktea/config"
 	"ktea/kadmin"
 	"ktea/kcadmin"
 	"ktea/kontext"
 	"ktea/sradmin"
+	"ktea/styles"
 	"ktea/ui"
 	"ktea/ui/components/help"
 	"ktea/ui/components/statusbar"
@@ -17,6 +20,7 @@ import (
 	"ktea/ui/tabs/clusters_tab"
 	"ktea/ui/tabs/kcon_tab"
 	"ktea/ui/tabs/loading_tab"
+	"ktea/ui/tabs/settings_tab"
 	"ktea/ui/tabs/sr_tab"
 	"ktea/ui/tabs/topics_tab"
 	"os"
@@ -36,6 +40,7 @@ const (
 	schemaRegTabLbl           = "schemaReg"
 	clustersTabLbl            = "clusters"
 	kconnectTabLbl            = "kconnect"
+	settingsTabLbl            = "settings"
 )
 
 var (
@@ -44,6 +49,7 @@ var (
 	schemaRegTab = tab.Tab{Title: "Schema Registry", Label: schemaRegTabLbl}
 	kconnectTab  = tab.Tab{Title: "Kafka Connect", Label: kconnectTabLbl}
 	clustersTab  = tab.Tab{Title: "Clusters", Label: clustersTabLbl}
+	settingsTab  = tab.Tab{Title: "Settings", Label: settingsTabLbl}
 )
 
 type Model struct {
@@ -60,11 +66,19 @@ type Model struct {
 	schemaRegistryTabCtrl *sr_tab.Model
 	clustersTabCtrl       *clusters_tab.Model
 	kconTabCtrl           *kcon_tab.Model
+	settingsTabCtrl       *settings_tab.Model
 	configIO              config.IO
 	switchingCluster      bool
 	startupConnErr        bool
 	statusbar             *statusbar.Model
 	showHelp              bool
+	// isDark reports whether the terminal background is dark; it picks the theme variant.
+	isDark   bool
+	startErr error
+	// the terminal's own colors, restored after a theme painted the background
+	termBg, termFg color.Color
+	painted        bool
+	quitting       bool
 }
 
 // RetryClusterConnectionMsg is an internal Msg
@@ -74,9 +88,27 @@ type RetryClusterConnectionMsg struct {
 }
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Batch(func() tea.Msg {
+	// Ask for the text color before loading the config: the terminal answers
+	// queries in order, so the reply comes before any theme color is set.
+	return tea.Batch(tea.Sequence(tea.RequestForegroundColor, func() tea.Msg {
 		return config.LoadedMsg{Config: config.New(m.configIO)}
-	}, tea.RequestWindowSize)
+	}), tea.RequestWindowSize)
+}
+
+// terminalColors returns the terminal background and text color the view should set.
+// A theme with a background also sets the text color, so unstyled text stays
+// readable, e.g. Catppuccin Latte on a dark terminal.
+func (m *Model) terminalColors() (bg, fg color.Color) {
+	if bg := styles.Current.Background; bg != nil && !m.quitting {
+		m.painted = true
+		return bg, styles.Current.Text
+	}
+	if m.painted {
+		// Some terminals ignore the "reset color" sequence bubbletea sends for a
+		// nil color, so set the original colors back explicitly.
+		return m.termBg, m.termFg
+	}
+	return nil, nil
 }
 
 func (m *Model) View() tea.View {
@@ -86,6 +118,7 @@ func (m *Model) View() tea.View {
 	}
 	v := tea.NewView(content)
 	v.AltScreen = true
+	v.BackgroundColor, v.ForegroundColor = m.terminalColors()
 	return v
 }
 
@@ -116,13 +149,29 @@ func (m *Model) withHelpModal(content string) string {
 	return ui.Overlay(content, modal, m.ktx.WindowWidth, m.ktx.WindowHeight)
 }
 
+// Update repaints the whole screen when the theme changes the terminal colors.
+// bubbletea only redraws cells whose content changed, and many terminals keep
+// the old background on cells that are not redrawn.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	bg := styles.Current.Background
+	model, cmd := m.update(msg)
+	if styles.Current.Background != bg {
+		cmd = tea.Batch(cmd, tea.ClearScreen)
+	}
+	return model, cmd
+}
+
+func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.ForegroundColorMsg:
+		m.termFg = msg.Color
+		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
+			m.quitting = true
 			return m, tea.Quit
 		case "f1":
 			m.showHelp = !m.showHelp && m.statusbar != nil
@@ -192,6 +241,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.clustersTabCtrl.Update(msg)
 		}
 	case config.LoadedMsg:
+		scheme, err := styles.Load(msg.Config.Theme, config.ThemesDir(), m.isDark)
+		if err != nil {
+			m.startErr = err
+			return m, tea.Quit
+		}
+		styles.Apply(scheme)
 		m.ktx.RegisterConfig(msg.Config)
 		if m.ktx.Config().HasClusters() {
 			cmd := m.boostrapUI(msg.Config.ActiveCluster())
@@ -204,7 +259,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statusbar = statusbar.New()
 			tCtrl, cmd := clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, m.statusbar)
 			m.tabCtrl = tCtrl
-			m.tabs = tab.New(clustersTab)
+			m.tabs = tab.New(clustersTab, settingsTab)
 			return m, cmd
 		}
 
@@ -253,6 +308,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.tabCtrl = m.clustersTabCtrl
 			case kconnectTabLbl:
 				m.tabCtrl = m.kconTabCtrl
+			case settingsTabLbl:
+				if m.settingsTabCtrl == nil {
+					m.settingsTabCtrl = settings_tab.New(m.ktx, config.ThemesDir(), m.isDark, m.statusbar)
+				}
+				m.tabCtrl = m.settingsTabCtrl
 			}
 			// can only be nil when ktea has not been fully loaded yet (config.LoadedMsg not been processed)
 			if m.tabCtrl != nil {
@@ -275,14 +335,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) recreateTabs(cluster *config.Cluster) {
-	titles := []tab.Tab{topicsTab, cgroupsTab, clustersTab}
+	titles := []tab.Tab{topicsTab, cgroupsTab, clustersTab, settingsTab}
 
 	if cluster.HasSchemaRegistry() {
 		titles = slices.Insert(titles, 2, schemaRegTab)
 	}
 
 	if cluster.HasKafkaConnect() {
-		titles = slices.Insert(titles, len(titles)-1, kconnectTab)
+		titles = slices.Insert(titles, len(titles)-2, kconnectTab)
 	}
 
 	m.tabs = tab.New(titles...)
@@ -314,8 +374,9 @@ func (m *Model) onWindowSizeUpdated(msg tea.WindowSizeMsg) {
 func (m *Model) boostrapUI(cluster *config.Cluster) tea.Cmd {
 	var cmd tea.Cmd
 	m.statusbar = statusbar.New()
+	m.settingsTabCtrl = nil // bound to the old statusbar
 	if err := m.recreateAdminClients(cluster); err != nil {
-		m.tabs = tab.New(clustersTab)
+		m.tabs = tab.New(clustersTab, settingsTab)
 		m.clustersTabCtrl, cmd = clusters_tab.New(m.ktx, kadmin.CheckKafkaConnectivity, sradmin.CheckSchemaRegistryConn, m.statusbar)
 		m.startupConnErr = true
 		m.tabCtrl = m.clustersTabCtrl
@@ -356,6 +417,7 @@ func NewModel(
 		kaInstantiator: kai,
 		ktx:            kontext.New(disableNerdFonts),
 		configIO:       configIO,
+		isDark:         true,
 	}
 }
 
@@ -380,13 +442,17 @@ func main() {
 		disableNerdFonts = &plainFontsParam
 	}
 
-	p := tea.NewProgram(
-		NewModel(
-			disableNerdFonts,
-			kadmin.SaramaInstantiator(),
-			config.NewDefaultIO(),
-		),
+	model := NewModel(
+		disableNerdFonts,
+		kadmin.SaramaInstantiator(),
+		config.NewDefaultIO(),
 	)
+	// Ask the terminal before the TUI takes over stdin.
+	if bg, err := lipgloss.BackgroundColor(os.Stdin, os.Stdout); err == nil && bg != nil {
+		model.termBg = bg
+		model.isDark = tea.BackgroundColorMsg{Color: bg}.IsDark()
+	}
+	p := tea.NewProgram(model)
 
 	if debugParam {
 		var fileErr error
@@ -406,5 +472,9 @@ func main() {
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal("Failed starting the TUI", err)
+	}
+	if model.startErr != nil {
+		fmt.Fprintln(os.Stderr, "ktea:", model.startErr)
+		os.Exit(1)
 	}
 }

@@ -146,7 +146,7 @@ func newForm(model *Model) *huh.Form {
 				return nil
 			}),
 		schemaInput,
-	))
+	)).WithTheme(styles.Huh)
 	form.Init()
 	return form
 }

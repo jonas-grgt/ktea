@@ -76,7 +76,7 @@ func (m *UpsertKcModel) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) str
 		m.table.SetWidth(ktx.WindowWidth - 2)
 		m.table.SetRows(m.rows)
 
-		views = append(views, renderer.Render(m.table.View()))
+		views = append(views, renderer.Render(ktable.View(&m.table)))
 		return ui.JoinVertical(lipgloss.Top, views...)
 	}
 	m.form.WithHeight(ktx.AvailableHeight - 3)
@@ -280,7 +280,7 @@ func (m *UpsertKcModel) createKcForm() *huh.Form {
 	form := huh.NewForm(
 		huh.NewGroup(fields...).
 			Title("Kafka Connect"),
-	)
+	).WithTheme(styles.Huh)
 	form.Init()
 
 	return form

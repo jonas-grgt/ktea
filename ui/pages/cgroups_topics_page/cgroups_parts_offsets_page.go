@@ -99,10 +99,10 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	}
 
 	topicsView := m.topicsBorder.View(
-		renderer.RenderWithStyle(m.topicsTable.View(), topicTableStyle),
+		renderer.RenderWithStyle(ktable.View(&m.topicsTable), topicTableStyle),
 	)
 	offsetsView := m.offsetsBorder.View(
-		renderer.RenderWithStyle(m.offsetsTable.View(), offsetTableStyle),
+		renderer.RenderWithStyle(ktable.View(&m.offsetsTable), offsetTableStyle),
 	)
 
 	return ui.JoinVertical(lg.Left,

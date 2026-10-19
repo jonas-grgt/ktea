@@ -237,7 +237,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		m.preEditName = &msg.Cluster.Name
 		m.clusterToEdit = msg.Cluster
 		m.formState = none
-		m.border.WithInActiveColor(styles.ColorGrey)
+		m.border.WithInActiveColor(styles.Current.TextMuted)
 		m.clusterSaved = true
 		if activeTab == cTab {
 			m.cForm = m.createCForm()
@@ -651,7 +651,7 @@ func (m *Model) createCForm() *huh.Form {
 		huh.NewGroup(clusterFields...).
 			Title("Cluster").
 			WithWidth(m.ktx.WindowWidth - 3),
-	)
+	).WithTheme(styles.Huh)
 	form.Init()
 	return form
 }
@@ -715,7 +715,7 @@ func (m *Model) createSrForm() *huh.Form {
 		huh.NewGroup(fields...).
 			Title("Schema Registry").
 			WithWidth(m.ktx.WindowWidth - 3),
-	)
+	).WithTheme(styles.Huh)
 	form.Init()
 
 	return form
@@ -806,7 +806,7 @@ func NewCreateClusterPage(
 
 	model.ktx = ktx
 
-	model.border = initBorder(border.WithInactiveColor(styles.ColorDarkGrey))
+	model.border = initBorder(border.WithInactiveColor(styles.Current.SurfaceAlt))
 
 	model.cForm = model.createCForm()
 	model.srForm = model.createSrForm()
@@ -921,7 +921,7 @@ func NewEditClusterPage(
 	}
 	model.ktx = ktx
 
-	model.border = initBorder(border.WithInactiveColor(styles.ColorGrey))
+	model.border = initBorder(border.WithInactiveColor(styles.Current.TextMuted))
 
 	model.cForm = model.createCForm()
 	model.srForm = model.createSrForm()

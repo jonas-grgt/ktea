@@ -176,7 +176,7 @@ func (m *searchModal) buildForm() {
 		)
 	}
 
-	m.form = huh.NewForm(groups...).WithShowHelp(false)
+	m.form = huh.NewForm(groups...).WithTheme(styles.Huh).WithShowHelp(false)
 	m.form.Init()
 }
 

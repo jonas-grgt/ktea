@@ -12,6 +12,13 @@ func NewDefaultTable() table.Model {
 	)
 }
 
+// View renders t with the current theme's table styles.
+// Tables copy their styles when created, so re-apply them to follow theme changes.
+func View(t *table.Model) string {
+	t.SetStyles(styles.Table.Styles)
+	return t.View()
+}
+
 // RowWidth is the rendered width of a row with the given columns.
 // bubbles v2 tables clip rows to their width, which defaults to 0.
 func RowWidth(cols []table.Column) int {

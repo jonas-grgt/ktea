@@ -43,7 +43,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	m.table.SetRows(m.rows)
 	m.table.Focus()
 
-	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(m.table.View()))
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(ktable.View(m.table)))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {

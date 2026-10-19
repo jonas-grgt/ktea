@@ -41,7 +41,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 			true,
 		)
 	}))
-	return renderer.Render(b.View(m.table.View()))
+	return renderer.Render(b.View(ktable.View(&m.table)))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {

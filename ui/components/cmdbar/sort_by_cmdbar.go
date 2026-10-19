@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"fmt"
+	"image/color"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -50,7 +51,7 @@ func (m *SortByCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) stri
 	for i, sort := range m.sorts {
 		var (
 			style   lipgloss.Style
-			bgColor string
+			bgColor color.Color
 			render  string
 			arrow   string
 		)
@@ -63,24 +64,24 @@ func (m *SortByCmdBar) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) stri
 
 		if m.activeIdx == i {
 			if m.selectedIdx == i {
-				bgColor = styles.ColorLightPink
+				bgColor = styles.Current.PrimaryMuted
 			} else {
-				bgColor = styles.ColorWhite
+				bgColor = styles.Current.Text
 			}
 			style = lipgloss.NewStyle().
-				Background(lipgloss.Color(bgColor)).
-				Foreground(lipgloss.Color(styles.ColorBlack))
+				Background(bgColor).
+				Foreground(styles.Current.OnPrimary)
 
 			render = fmt.Sprintf(" %s %s ", sort.Label, arrow)
 		} else if m.selectedIdx == i {
 			style = lipgloss.NewStyle().
-				Background(lipgloss.Color(styles.ColorPink)).
-				Foreground(lipgloss.Color(styles.ColorBlack))
+				Background(styles.Current.Primary).
+				Foreground(styles.Current.OnPrimary)
 			render = fmt.Sprintf(" %s %s ", sort.Label, arrow)
 		} else {
 			style = lipgloss.NewStyle().
-				Background(lipgloss.Color(styles.ColorDarkGrey)).
-				Foreground(lipgloss.Color(styles.ColorWhite))
+				Background(styles.Current.SurfaceAlt).
+				Foreground(styles.Current.Text)
 			render = fmt.Sprintf(" %s %s ", sort.Label, arrow)
 		}
 
@@ -156,7 +157,7 @@ func (m *SortByCmdBar) PrefixSortIcon(title string) string {
 	sb := m.SortedBy()
 	if sb.Label == title {
 		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color(styles.ColorPink)).
+			Foreground(styles.Current.Primary).
 			Bold(true).
 			Render(sb.Direction.String()) + " " + lipgloss.NewStyle().Bold(true).Render(title)
 	}

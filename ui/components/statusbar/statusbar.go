@@ -2,6 +2,7 @@ package statusbar
 
 import (
 	lg "charm.land/lipgloss/v2"
+	"image/color"
 	"ktea/kontext"
 	"ktea/styles"
 	"ktea/ui"
@@ -41,8 +42,8 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		if ktx.Config().PlainFonts {
 			leftSeparator = ""
 		}
-		clusterRight := renderRune(rightSeparator, clusterColor, styles.ColorPink)
-		clusterLeft := renderRune(leftSeparator, clusterColor, "")
+		clusterRight := renderRune(rightSeparator, lg.Color(clusterColor), styles.Current.Primary)
+		clusterLeft := renderRune(leftSeparator, lg.Color(clusterColor), lg.NoColor{})
 
 		activeCluster = clusterLeft + activeCluster + clusterRight
 	}
@@ -53,7 +54,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		endSeparator = ""
 	}
 
-	indicator += renderRune(endSeparator, styles.ColorPink, styles.ColorMidGrey)
+	indicator += renderRune(endSeparator, styles.Current.Primary, styles.Current.Surface)
 
 	leftover := ktx.WindowWidth - lg.Width(activeCluster) - lg.Width(indicator)
 
@@ -68,22 +69,22 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 			activeCluster,
 			indicator,
 			styles.Statusbar.Spacer.Width(leftover).Render(""),
-			renderText(endSeparator, styles.ColorMidGrey),
+			renderText(endSeparator, styles.Current.Surface),
 		))
 
 	return renderer.Render(barView)
 }
 
-func renderRune(symbol string, fg, bg string) string {
+func renderRune(symbol string, fg, bg color.Color) string {
 	return lg.NewStyle().
-		Foreground(lg.Color(fg)).
-		Background(lg.Color(bg)).
+		Foreground(fg).
+		Background(bg).
 		Render(symbol)
 }
 
-func renderText(text, fg string) string {
+func renderText(text string, fg color.Color) string {
 	return lg.NewStyle().
-		Foreground(lg.Color(fg)).
+		Foreground(fg).
 		Render(text)
 }
 

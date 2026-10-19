@@ -199,7 +199,7 @@ func (m *Model) sidebarView(ktx *kontext.ProgramKtx, payloadWidth int, height in
 		headerSideBar = ui.JoinVertical(
 			lipgloss.Top,
 			lipgloss.NewStyle().Padding(1).Render(m.metaInfo),
-			headersTableStyle.Render(lipgloss.JoinVertical(lipgloss.Top, m.headerKeyTable.View(), m.headerValueVp.View())),
+			headersTableStyle.Render(lipgloss.JoinVertical(lipgloss.Top, ktable.View(m.headerKeyTable), m.headerValueVp.View())),
 		)
 	}
 	return headerSideBar
@@ -234,7 +234,7 @@ func (m *Model) recordView(payloadWidth int, height int) string {
 				Render(lipgloss.NewStyle().
 					Bold(true).
 					Padding(1).
-					Foreground(lipgloss.Color(styles.ColorGrey)).
+					Foreground(styles.Current.TextMuted).
 					Render("Unable to render payload")))
 		}
 	} else {
@@ -251,13 +251,13 @@ func (m *Model) headerStyle() lipgloss.Style {
 			BorderStyle(lipgloss.RoundedBorder()).
 			Padding(0).
 			Margin(0).
-			BorderForeground(lipgloss.Color(styles.ColorBlurBorder))
+			BorderForeground(styles.Current.BorderBlur)
 	} else {
 		headersTableStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
 			Padding(0).
 			Margin(0).
-			BorderForeground(lipgloss.Color(styles.ColorFocusBorder))
+			BorderForeground(styles.Current.BorderFocus)
 	}
 	return headersTableStyle
 }

@@ -217,7 +217,7 @@ func (m *Model) newForm(ktx *kontext.ProgramKtx) *huh.Form {
 			Affirmative("Produce").
 			Negative(""),
 		),
-	)
+	).WithTheme(styles.Huh)
 	form.WithLayout(huh.LayoutGrid(4, 2))
 	form.Init()
 	return form

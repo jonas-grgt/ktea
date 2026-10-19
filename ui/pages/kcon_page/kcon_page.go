@@ -75,7 +75,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	m.table.SetWidth(ktx.WindowWidth - 2)
 	m.table.SetHeight(ktx.AvailableHeight - 2)
 
-	tableView := m.border.View(m.table.View())
+	tableView := m.border.View(ktable.View(m.table))
 	return ui.JoinVertical(lipgloss.Top, cmdBarView, tableView)
 }
 
@@ -463,7 +463,7 @@ func New(
 
 	deleteMsgFunc := func(connector string) string {
 		message := connector + lipgloss.NewStyle().
-			Foreground(lipgloss.Color(styles.ColorIndigo)).
+			Foreground(styles.Current.Accent).
 			Bold(true).
 			Render(" will be deleted permanently")
 		return message

@@ -67,7 +67,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 		m.goToTop = false
 	}
 
-	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(m.table.View()))
+	return ui.JoinVertical(lipgloss.Top, cmdBarView, m.border.View(ktable.View(&m.table)))
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
@@ -130,7 +130,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 func (m *Model) columnTitle(title string) string {
 	if m.sort.Label == title {
 		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color(styles.ColorPink)).
+			Foreground(styles.Current.Primary).
 			Bold(true).
 			Render(m.sort.Direction.String()) + " " + title
 	}
@@ -223,7 +223,7 @@ func New(
 
 	deleteMsgFunc := func(topic string) string {
 		message := topic + lipgloss.NewStyle().
-			Foreground(lipgloss.Color(styles.ColorIndigo)).
+			Foreground(styles.Current.Accent).
 			Bold(true).
 			Render(" will be deleted permanently")
 		return message

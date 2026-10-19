@@ -3,6 +3,7 @@ package border
 import (
 	"charm.land/lipgloss/v2"
 	"fmt"
+	"image/color"
 	"ktea/styles"
 	"strings"
 )
@@ -22,8 +23,8 @@ type Model struct {
 	onTabChanged  OnTabChangedFunc
 	textByPos     map[Position]TextFunc
 	activeTabIdx  int
-	activeColor   string
-	inActiveColor string
+	activeColor   color.Color
+	inActiveColor color.Color
 	paddingTop    string
 }
 
@@ -84,12 +85,12 @@ func (m *Model) buildBorderLine(
 
 func (m *Model) borderize(content string) string {
 
-	borderColor := styles.ColorFocusBorder
+	borderColor := styles.Current.BorderFocus
 	if !m.Focused {
-		borderColor = styles.ColorBlurBorder
+		borderColor = styles.Current.BorderBlur
 	}
 
-	style := lipgloss.NewStyle().Foreground(lipgloss.Color(borderColor))
+	style := lipgloss.NewStyle().Foreground(borderColor)
 
 	// Split content into lines to get the maximum width
 	lines := strings.Split(content, "\n")
@@ -164,7 +165,7 @@ func (m *Model) GoTo(label TabLabel) {
 	}
 }
 
-func (m *Model) WithInActiveColor(c string) {
+func (m *Model) WithInActiveColor(c color.Color) {
 	m.inActiveColor = c
 }
 
@@ -180,36 +181,7 @@ func KeyValueTitle(
 	valueLabel string,
 	active bool,
 ) string {
-	var (
-		colorLabel string
-		colorCount string
-	)
-	if active {
-		colorLabel = styles.ColorWhite
-		colorCount = styles.ColorPink
-	} else {
-		colorLabel = styles.ColorGrey
-		colorCount = styles.ColorLightPink
-	}
-
-	var renderedValueLabel string
-	if valueLabel == "" {
-		renderedValueLabel = ""
-	} else {
-		renderedValueLabel = ":" + lipgloss.NewStyle().
-			Foreground(lipgloss.Color(colorCount)).
-			Bold(true).
-			Render(fmt.Sprintf(" %s", valueLabel))
-	}
-
-	return lipgloss.NewStyle().
-		Foreground(lipgloss.Color(colorLabel)).
-		Bold(true).
-		Render(fmt.Sprintf("[ %s", keyLabel)) + renderedValueLabel +
-		lipgloss.NewStyle().
-			Foreground(lipgloss.Color(colorLabel)).
-			Bold(true).
-			Render(" ]")
+	return styles.EmbeddedBorderText(keyLabel, valueLabel)(active)
 }
 
 // WithTitle adds a right aligned top and bottom title string
@@ -251,14 +223,15 @@ func WithTabs(tabs ...Tab) Option {
 				if m.activeTabIdx == i {
 					renderedTabs += lipgloss.NewStyle().
 						Bold(true).
-						Background(lipgloss.Color(m.activeColor)).
+						Background(m.tabColor()).
 						Padding(0, 1).
 						Render(tab.Title)
 				} else {
-					renderedTabs += lipgloss.NewStyle().
-						Padding(0, 1).
-						Foreground(lipgloss.Color(m.inActiveColor)).
-						Render(tab.Title)
+					style := lipgloss.NewStyle().Padding(0, 1)
+					if m.inActiveColor != nil {
+						style = style.Foreground(m.inActiveColor)
+					}
+					renderedTabs += style.Render(tab.Title)
 				}
 			}
 			return fmt.Sprintf("|%s|", renderedTabs)
@@ -266,7 +239,15 @@ func WithTabs(tabs ...Tab) Option {
 	}
 }
 
-func WithInactiveColor(c string) Option {
+// tabColor is read on every render so the border follows theme changes.
+func (m *Model) tabColor() color.Color {
+	if m.activeColor != nil {
+		return m.activeColor
+	}
+	return styles.Current.Active
+}
+
+func WithInactiveColor(c color.Color) Option {
 	return func(m *Model) {
 		m.inActiveColor = c
 	}
@@ -288,7 +269,6 @@ func New(options ...Option) *Model {
 	m := &Model{}
 	m.textByPos = make(map[Position]TextFunc)
 	m.Focused = true
-	m.activeColor = styles.ColorPurple
 
 	for _, option := range options {
 		option(m)

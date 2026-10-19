@@ -70,6 +70,8 @@ type Config struct {
 	Clusters   []Cluster `yaml:"clusters"`
 	ConfigIO   IO        `yaml:"-"`
 	PlainFonts bool      `yaml:"plainFonts"`
+	// Theme is a built-in theme or the name of a file in ThemesDir() (without .yaml).
+	Theme string `yaml:"theme,omitempty"`
 }
 
 func (c *Config) HasClusters() bool {
@@ -241,6 +243,12 @@ func (c *Config) ActiveCluster() *Cluster {
 		return &c.Clusters[0]
 	}
 	return nil
+}
+
+// SetTheme saves name as the active theme.
+func (c *Config) SetTheme(name string) {
+	c.Theme = name
+	c.flush()
 }
 
 func (c *Config) flush() {
