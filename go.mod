@@ -10,7 +10,7 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/burdiyan/kafkautil v0.0.0-20240215092415-7e6d3d0fc870
 	github.com/charmbracelet/x/ansi v0.11.9
-	github.com/docker/go-connections v0.6.0
+	github.com/docker/go-connections v0.8.2
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/uuid v1.6.0
 	github.com/linkedin/goavro/v2 v2.15.0
