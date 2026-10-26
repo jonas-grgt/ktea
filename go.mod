@@ -11,7 +11,7 @@ require (
 	github.com/burdiyan/kafkautil v0.0.0-20240215092415-7e6d3d0fc870
 	github.com/charmbracelet/x/ansi v0.11.9
 	github.com/docker/go-connections v0.6.0
-	github.com/dustin/go-humanize v1.0.1
+	github.com/dustin/go-humanize v1.1.0
 	github.com/google/uuid v1.6.0
 	github.com/linkedin/goavro/v2 v2.15.0
 	github.com/muesli/reflow v0.3.0
