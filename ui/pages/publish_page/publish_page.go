@@ -39,6 +39,8 @@ type Model struct {
 	navigator  tabs.TopicsTabNavigator
 }
 
+var formLayout = huh.LayoutGrid(4, 2)
+
 type formValues struct {
 	Key       string
 	Partition string
@@ -58,7 +60,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 
 	return ui.JoinVertical(lipgloss.Top,
 		notifierView,
-		renderer.RenderWithStyle(m.topicForm.View(), styles.Form),
+		renderer.RenderWithStyle(ui.RenderForm(m.topicForm, formLayout), styles.Form),
 	)
 }
 
@@ -76,7 +78,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		)
 	case kadmin.PublicationFailed:
 		m.state = none
-		m.topicForm.Init()
+		// rebuild the submitted form; entered values live in m.formValues
+		m.topicForm = nil
 		return m.notifier.ShowErrorMsg("Publication failed!", fmt.Errorf("TODO"))
 	case kadmin.PublicationSucceeded:
 		m.resetForm()
@@ -104,7 +107,6 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		}
 		if m.topicForm != nil && m.topicForm.State == huh.StateCompleted {
 			m.state = publishing
-			m.topicForm.State = huh.StateNormal
 			return tea.Batch(
 				m.notifier.SpinWithRocketMsg("Publishing record"),
 				func() tea.Msg {
@@ -215,7 +217,7 @@ func (m *Model) newForm(ktx *kontext.ProgramKtx) *huh.Form {
 			Negative(""),
 		),
 	).WithTheme(styles.Huh)
-	form.WithLayout(huh.LayoutGrid(4, 2))
+	form.WithLayout(formLayout)
 	form.Init()
 	return form
 }

@@ -462,3 +462,45 @@ func executeBatchCmd(cmd tea.Cmd) []tea.Msg {
 	msgs = append(msgs, msg)
 	return msgs
 }
+
+func TestPublishFormStaysVisible(t *testing.T) {
+	ktx := &kontext.ProgramKtx{WindowWidth: 100, WindowHeight: 100}
+
+	fillAndSubmit := func() *Model {
+		m := New(&MockPublisher{}, &kadmin.ListedTopic{
+			Name:           "topic1",
+			PartitionCount: 10,
+			Replicas:       1,
+		}, tabs.NewMockTopicsTabNavigator())
+		m.View(ktx, tests.Renderer)
+
+		tests.UpdateKeys(m, "my-key")
+		cmd := m.Update(tests.Key(tea.KeyEnter))
+		m.Update(cmd())
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		m.Update(cmd())
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
+		tests.UpdateKeys(m, "payload")
+		cmd = m.Update(tests.Key(tea.KeyEnter))
+		tests.NextGroup(m, cmd)
+		tests.Submit(m)
+		return m
+	}
+
+	t.Run("while publishing", func(t *testing.T) {
+		m := fillAndSubmit()
+
+		render := ansi.Strip(m.View(ktx, tests.Renderer))
+		assert.Contains(t, render, "my-key")
+	})
+
+	t.Run("after publication failed, keeping the entered values", func(t *testing.T) {
+		m := fillAndSubmit()
+
+		m.Update(kadmin.PublicationFailed{})
+
+		render := ansi.Strip(m.View(ktx, tests.Renderer))
+		assert.Contains(t, render, "my-key")
+	})
+}

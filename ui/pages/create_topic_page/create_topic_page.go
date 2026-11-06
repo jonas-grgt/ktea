@@ -57,7 +57,7 @@ type topicFormValues struct {
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	var views []string
 	notifierView := m.notifier.View(ktx, renderer)
-	formView := renderer.RenderWithStyle(m.form.View(), styles.Form)
+	formView := renderer.RenderWithStyle(ui.RenderForm(m.form, huh.LayoutDefault), styles.Form)
 	views = append(views, notifierView, formView)
 
 	if len(m.formValues.configs) > 0 {

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -447,4 +448,36 @@ func TestCreateTopic_Validation(t *testing.T) {
 			assert.NotContains(t, render, "please enter configurations in the format \"config=value\"")
 		})
 	})
+}
+
+func TestCreateTopicFormStaysVisibleWhileSubmitting(t *testing.T) {
+	// given
+	m := New(&MockTopicCreator{}, tabs.NewMockTopicsTabNavigator())
+	ktx := tests.NewKontext()
+	m.View(ktx, tests.Renderer)
+
+	// topic name
+	tests.UpdateKeys(m, "topicA")
+	cmd := m.Update(tests.Key(tea.KeyEnter))
+	m.Update(cmd())
+	// partition count
+	tests.UpdateKeys(m, "2")
+	cmd = m.Update(tests.Key(tea.KeyEnter))
+	m.Update(cmd())
+	// replication factor
+	tests.UpdateKeys(m, "3")
+	cmd = m.Update(tests.Key(tea.KeyEnter))
+	m.Update(cmd())
+	// cleanup policy
+	cmd = m.Update(tests.Key(tea.KeyEnter))
+	m.Update(cmd())
+
+	// when: submitted without extra config
+	tests.Submit(m)
+	assert.Equal(t, huh.StateCompleted, m.form.State)
+	m.Update(kadmin.TopicCreationStartedMsg{})
+
+	// then
+	render := ansi.Strip(m.View(ktx, tests.Renderer))
+	assert.Contains(t, render, "topicA")
 }

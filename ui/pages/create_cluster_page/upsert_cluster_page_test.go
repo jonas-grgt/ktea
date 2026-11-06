@@ -1558,3 +1558,30 @@ func TestCreateSchemaRegistry(t *testing.T) {
 		})
 	})
 }
+
+func TestClusterFormStaysVisibleWhileSubmitting(t *testing.T) {
+	// given
+	page, ktx := createClusterPage()
+	kb := tests.NewKeyboard(page)
+	kb.Type("TST").Enter()
+	kb.Enter()
+	kb.Type("unknown-host:9092").Enter()
+	kb.Enter()
+
+	// when: submitted and the connection check is still running
+	kb.Submit()
+	page.Update(kadmin.ConnCheckStartedMsg{})
+
+	// then
+	render := ansi.Strip(page.View(ktx, tests.Renderer))
+	assert.Contains(t, render, "Testing cluster connectivity")
+	assert.Contains(t, render, "TST")
+	assert.Contains(t, render, "unknown-host:9092")
+
+	t.Run("and ignores input", func(t *testing.T) {
+		tests.UpdateKeys(page, "x")
+
+		render := ansi.Strip(page.View(ktx, tests.Renderer))
+		assert.NotContains(t, render, "unknown-host:9092x")
+	})
+}

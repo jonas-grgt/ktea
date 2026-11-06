@@ -129,3 +129,22 @@ func TestCreateSubjectsPage(t *testing.T) {
 		assert.Contains(t, render, "schema cannot be empty")
 	})
 }
+
+func TestSchemaFormStaysVisibleWhileSubmitting(t *testing.T) {
+	// given
+	page, _ := New(&MockSubjectCreator{}, tests.Kontext, tabs.NewMockSrTabNavigator())
+	page.View(tests.Kontext, tests.Renderer)
+	tests.UpdateKeys(page, "subject")
+	cmd := page.Update(tests.Key(tea.KeyEnter))
+	page.Update(cmd())
+	tests.UpdateKeys(page, "{\"type\":\"string\"}")
+
+	// when
+	tests.Submit(page)
+	page.Update(sradmin.SchemaCreationStartedMsg{})
+
+	// then
+	render := ansi.Strip(page.View(tests.Kontext, tests.Renderer))
+	assert.Contains(t, render, "subject")
+	assert.Contains(t, render, "{\"type\":\"string\"}")
+}

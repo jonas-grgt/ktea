@@ -153,7 +153,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 			Width(ktx.WindowWidth - 2).
 			Render(m.kcModel.View(ktx, renderer)))
 	} else {
-		mainView = renderer.RenderWithStyle(m.form.View(), styles.Form)
+		mainView = renderer.RenderWithStyle(ui.RenderForm(m.form, huh.LayoutDefault), styles.Form)
 	}
 
 	mainView = m.border.View(lipgloss.NewStyle().

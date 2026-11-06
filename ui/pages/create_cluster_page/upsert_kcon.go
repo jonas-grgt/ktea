@@ -80,7 +80,7 @@ func (m *UpsertKcModel) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) str
 		return ui.JoinVertical(lipgloss.Top, views...)
 	}
 	m.form.WithHeight(ktx.AvailableHeight - 3)
-	return renderer.RenderWithStyle(m.form.View(), styles.Form)
+	return renderer.RenderWithStyle(ui.RenderForm(m.form, huh.LayoutDefault), styles.Form)
 }
 
 func (m *UpsertKcModel) Update(msg tea.Msg) tea.Cmd {

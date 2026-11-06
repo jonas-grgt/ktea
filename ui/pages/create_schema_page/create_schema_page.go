@@ -49,7 +49,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 	return ui.JoinVertical(
 		lipgloss.Top,
 		cmdbarView,
-		renderer.RenderWithStyle(m.form.View(), styles.Form),
+		renderer.RenderWithStyle(ui.RenderForm(m.form, huh.LayoutDefault), styles.Form),
 	)
 }
 

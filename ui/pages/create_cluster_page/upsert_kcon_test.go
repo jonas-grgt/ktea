@@ -146,3 +146,34 @@ func TestUpsertKcModel(t *testing.T) {
 		assert.Contains(t, render, "s3-sink")
 	})
 }
+
+func TestKcFormStaysVisibleWhileSubmitting(t *testing.T) {
+	// given
+	ktx := tests.NewKontext()
+	m := NewUpsertKcModel(
+		tabs.NewMockClustersTabNavigator(),
+		ktx,
+		nil,
+		[]config.KafkaConnectConfig{},
+		kcadmin.NewMockConnChecker(),
+		cmdbar.NewNotifierCmdBar("test"),
+		mockKafkaConnectRegisterer,
+	)
+	m.View(ktx, tests.Renderer)
+	tests.UpdateKeys(m, "dev sink cluster")
+	cmd := m.Update(tests.Key(tea.KeyEnter))
+	m.Update(cmd())
+	tests.UpdateKeys(m, "http://localhost:8083")
+	cmd = m.Update(tests.Key(tea.KeyEnter))
+	m.Update(cmd())
+	cmd = m.Update(tests.Key(tea.KeyEnter))
+	m.Update(cmd())
+
+	// when
+	tests.Submit(m)
+
+	// then
+	render := ansi.Strip(m.View(ktx, tests.Renderer))
+	assert.Contains(t, render, "dev sink cluster")
+	assert.Contains(t, render, "http://localhost:8083")
+}
