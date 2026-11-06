@@ -256,15 +256,23 @@ commited offsets etc ...
 
 `docker/docker-compose.yml` contains a cluster, schema-registry and kafka-connect setup.
 `docker/docker-compose-ssl.yml` contains a ssl enabled cluster only
+`docker/docker-compose-scram.yml` contains a Redpanda cluster with SASL/SCRAM
+
+The `Makefile` wraps these, run `make` to list all goals:
+
+- `make up`, `make up-ssl` or `make up-scram` starts a cluster (only one runs at a time, they all use port 9092)
+- `make seed` creates topics, consumer groups and offsets on the default cluster
+- `make down` stops all clusters, `make clean` also deletes their data
 
 ### Generate data
 
 After the local cluster is up and running, you can generate some data to work with, 
-using`go run ./cmd/generate`.
+using `make generate` (`go run ./cmd/generate`).
 
 ### Run `ktea`
 
-Use `go run -tags dev cmd/ktea/main.go` to run `ktea` from the root of the repository.
+Use `make run` (`go run -tags dev ./cmd/ktea`) to run `ktea` from the root of the repository,
+or `make run-debug` to also write a `debug.log`.
 
 > Note: running the tui with dev build tag will simulate an artificial slow network by sleeping for 2 seconds when doing network IO. This way the loaders and spinners can be visually asserted.
 > 
