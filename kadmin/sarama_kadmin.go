@@ -142,7 +142,8 @@ func NewSaramaKadmin(cluster *config.Cluster) (Kadmin, error) {
 		return nil, err
 	}
 
-	admin, err := sarama.NewClusterAdmin(cluster.BootstrapServers, cfg)
+	// share the client so the admin reuses its broker connections and metadata
+	admin, err := sarama.NewClusterAdminFromClient(client)
 	if err != nil {
 		return nil, err
 	}

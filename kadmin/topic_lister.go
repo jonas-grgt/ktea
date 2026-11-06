@@ -1,10 +1,9 @@
 package kadmin
 
 import (
-	"sync"
-
 	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
+	"github.com/IBM/sarama"
 )
 
 const UnknownRecordCount = -1
@@ -68,55 +67,83 @@ func (ka *SaramaKafkaAdmin) ListTopics() tea.Msg {
 	}
 }
 
+// doListTopics fetches the topics and their cleanup.policy from the controller
+// in two requests. The controller connection already exists, so no other
+// broker is dialed: on clusters with many brokers, connecting to each of them
+// at once floods DNS (see issue #177).
 func (ka *SaramaKafkaAdmin) doListTopics(
 	errChan chan error,
 	topicsChan chan []ListedTopic,
 ) {
 	MaybeIntroduceLatency()
-	listResult, err := ka.admin.ListTopics()
+	topics, err := ka.fetchTopics()
 	if err != nil {
 		errChan <- err
 		return
 	}
-
-	var (
-		topics []ListedTopic
-		wg     = sync.WaitGroup{}
-		mu     = sync.Mutex{}
-	)
-
-	for topic, t := range listResult {
-		wg.Go(func() {
-			msg := ka.ListConfigs(topic).(TopicConfigListingStartedMsg)
-
-			var configs map[string]string
-			switch c := msg.AwaitCompletion().(type) {
-			case TopicConfigListingErrorMsg:
-				log.Errorf("error listing configs for topic %s: %v", topic, c.Err)
-				errChan <- c.Err
-				return
-			case TopicConfigsListedMsg:
-				configs = c.Configs
-			}
-
-			cleanupPolicy := "unknown"
-			if policy, ok := configs["cleanup.policy"]; ok {
-				cleanupPolicy = policy
-			}
-
-			mu.Lock()
-			topics = append(topics, ListedTopic{
-				topic,
-				int(t.NumPartitions),
-				int(t.ReplicationFactor),
-				cleanupPolicy,
-			})
-			mu.Unlock()
-		})
-	}
-
-	wg.Wait()
-
 	topicsChan <- topics
 	close(topicsChan)
+}
+
+func (ka *SaramaKafkaAdmin) fetchTopics() ([]ListedTopic, error) {
+	broker, err := ka.client.Controller()
+	if err != nil {
+		return nil, err
+	}
+
+	metadata, err := broker.GetMetadata(sarama.NewMetadataRequest(ka.config.Version, nil))
+	if err != nil {
+		return nil, err
+	}
+
+	configsReq := &sarama.DescribeConfigsRequest{}
+	if ka.config.Version.IsAtLeast(sarama.V2_0_0_0) {
+		configsReq.Version = 2
+	} else if ka.config.Version.IsAtLeast(sarama.V1_1_0_0) {
+		configsReq.Version = 1
+	}
+	for _, t := range metadata.Topics {
+		configsReq.Resources = append(configsReq.Resources, &sarama.ConfigResource{
+			Type:        TopicResourceType,
+			Name:        t.Name,
+			ConfigNames: []string{"cleanup.policy"},
+		})
+	}
+	configs, err := broker.DescribeConfigs(configsReq)
+	if err != nil {
+		return nil, err
+	}
+
+	cleanupPolicies := make(map[string]string, len(configs.Resources))
+	for _, r := range configs.Resources {
+		if r.ErrorCode != 0 {
+			// e.g. no permission to describe this topic's configs
+			log.Errorf("error listing configs for topic %s: %v %s", r.Name, sarama.KError(r.ErrorCode), r.ErrorMsg)
+			continue
+		}
+		for _, c := range r.Configs {
+			if c.Name == "cleanup.policy" {
+				cleanupPolicies[r.Name] = c.Value
+			}
+		}
+	}
+
+	topics := make([]ListedTopic, 0, len(metadata.Topics))
+	for _, t := range metadata.Topics {
+		replicas := 0
+		if len(t.Partitions) > 0 {
+			replicas = len(t.Partitions[0].Replicas)
+		}
+		cleanupPolicy, ok := cleanupPolicies[t.Name]
+		if !ok {
+			cleanupPolicy = "unknown"
+		}
+		topics = append(topics, ListedTopic{
+			Name:           t.Name,
+			PartitionCount: len(t.Partitions),
+			Replicas:       replicas,
+			Cleanup:        cleanupPolicy,
+		})
+	}
+	return topics, nil
 }
