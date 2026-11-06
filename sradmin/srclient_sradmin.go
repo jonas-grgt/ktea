@@ -82,6 +82,8 @@ func (s *DefaultSrClient) doCreateSchema(details SubjectCreationDetails, created
 	createdChan <- true
 }
 
+const maxConnsPerRegistry = 10
+
 func createHttpClient(registry *config.SchemaRegistryConfig) *http.Client {
 	auth := registry.Username + ":" + registry.Password
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
@@ -113,6 +115,11 @@ func createHttpClient(registry *config.SchemaRegistryConfig) *http.Client {
 	transport := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsConfig,
+		// Listing subjects sends a few requests per subject in parallel. Cap the
+		// connections so they queue instead of opening one each, and keep them
+		// idle for reuse instead of reconnecting for every request.
+		MaxConnsPerHost:     maxConnsPerRegistry,
+		MaxIdleConnsPerHost: maxConnsPerRegistry,
 	}
 
 	client := &http.Client{
