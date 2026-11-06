@@ -30,6 +30,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
+	"github.com/IBM/sarama"
 )
 
 var version string
@@ -464,6 +465,9 @@ func main() {
 			log.SetLevel(log.DebugLevel)
 			log.Debug("Logging to debug.log")
 			log.Info("started")
+			// Kafka client logs: connections, authentication, broker errors
+			sarama.Logger = log.Default().WithPrefix("sarama").
+				StandardLog(log.StandardLogOptions{ForceLevel: log.DebugLevel})
 		}
 	} else {
 		log.SetOutput(os.Stderr)
