@@ -28,6 +28,8 @@ type Kadmin interface {
 	SraSetter
 	ClusterConfigLister
 	BrokerConfigLister
+	// Close releases the connections to the cluster.
+	Close() error
 }
 
 type ConnectionDetails struct {

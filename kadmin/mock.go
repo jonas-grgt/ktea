@@ -60,6 +60,8 @@ func (m MockKadmin) ListConfigs(topic string) tea.Msg {
 	return nil
 }
 
+func (m MockKadmin) Close() error { return nil }
+
 func (m MockKadmin) SetSra(sra sradmin.Client) {
 }
 

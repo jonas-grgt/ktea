@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"ktea/config"
 	"ktea/sradmin"
@@ -145,11 +146,13 @@ func NewSaramaKadmin(cluster *config.Cluster) (Kadmin, error) {
 	// share the client so the admin reuses its broker connections and metadata
 	admin, err := sarama.NewClusterAdminFromClient(client)
 	if err != nil {
+		_ = client.Close()
 		return nil, err
 	}
 
 	producer, err := sarama.NewSyncProducerFromClient(client)
 	if err != nil {
+		_ = client.Close()
 		return nil, err
 	}
 
@@ -191,4 +194,10 @@ func doCheckConnectivity(servers []string, config *sarama.Config, errChan chan e
 		}
 	}(c)
 	connectedChan <- true
+}
+
+// Close closes the producer and the client. The admin shares the client, so
+// it needs no separate close.
+func (ka *SaramaKafkaAdmin) Close() error {
+	return errors.Join(ka.producer.Close(), ka.client.Close())
 }

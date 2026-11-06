@@ -352,11 +352,17 @@ func (m *Model) recreateTabs(cluster *config.Cluster) {
 // recreateAdminClients (re)creates the kadmin.Model and kadmin.SrAdmin
 // based on the given cluster
 func (m *Model) recreateAdminClients(cluster *config.Cluster) error {
-	if ka, err := m.kaInstantiator(cluster); err != nil {
+	ka, err := m.kaInstantiator(cluster)
+	if err != nil {
 		return err
-	} else {
-		m.ka = ka
 	}
+	// the previous cluster's connections would otherwise stay open
+	if m.ka != nil {
+		if err := m.ka.Close(); err != nil {
+			log.Error("Unable to close previous cluster connection", "err", err)
+		}
+	}
+	m.ka = ka
 
 	if cluster.HasSchemaRegistry() {
 		m.sra = sradmin.New(m.ktx.Config().ActiveCluster().SchemaRegistry)
