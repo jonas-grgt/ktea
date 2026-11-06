@@ -77,6 +77,18 @@ clusters:
             password: "secret"
 ```
 
+### Debug logging
+
+Debug logs are written when `ktea` is started with `--debug`:
+
+```sh
+ktea --debug                 # writes ./debug.log
+ktea --debug=/tmp/ktea       # writes /tmp/ktea/debug.log (when /tmp/ktea is a directory)
+ktea --debug=/tmp/ktea.log   # writes /tmp/ktea.log
+```
+
+The path must be attached with `=`; `--debug /path` is not supported.
+
 ### Themes
 
 ktea comes with several color themes, and you can write your own.
@@ -272,7 +284,8 @@ using `make generate` (`go run ./cmd/generate`).
 ### Run `ktea`
 
 Use `make run` (`go run -tags dev ./cmd/ktea`) to run `ktea` from the root of the repository,
-or `make run-debug` to also write a `debug.log`.
+or `make run-debug` to also write a `debug.log`
+(use `go run -tags dev ./cmd/ktea --debug=PATH` to write it somewhere else).
 
 > Note: running the tui with dev build tag will simulate an artificial slow network by sleeping for 2 seconds when doing network IO. This way the loaders and spinners can be visually asserted.
 > 
