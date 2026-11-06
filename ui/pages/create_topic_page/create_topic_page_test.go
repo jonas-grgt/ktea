@@ -7,7 +7,7 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -25,7 +25,7 @@ func batchUpdate(m *Model, cmd tea.Cmd) {
 }
 
 func CreateTopicSectionWithCursorAtPartitionsField() *Model {
-	m := New(&MockTopicCreator{})
+	m := New(&MockTopicCreator{}, tabs.NewMockTopicsTabNavigator())
 	cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: string('a')})
 	batchUpdate(m, cmd)
 	cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
@@ -34,7 +34,7 @@ func CreateTopicSectionWithCursorAtPartitionsField() *Model {
 }
 
 func CreateTopicSectionWithCursorAtReplicationFactor() *Model {
-	m := New(&MockTopicCreator{})
+	m := New(&MockTopicCreator{}, tabs.NewMockTopicsTabNavigator())
 	cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: string('a')})
 	cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	// next field
@@ -73,27 +73,27 @@ func TestCreateTopic(t *testing.T) {
 				return CapturedTopicCreationDetails{details}
 			},
 		}
-		m := New(&mockCreator)
+		m := New(&mockCreator, tabs.NewMockTopicsTabNavigator())
 
 		t.Run("goes back to topic list page", func(t *testing.T) {
 			cmd := m.Update(tests.Key(tea.KeyEsc))
 
-			assert.Equal(t, nav.LoadTopicsPageMsg{Refresh: false}, cmd())
+			assert.Equal(t, tabs.ToTopicsPageCalledMsg{Refresh: false}, cmd())
 		})
 
 		t.Run("after at least one created topic refreshes topics list", func(t *testing.T) {
-			m = New(&mockCreator)
+			m = New(&mockCreator, tabs.NewMockTopicsTabNavigator())
 
 			m.Update(kadmin.TopicCreatedMsg{})
 
 			cmd := m.Update(tests.Key(tea.KeyEsc))
 
-			assert.Equal(t, nav.LoadTopicsPageMsg{Refresh: true}, cmd())
+			assert.Equal(t, tabs.ToTopicsPageCalledMsg{Refresh: true}, cmd())
 		})
 	})
 
 	t.Run("c-r resets form", func(t *testing.T) {
-		m := New(&MockTopicCreator{})
+		m := New(&MockTopicCreator{}, tabs.NewMockTopicsTabNavigator())
 
 		// topic name
 		tests.UpdateKeys(m, "topicA")
@@ -139,7 +139,7 @@ func TestCreateTopic(t *testing.T) {
 				return nil
 			},
 		}
-		m := New(&mockCreator)
+		m := New(&mockCreator, tabs.NewMockTopicsTabNavigator())
 
 		m.Update(kadmin.TopicCreationErrMsg{
 			Err: fmt.Errorf("Topic with this name already exists - Topic 'topic-0' already exists."),
@@ -160,7 +160,7 @@ func TestCreateTopic(t *testing.T) {
 				return CapturedTopicCreationDetails{details}
 			},
 		}
-		m := New(&mockCreator)
+		m := New(&mockCreator, tabs.NewMockTopicsTabNavigator())
 
 		// topic name
 		tests.UpdateKeys(m, "topicA")
@@ -220,7 +220,7 @@ func TestCreateTopic(t *testing.T) {
 				return CapturedTopicCreationDetails{details}
 			},
 		}
-		m := New(&mockCreator)
+		m := New(&mockCreator, tabs.NewMockTopicsTabNavigator())
 
 		// topic name
 		tests.UpdateKeys(m, "topicA")
@@ -277,7 +277,7 @@ func TestCreateTopic(t *testing.T) {
 func TestCreateTopic_Validation(t *testing.T) {
 	t.Run("Validate ListedTopic Name", func(t *testing.T) {
 		t.Run("When field is empty", func(t *testing.T) {
-			m := New(&MockTopicCreator{})
+			m := New(&MockTopicCreator{}, tabs.NewMockTopicsTabNavigator())
 
 			cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 			batchUpdate(m, cmd)
@@ -393,7 +393,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 	t.Run("Validate configuration", func(t *testing.T) {
 
 		t.Run("When field does not conform config=value format", func(t *testing.T) {
-			m := New(&MockTopicCreator{})
+			m := New(&MockTopicCreator{}, tabs.NewMockTopicsTabNavigator())
 
 			// topic name
 			tests.UpdateKeys(m, "topicA")
@@ -420,7 +420,7 @@ func TestCreateTopic_Validation(t *testing.T) {
 		})
 
 		t.Run("When field conforms config=value format", func(t *testing.T) {
-			m := New(&MockTopicCreator{})
+			m := New(&MockTopicCreator{}, tabs.NewMockTopicsTabNavigator())
 
 			// topic name
 			tests.UpdateKeys(m, "topicA")

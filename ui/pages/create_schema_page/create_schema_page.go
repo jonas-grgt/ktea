@@ -12,7 +12,7 @@ import (
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 )
 
 type state int
@@ -36,6 +36,7 @@ type Model struct {
 	ktx                     *kontext.ProgramKtx
 	schemaInput             *huh.Text
 	createdAtLeastOneSchema bool
+	navigator               tabs.SrTabNavigator
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -82,9 +83,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 				if m.state == creating {
 					return nil
 				}
-				cmds = append(cmds, ui.PublishMsg(nav.LoadSubjectsPageMsg{
-					Refresh: m.createdAtLeastOneSchema,
-				}))
+				cmds = append(cmds, m.navigator.ToSubjectsPage(m.createdAtLeastOneSchema))
 			default:
 				m.cmdBar.Notifier.Idle()
 			}
@@ -151,8 +150,9 @@ func newForm(model *Model) *huh.Form {
 	return form
 }
 
-func New(schemaCreator sradmin.SchemaCreator, ktx *kontext.ProgramKtx) (*Model, tea.Cmd) {
+func New(schemaCreator sradmin.SchemaCreator, ktx *kontext.ProgramKtx, navigator tabs.SrTabNavigator) (*Model, tea.Cmd) {
 	model := &Model{}
+	model.navigator = navigator
 	model.ktx = ktx
 	model.schemaCreator = schemaCreator
 	model.state = entering

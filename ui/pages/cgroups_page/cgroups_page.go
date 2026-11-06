@@ -12,7 +12,7 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"reflect"
 	"slices"
 	"sort"
@@ -43,6 +43,7 @@ type Model struct {
 	sort          cmdbar.SortLabel
 	state         state
 	goToTop       bool
+	navigator     tabs.CGroupsTabNavigator
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -83,7 +84,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			// only accept enter when the table is focussed
 			if !m.tcb.IsFocussed() {
 				// TODO ignore enter when there are no groups loaded
-				return ui.PublishMsg(nav.LoadCGroupTopicsPageMsg{GroupName: *m.SelectedCGroup()})
+				return m.navigator.ToCGroupTopicsPage(*m.SelectedCGroup())
 			}
 		case "f5":
 			m.groups = nil
@@ -213,9 +214,11 @@ func (m *Model) Title() string {
 func New(
 	lister kadmin.CGroupLister,
 	deleter kadmin.CGroupDeleter,
+	navigator tabs.CGroupsTabNavigator,
 ) (*Model, tea.Cmd) {
 	m := &Model{}
 	m.lister = lister
+	m.navigator = navigator
 
 	// Use ktable.NewDefaultTable() instead of direct initialization
 	t := ktable.NewDefaultTable()

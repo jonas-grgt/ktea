@@ -103,7 +103,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case searchClosedMsg:
 		m.search = nil
 		if !m.readStarted {
-			return m.navigator.ToTopicsPage()
+			return m.navigator.ToTopicsPage(false)
 		}
 		return nil
 	case searchSubmittedMsg:
@@ -128,7 +128,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyPressMsg:
 		if msg.String() == "esc" {
 			m.cancelConsumption()
-			return m.navigator.ToTopicsPage()
+			return m.navigator.ToTopicsPage(false)
 		} else if (msg.String() == "/" || msg.String() == "ctrl+f") && !m.cmdBar.IsFocussed() {
 			m.search = newSearchModal(m.topic, m.readDetails, msg.String() == "ctrl+f")
 			return nil
@@ -144,7 +144,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					m.consuming = false
 					recordIndex := m.recordIndexForRow(selectedRow)
 					return m.navigator.ToRecordDetailsPage(
-						tabs.LoadRecordDetailPageMsg{
+						tabs.RecordDetailsPageDetails{
 							Record:    &selectedRecord,
 							TopicName: m.readDetails.TopicName,
 							Records:   m.records,

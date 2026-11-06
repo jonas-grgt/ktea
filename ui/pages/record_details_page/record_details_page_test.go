@@ -8,6 +8,7 @@ import (
 	"ktea/tests"
 	"ktea/ui/clipper"
 	"ktea/ui/components/statusbar"
+	"ktea/ui/tabs"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -35,6 +36,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 		// init ui
 		m.View(tests.Kontext, tests.Renderer)
@@ -94,6 +96,7 @@ func TestRecordDetailsPage(t *testing.T) {
 				0,
 				clipper.NewMock(),
 				&ktx,
+				tabs.NewMockTopicsTabNavigator(),
 			)
 
 			shortcuts := m.Shortcuts()
@@ -143,6 +146,7 @@ func TestRecordDetailsPage(t *testing.T) {
 				0,
 				clipper.NewMock(),
 				&ktx,
+				tabs.NewMockTopicsTabNavigator(),
 			)
 
 			shortcuts := m.Shortcuts()
@@ -202,6 +206,7 @@ func TestRecordDetailsPage(t *testing.T) {
 				0,
 				clipper.NewMock(),
 				&ktx,
+				tabs.NewMockTopicsTabNavigator(),
 			)
 
 			m.View(tests.NewKontext(), tests.Renderer)
@@ -227,6 +232,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		render := ansi.Strip(m.View(tests.NewKontext(), tests.Renderer))
@@ -248,6 +254,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		title := m.Title()
@@ -280,6 +287,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipMock,
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		m.View(tests.NewKontext(), tests.Renderer)
@@ -326,6 +334,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipMock,
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		m.View(tests.NewKontext(), tests.Renderer)
@@ -381,6 +390,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipMock,
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		m.View(tests.NewKontext(), tests.Renderer)
@@ -431,6 +441,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipMock,
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		m.View(tests.NewKontext(), tests.Renderer)
@@ -472,6 +483,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipMock,
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		m.View(tests.NewKontext(), tests.Renderer)
@@ -501,6 +513,7 @@ func TestRecordDetailsPage(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		// init ui
@@ -541,6 +554,7 @@ func TestRecordNavigation(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -568,6 +582,7 @@ func TestRecordNavigation(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -599,6 +614,7 @@ func TestRecordNavigation(t *testing.T) {
 			1,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -626,6 +642,7 @@ func TestRecordNavigation(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			tests.NewKontext(),
+			tabs.NewMockTopicsTabNavigator(),
 		)
 		m.View(tests.NewKontext(), tests.Renderer)
 
@@ -671,6 +688,7 @@ func TestRecordNavigation(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			&ktx,
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		shortcuts := m.Shortcuts()
@@ -718,6 +736,7 @@ func TestRecordNavigation(t *testing.T) {
 			0,
 			clipper.NewMock(),
 			&ktx,
+			tabs.NewMockTopicsTabNavigator(),
 		)
 
 		shortcuts := m.Shortcuts()

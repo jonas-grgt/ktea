@@ -10,7 +10,6 @@ import (
 	"ktea/ui/components/statusbar"
 	"ktea/ui/pages"
 	"ktea/ui/pages/create_schema_page"
-	"ktea/ui/pages/nav"
 	"ktea/ui/pages/schema_details_page"
 	"ktea/ui/pages/subjects_page"
 )
@@ -35,40 +34,44 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 }
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
-	var cmds []tea.Cmd
-
-	switch msg := msg.(type) {
-	case sradmin.SubjectsListedMsg:
+	if msg, ok := msg.(sradmin.SubjectsListedMsg); ok {
 		return m.subjectsPage.Update(msg)
-	case nav.LoadCreateSubjectPageMsg:
-		createPage, cmd := create_schema_page.New(m.srClient, m.ktx)
-		cmds = append(cmds, cmd)
-		m.active = createPage
-	case nav.LoadSubjectsPageMsg:
-		if m.subjectsPage == nil || msg.Refresh && m.active != m.subjectsPage {
-			var cmd tea.Cmd
-			m.subjectsPage, cmd = subjects_page.New(m.srClient)
-			cmds = append(cmds, cmd)
-		}
-		m.active = m.subjectsPage
-	case nav.LoadSchemaDetailsPageMsg:
-		var cmd tea.Cmd
-		m.schemaDetailsPage, cmd = schema_details_page.New(m.srClient, m.srClient, msg.Subject, clipper.New())
-		m.active = m.schemaDetailsPage
-		cmds = append(cmds, cmd)
 	}
+
+	cmd := m.active.Update(msg)
 
 	// in case the active page might have changed, update the statusbar provider
 	m.statusbar.SetProvider(m.active)
 
-	cmds = append(cmds, m.active.Update(msg))
+	return cmd
+}
 
-	return tea.Batch(cmds...)
+func (m *Model) ToSubjectsPage(refresh bool) tea.Cmd {
+	var cmd tea.Cmd
+	if refresh && m.active != m.subjectsPage {
+		m.subjectsPage, cmd = subjects_page.New(m.srClient, m)
+	}
+	m.active = m.subjectsPage
+	return cmd
+}
+
+func (m *Model) ToCreateSubjectPage() tea.Cmd {
+	page, cmd := create_schema_page.New(m.srClient, m.ktx, m)
+	m.active = page
+	return cmd
+}
+
+func (m *Model) ToSchemaDetailsPage(subject sradmin.Subject) tea.Cmd {
+	var cmd tea.Cmd
+	m.schemaDetailsPage, cmd = schema_details_page.New(m.srClient, m.srClient, subject, clipper.New(), m)
+	m.active = m.schemaDetailsPage
+	return cmd
 }
 
 func New(srClient sradmin.Client, ktx *kontext.ProgramKtx, stsBar *statusbar.Model) (*Model, tea.Cmd) {
-	subjectsPage, cmd := subjects_page.New(srClient)
-	model := Model{active: subjectsPage}
+	model := Model{}
+	subjectsPage, cmd := subjects_page.New(srClient, &model)
+	model.active = subjectsPage
 	model.subjectsPage = subjectsPage
 	model.statusbar = stsBar
 	model.srClient = srClient

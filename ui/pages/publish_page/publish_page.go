@@ -15,7 +15,7 @@ import (
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"reflect"
 	"strconv"
 	"strings"
@@ -36,10 +36,7 @@ type Model struct {
 	topic      *kadmin.ListedTopic
 	notifier   *notifier.Model
 	formValues *formValues
-}
-
-type LoadPageMsg struct {
-	Topic kadmin.ListedTopic
+	navigator  tabs.TopicsTabNavigator
 }
 
 type formValues struct {
@@ -95,7 +92,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			if m.state == publishing {
 				return nil
 			}
-			return ui.PublishMsg(nav.LoadTopicsPageMsg{})
+			return m.navigator.ToTopicsPage(false)
 		case "ctrl+r":
 			m.resetForm()
 		}
@@ -223,11 +220,12 @@ func (m *Model) newForm(ktx *kontext.ProgramKtx) *huh.Form {
 	return form
 }
 
-func New(p kadmin.Publisher, topic *kadmin.ListedTopic) *Model {
+func New(p kadmin.Publisher, topic *kadmin.ListedTopic, navigator tabs.TopicsTabNavigator) *Model {
 	return &Model{
 		topic:      topic,
 		publisher:  p,
 		notifier:   notifier.New(),
 		formValues: &formValues{},
+		navigator:  navigator,
 	}
 }

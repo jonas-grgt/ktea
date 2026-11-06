@@ -9,7 +9,7 @@ import (
 	"ktea/tests"
 	"ktea/ui/clipper"
 	"ktea/ui/components/notifier"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"testing"
 )
 
@@ -30,13 +30,13 @@ func TestSchemaDetailsPage(t *testing.T) {
 
 	t.Run("When schemas not loaded yet", func(t *testing.T) {
 
-		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock())
+		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		t.Run("viewport ignores msgs", func(t *testing.T) {
 			assert.Nil(t, page.vp)
 			assert.Nil(t, page.schemas)
 
-			page.Update(nav.LoadSchemaDetailsPageMsg{})
+			page.Update(tea.WindowSizeMsg{})
 
 			assert.Nil(t, page.vp)
 		})
@@ -55,7 +55,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{
 			Name:     "subject-name",
 			Versions: nil,
-		}, clipper.NewMock())
+		}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		page.Update(sradmin.SchemasListed{
 			Schemas: []sradmin.Schema{
@@ -74,7 +74,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 	})
 
 	t.Run("Loading indicator", func(t *testing.T) {
-		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock())
+		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		t.Run("visible when fetching schemas", func(t *testing.T) {
 			page.Update(sradmin.SchemaListingStarted{})
@@ -103,17 +103,17 @@ func TestSchemaDetailsPage(t *testing.T) {
 	})
 
 	t.Run("esc goes back to subjects list", func(t *testing.T) {
-		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock())
+		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		cmds := page.Update(tests.Key(tea.KeyEsc))
 
 		msgs := tests.ExecuteBatchCmd(cmds)
 
-		assert.Contains(t, msgs, nav.LoadSubjectsPageMsg{})
+		assert.Contains(t, msgs, tabs.ToSubjectsPageCalledMsg{Refresh: false})
 	})
 
 	t.Run("Render single schema formatted", func(t *testing.T) {
-		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock())
+		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		page.Update(sradmin.SchemasListed{
 			Schemas: []sradmin.Schema{
@@ -132,7 +132,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 	})
 
 	t.Run("Multiple versions", func(t *testing.T) {
-		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock())
+		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		page.Update(sradmin.SchemasListed{
 			Schemas: []sradmin.Schema{
@@ -163,7 +163,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 	})
 
 	t.Run("Renders version IDs", func(t *testing.T) {
-		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock())
+		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		page.Update(sradmin.SchemasListed{
 			Schemas: []sradmin.Schema{
@@ -202,7 +202,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 	})
 
 	t.Run("schema view is scrollable", func(t *testing.T) {
-		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock())
+		page, _ := New(&MockSchemaLister{}, &MockSchemaDeleter{}, sradmin.Subject{}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		page.Update(sradmin.SchemasListed{
 			Schemas: []sradmin.Schema{
@@ -243,7 +243,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			Name:          "test-subject",
 			Versions:      []int{1, 2},
 			Compatibility: "BACKWARDS",
-		}, clipper.NewMock())
+		}, clipper.NewMock(), tabs.NewMockSrTabNavigator())
 
 		page.Update(sradmin.SchemasListed{
 			Schemas: []sradmin.Schema{
@@ -324,8 +324,10 @@ func TestSchemaDetailsPage(t *testing.T) {
 				Version: 2,
 			})
 
-			msg := tests.ExecuteBatchCmd(cmd)
-			assert.Contains(t, msg, nav.LoadSubjectsPageMsg{Refresh: true}, msg)
+			msgs := tests.ExecuteBatchCmd(cmd)
+			assert.Contains(t, msgs, allSchemasDeletedMsg{}, msgs)
+
+			assert.Equal(t, tabs.ToSubjectsPageCalledMsg{Refresh: true}, page.Update(allSchemasDeletedMsg{})())
 		})
 	})
 
@@ -340,7 +342,7 @@ func TestSchemaDetailsPage(t *testing.T) {
 			Name:          "test-subject",
 			Versions:      []int{1, 2},
 			Compatibility: "BACKWARDS",
-		}, clipMock)
+		}, clipMock, tabs.NewMockSrTabNavigator())
 
 		page.Update(sradmin.SchemasListed{
 			Schemas: []sradmin.Schema{

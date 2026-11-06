@@ -13,7 +13,7 @@ import (
 	"ktea/ui/components/chips"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"slices"
 	"sort"
 	"strconv"
@@ -31,7 +31,11 @@ type Model struct {
 	atLeastOneSchemaDeleted bool
 	updatedSchemas          []sradmin.Schema
 	clipWriter              clipper.Writer
+	navigator               tabs.SrTabNavigator
 }
+
+// allSchemasDeletedMsg signals, after a short delay, that the last schema got deleted.
+type allSchemasDeletedMsg struct{}
 
 type SchemaCopiedMsg struct {
 }
@@ -108,7 +112,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 					return nil
 				}
 			}
-			return ui.PublishMsg(nav.LoadSubjectsPageMsg{Refresh: m.atLeastOneSchemaDeleted})
+			return m.navigator.ToSubjectsPage(m.atLeastOneSchemaDeleted)
 		case "enter":
 			if m.cmdbar.active == nil {
 				version, _ := strconv.Atoi(m.versionChips.SelectedLabel())
@@ -136,6 +140,8 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			return m.schemas[i].Version < m.schemas[j].Version
 		})
 		m.activeSchema = m.latestSchema()
+	case allSchemasDeletedMsg:
+		return m.navigator.ToSubjectsPage(true)
 	case sradmin.SchemaListingStarted:
 		cmds = append(cmds, msg.AwaitCompletion)
 	case sradmin.SchemaDeletionStartedMsg:
@@ -151,7 +157,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		if len(m.updatedSchemas) == 0 {
 			cmds = append(cmds, func() tea.Msg {
 				time.Sleep(5 * time.Second)
-				return nav.LoadSubjectsPageMsg{Refresh: true}
+				return allSchemasDeletedMsg{}
 			})
 		}
 	}
@@ -224,12 +230,14 @@ func New(
 	schemaDeleter sradmin.SchemaDeleter,
 	subject sradmin.Subject,
 	clipWriter clipper.Writer,
+	navigator tabs.SrTabNavigator,
 ) (*Model, tea.Cmd) {
 
 	model := &Model{
 		subject:      subject,
 		schemaLister: schemaLister,
 		clipWriter:   clipWriter,
+		navigator:    navigator,
 	}
 
 	deleteFunc := func(version int) tea.Cmd {

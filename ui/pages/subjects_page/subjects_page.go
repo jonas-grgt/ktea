@@ -12,7 +12,7 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"reflect"
 	"sort"
 	"strconv"
@@ -51,6 +51,7 @@ type Model struct {
 	sort            cmdbar.SortLabel
 	globalCompLevel string
 	goToTop         bool
+	navigator       tabs.SrTabNavigator
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -123,18 +124,14 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			return m.lister.ListSubjects
 		case "ctrl+n":
 			if m.state != loading && m.state != deleting {
-				return ui.PublishMsg(nav.LoadCreateSubjectPageMsg{})
+				return m.navigator.ToCreateSubjectPage()
 			}
 		case "enter":
 			// only accept enter when the table is focussed
 			if !m.tcb.IsFocussed() {
 				// ignore enter when there are no schemas loaded
 				if m.state == subjectsLoaded && len(m.subjects) > 0 {
-					return ui.PublishMsg(
-						nav.LoadSchemaDetailsPageMsg{
-							Subject: *m.SelectedSubject(),
-						},
-					)
+					return m.navigator.ToSchemaDetailsPage(*m.SelectedSubject())
 				}
 			}
 		}
@@ -330,12 +327,13 @@ func (m *Model) Title() string {
 	return "Subjects"
 }
 
-func New(srClient sradmin.Client) (*Model, tea.Cmd) {
+func New(srClient sradmin.Client, navigator tabs.SrTabNavigator) (*Model, tea.Cmd) {
 	model := Model{
 		table:         ktable.NewDefaultTable(),
 		tableFocussed: true,
 		lister:        srClient,
 		state:         initialized,
+		navigator:     navigator,
 	}
 
 	deleteMsgFn := func(subject sradmin.Subject) string {

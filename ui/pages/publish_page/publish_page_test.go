@@ -8,7 +8,7 @@ import (
 	"ktea/kontext"
 	"ktea/tests"
 	"ktea/ui/components/notifier"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"testing"
 )
 
@@ -54,11 +54,11 @@ func TestPublish(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 1,
 			Replicas:       1,
-		})
+		}, tabs.NewMockTopicsTabNavigator())
 
 		cmd := m.Update(tests.Key(tea.KeyEsc))
 
-		assert.IsType(t, nav.LoadTopicsPageMsg{}, cmd())
+		assert.Equal(t, tabs.ToTopicsPageCalledMsg{Refresh: false}, cmd())
 
 	})
 
@@ -71,7 +71,7 @@ func TestPublish(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		})
+		}, tabs.NewMockTopicsTabNavigator())
 
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
@@ -116,7 +116,7 @@ func TestPublish(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		})
+		}, tabs.NewMockTopicsTabNavigator())
 
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
@@ -169,7 +169,7 @@ func TestPublish(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		})
+		}, tabs.NewMockTopicsTabNavigator())
 
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
@@ -219,7 +219,7 @@ func TestPublish(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		})
+		}, tabs.NewMockTopicsTabNavigator())
 
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
@@ -261,7 +261,7 @@ func TestPublish(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		})
+		}, tabs.NewMockTopicsTabNavigator())
 
 		cmds := m.Update(kadmin.PublicationSucceeded{})
 		msgs := executeBatchCmd(cmds)
@@ -290,7 +290,7 @@ func TestPublish(t *testing.T) {
 			Name:           "topic1",
 			PartitionCount: 10,
 			Replicas:       1,
-		})
+		}, tabs.NewMockTopicsTabNavigator())
 
 		m.View(&kontext.ProgramKtx{
 			WindowWidth:  100,
@@ -334,7 +334,7 @@ func TestPublish(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 1,
 				Replicas:       1,
-			})
+			}, tabs.NewMockTopicsTabNavigator())
 
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
@@ -360,7 +360,7 @@ func TestPublish(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 1,
 				Replicas:       1,
-			})
+			}, tabs.NewMockTopicsTabNavigator())
 
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
@@ -386,7 +386,7 @@ func TestPublish(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 1,
 				Replicas:       1,
-			})
+			}, tabs.NewMockTopicsTabNavigator())
 
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,
@@ -414,7 +414,7 @@ func TestPublish(t *testing.T) {
 				Name:           "topic1",
 				PartitionCount: 5,
 				Replicas:       1,
-			})
+			}, tabs.NewMockTopicsTabNavigator())
 
 			m.View(&kontext.ProgramKtx{
 				WindowWidth:  100,

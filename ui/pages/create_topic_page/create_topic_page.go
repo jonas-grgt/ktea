@@ -10,7 +10,7 @@ import (
 	"ktea/ui/components/cmdbar"
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"regexp"
 	"strconv"
 	"strings"
@@ -37,6 +37,7 @@ type Model struct {
 	formValues             topicFormValues
 	formState              formState
 	createdAtLeastOneTopic bool
+	navigator              tabs.TopicsTabNavigator
 }
 
 type config struct {
@@ -86,7 +87,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		return tea.Batch(cmds...)
 	case tea.KeyPressMsg:
 		if msg.String() == "esc" && m.formState != loading {
-			return ui.PublishMsg(nav.LoadTopicsPageMsg{Refresh: m.createdAtLeastOneTopic})
+			return m.navigator.ToTopicsPage(m.createdAtLeastOneTopic)
 		} else if msg.String() == "ctrl+r" {
 			m.formValues.name = ""
 			m.formValues.cleanupPolicy = ""
@@ -281,9 +282,10 @@ func (m *Model) initForm(fs formState) {
 	m.form = form
 }
 
-func New(tc kadmin.TopicCreator) *Model {
+func New(tc kadmin.TopicCreator, navigator tabs.TopicsTabNavigator) *Model {
 	var t = Model{}
 	t.topicCreator = tc
+	t.navigator = navigator
 	t.shortcuts = []statusbar.Shortcut{
 		{"Confirm", "enter"},
 		{"Next Field", "tab"},

@@ -10,16 +10,13 @@ import (
 	"ktea/ui/pages"
 	"ktea/ui/pages/cgroups_page"
 	"ktea/ui/pages/cgroups_topics_page"
-	"ktea/ui/pages/nav"
 )
 
 type Model struct {
-	active        pages.Page
-	statusbar     *statusbar.Model
-	offsetLister  kadmin.OffsetLister
-	cgroupLister  kadmin.CGroupLister
-	cgroupDeleter kadmin.CGroupDeleter
-	cgroupsPage   *cgroups_page.Model
+	active       pages.Page
+	statusbar    *statusbar.Model
+	offsetLister kadmin.OffsetLister
+	cgroupsPage  *cgroups_page.Model
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -32,20 +29,7 @@ func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
 
 func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
-	switch msg := msg.(type) {
-	case nav.LoadCGroupTopicsPageMsg:
-		cgroupsTopicsPage, cmd := cgroups_topics_page.New(m.offsetLister, msg.GroupName)
-		cmds = append(cmds, cmd)
-		m.active = cgroupsTopicsPage
-		return tea.Batch(cmds...)
-	case nav.LoadCGroupsPageMsg:
-		var cmd tea.Cmd
-		if m.cgroupsPage == nil {
-			m.cgroupsPage, cmd = cgroups_page.New(m.cgroupLister, m.cgroupDeleter)
-		}
-		m.active = m.cgroupsPage
-		cmds = append(cmds, cmd)
-	case kadmin.ConsumerGroupListingStartedMsg:
+	if msg, ok := msg.(kadmin.ConsumerGroupListingStartedMsg); ok {
 		cmds = append(cmds, msg.AwaitCompletion)
 	}
 
@@ -58,18 +42,27 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+func (m *Model) ToCGroupsPage() tea.Cmd {
+	m.active = m.cgroupsPage
+	return nil
+}
+
+func (m *Model) ToCGroupTopicsPage(group string) tea.Cmd {
+	page, cmd := cgroups_topics_page.New(m.offsetLister, group, m)
+	m.active = page
+	return cmd
+}
+
 func New(
 	cgroupLister kadmin.CGroupLister,
 	cgroupDeleter kadmin.CGroupDeleter,
 	consumerGroupOffsetLister kadmin.OffsetLister,
 	statusbar *statusbar.Model,
 ) (*Model, tea.Cmd) {
-	cgroupsPage, cmd := cgroups_page.New(cgroupLister, cgroupDeleter)
-
 	m := &Model{}
+	cgroupsPage, cmd := cgroups_page.New(cgroupLister, cgroupDeleter, m)
+
 	m.offsetLister = consumerGroupOffsetLister
-	m.cgroupLister = cgroupLister
-	m.cgroupDeleter = cgroupDeleter
 	m.cgroupsPage = cgroupsPage
 	m.active = cgroupsPage
 	m.statusbar = statusbar

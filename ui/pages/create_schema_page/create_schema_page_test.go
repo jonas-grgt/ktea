@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/sradmin"
 	"ktea/tests"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"testing"
 )
 
@@ -18,7 +18,7 @@ func (m *MockSubjectCreator) CreateSchema(details sradmin.SubjectCreationDetails
 
 func TestCreateSubjectsPage(t *testing.T) {
 	t.Run("Create schema", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext, tabs.NewMockSrTabNavigator())
 		// initialize form
 		subjectPage.View(tests.Kontext, tests.Renderer)
 
@@ -59,7 +59,7 @@ func TestCreateSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Unable to go back when schema is being created", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext, tabs.NewMockSrTabNavigator())
 		// initialize form
 		subjectPage.View(tests.Kontext, tests.Renderer)
 
@@ -77,18 +77,18 @@ func TestCreateSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Esc goes back not refreshing when no schemas were created", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext, tabs.NewMockSrTabNavigator())
 		// initialize form
 		subjectPage.View(tests.Kontext, tests.Renderer)
 
 		cmds := subjectPage.Update(tests.Key(tea.KeyEsc))
 		msgs := tests.ExecuteBatchCmd(cmds)
 
-		assert.Contains(t, msgs, nav.LoadSubjectsPageMsg{Refresh: false})
+		assert.Contains(t, msgs, tabs.ToSubjectsPageCalledMsg{Refresh: false})
 	})
 
 	t.Run("Esc goes back refreshing when a schema has been created", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext, tabs.NewMockSrTabNavigator())
 		// initialize form
 		subjectPage.View(tests.Kontext, tests.Renderer)
 
@@ -97,11 +97,11 @@ func TestCreateSubjectsPage(t *testing.T) {
 		cmds := subjectPage.Update(tests.Key(tea.KeyEsc))
 		msgs := tests.ExecuteBatchCmd(cmds)
 
-		assert.Contains(t, msgs, nav.LoadSubjectsPageMsg{Refresh: true})
+		assert.Contains(t, msgs, tabs.ToSubjectsPageCalledMsg{Refresh: true})
 	})
 
 	t.Run("Subject is mandatory", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext, tabs.NewMockSrTabNavigator())
 		// initialize form
 		subjectPage.View(tests.Kontext, tests.Renderer)
 
@@ -113,7 +113,7 @@ func TestCreateSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Schema is mandatory", func(t *testing.T) {
-		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext)
+		subjectPage, _ := New(&MockSubjectCreator{}, tests.Kontext, tabs.NewMockSrTabNavigator())
 		// initialize form
 		subjectPage.View(tests.Kontext, tests.Renderer)
 

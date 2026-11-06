@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"ktea/kadmin"
 	"ktea/tests"
+	"ktea/ui/tabs"
 	"strings"
 	"testing"
 )
@@ -28,7 +29,7 @@ func (m MockCGroupDeleter) DeleteCGroup(name string) tea.Msg {
 
 func TestCgroupsPage(t *testing.T) {
 	t.Run("Default sort by Consumer Group Asc", func(t *testing.T) {
-		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{})
+		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{}, tabs.NewMockCGroupsTabNavigator())
 
 		_ = page.Update(kadmin.ConsumerGroupsListedMsg{
 			ConsumerGroups: []*kadmin.ConsumerGroup{
@@ -61,7 +62,7 @@ func TestCgroupsPage(t *testing.T) {
 	})
 
 	t.Run("Toggle sort by Consumer Group Desc", func(t *testing.T) {
-		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{})
+		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{}, tabs.NewMockCGroupsTabNavigator())
 
 		_ = page.Update(kadmin.ConsumerGroupsListedMsg{
 			ConsumerGroups: []*kadmin.ConsumerGroup{
@@ -96,7 +97,7 @@ func TestCgroupsPage(t *testing.T) {
 	})
 
 	t.Run("Toggle sort by Members", func(t *testing.T) {
-		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{})
+		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{}, tabs.NewMockCGroupsTabNavigator())
 
 		_ = page.Update(kadmin.ConsumerGroupsListedMsg{
 			ConsumerGroups: []*kadmin.ConsumerGroup{
@@ -178,7 +179,7 @@ func TestCgroupsPage(t *testing.T) {
 	})
 
 	t.Run("Delete consumer group", func(t *testing.T) {
-		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{})
+		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{}, tabs.NewMockCGroupsTabNavigator())
 
 		_ = page.Update(kadmin.ConsumerGroupsListedMsg{
 			ConsumerGroups: []*kadmin.ConsumerGroup{
@@ -243,7 +244,7 @@ func TestCgroupsPage(t *testing.T) {
 	})
 
 	t.Run("When groups are loaded or refresh then the search form is reset", func(t *testing.T) {
-		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{})
+		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{}, tabs.NewMockCGroupsTabNavigator())
 
 		_ = page.Update(kadmin.ConsumerGroupsListedMsg{
 			ConsumerGroups: []*kadmin.ConsumerGroup{
@@ -290,7 +291,7 @@ func TestCgroupsPage(t *testing.T) {
 	})
 
 	t.Run("Searching resets selected row to top row", func(t *testing.T) {
-		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{})
+		page, _ := New(&MockCGroupLister{}, &MockCGroupDeleter{}, tabs.NewMockCGroupsTabNavigator())
 
 		_ = page.Update(kadmin.ConsumerGroupsListedMsg{
 			ConsumerGroups: []*kadmin.ConsumerGroup{

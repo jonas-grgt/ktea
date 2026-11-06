@@ -11,7 +11,7 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"reflect"
 	"slices"
 	"sort"
@@ -56,6 +56,7 @@ type Model struct {
 	cmdBar            *CGroupCmdbar[string]
 	offsets           []kadmin.TopicPartitionOffset
 	state             state
+	navigator         tabs.CGroupsTabNavigator
 }
 
 func (m *Model) View(ktx *kontext.ProgramKtx, renderer *ui.Renderer) string {
@@ -152,7 +153,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		case "esc":
 			// only accept when the table is focussed
 			if !m.cmdBar.IsFocussed() {
-				return ui.PublishMsg(nav.LoadCGroupsPageMsg{})
+				return m.navigator.ToCGroupsPage()
 			}
 		case "f5":
 			m.state = stateOffsetsLoading
@@ -288,7 +289,7 @@ func (m *Model) Title() string {
 	return "Consumer Groups / " + m.groupName
 }
 
-func New(lister kadmin.OffsetLister, group string) (*Model, tea.Cmd) {
+func New(lister kadmin.OffsetLister, group string, navigator tabs.CGroupsTabNavigator) (*Model, tea.Cmd) {
 	tt := table.New(
 		table.WithFocused(true),
 		table.WithStyles(styles.Table.Styles),
@@ -333,6 +334,7 @@ func New(lister kadmin.OffsetLister, group string) (*Model, tea.Cmd) {
 		topicsTable:  tt,
 		offsetsTable: ot,
 		state:        stateOffsetsLoading,
+		navigator:    navigator,
 	}
 	model.topicsBorder = border.New(
 		border.WithInnerPaddingTop(),

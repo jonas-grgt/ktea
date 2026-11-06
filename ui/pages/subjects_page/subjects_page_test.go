@@ -8,7 +8,7 @@ import (
 	"ktea/sradmin"
 	"ktea/tests"
 	"ktea/ui/components/statusbar"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"math/rand"
 	"strings"
 	"testing"
@@ -19,7 +19,7 @@ func TestSubjectsPage(t *testing.T) {
 
 	t.Run("No subjects found", func(t *testing.T) {
 
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		subjectsPage.Update(sradmin.SubjectsListedMsg{Subjects: []sradmin.Subject{}})
 
@@ -37,7 +37,7 @@ func TestSubjectsPage(t *testing.T) {
 
 	t.Run("List subjects and number of versions", func(t *testing.T) {
 
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -65,7 +65,7 @@ func TestSubjectsPage(t *testing.T) {
 
 	t.Run("When subjects are loaded or refresh then the search form is reset", func(t *testing.T) {
 
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -92,7 +92,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Searching resets selected row to top row", func(t *testing.T) {
-		page, _ := New(sradmin.NewMock())
+		page, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -125,7 +125,7 @@ func TestSubjectsPage(t *testing.T) {
 
 	t.Run("Enter opens schema detail page", func(t *testing.T) {
 
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -145,7 +145,7 @@ func TestSubjectsPage(t *testing.T) {
 		subjectsPage.Update(tests.Key(tea.KeyDown))
 		cmd := subjectsPage.Update(tests.Key(tea.KeyEnter))
 
-		assert.Equal(t, nav.LoadSchemaDetailsPageMsg{
+		assert.Equal(t, tabs.ToSchemaDetailsPageCalledMsg{
 			Subject: sradmin.Subject{
 				Name:     "subject2",
 				Versions: []int{0, 1, 2},
@@ -154,7 +154,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Order subjects default by Subject Name Asc", func(t *testing.T) {
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -184,7 +184,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Sorting", func(t *testing.T) {
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		var (
 			subjects      []sradmin.Subject
@@ -318,7 +318,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Loading details page (enter) after searching from selective list", func(t *testing.T) {
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -344,7 +344,7 @@ func TestSubjectsPage(t *testing.T) {
 
 		msgs := tests.ExecuteBatchCmd(cmd)
 
-		assert.Contains(t, msgs, nav.LoadSchemaDetailsPageMsg{
+		assert.Contains(t, msgs, tabs.ToSchemaDetailsPageCalledMsg{
 			Subject: sradmin.Subject{
 				Name:          "subject10",
 				Versions:      []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
@@ -369,6 +369,7 @@ func TestSubjectsPage(t *testing.T) {
 					},
 				),
 			),
+			tabs.NewMockSrTabNavigator(),
 		)
 
 		var subjects []sradmin.Subject
@@ -476,7 +477,7 @@ func TestSubjectsPage(t *testing.T) {
 
 		t.Run("When deletion started show spinning indicator", func(t *testing.T) {
 
-			subjectsPage, _ := New(sradmin.NewMock())
+			subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 			addSubjects(subjectsPage)
 
@@ -488,7 +489,7 @@ func TestSubjectsPage(t *testing.T) {
 		})
 
 		t.Run("Disable delete when no subject selected", func(t *testing.T) {
-			emptyPage, _ := New(sradmin.NewMock())
+			emptyPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 			var subjects []sradmin.Subject
 			emptyPage.Update(sradmin.SubjectsListedMsg{Subjects: subjects})
@@ -514,7 +515,7 @@ func TestSubjectsPage(t *testing.T) {
 		})
 
 		t.Run("Remove delete subject from table", func(t *testing.T) {
-			subjectsPage, _ := New(sradmin.NewMock())
+			subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 			subjects := addSubjects(subjectsPage)
 
@@ -535,7 +536,7 @@ func TestSubjectsPage(t *testing.T) {
 				},
 			),
 		)
-		subjectsPage, _ := New(srAdminMock)
+		subjectsPage, _ := New(srAdminMock, tabs.NewMockSrTabNavigator())
 
 		var subjects []sradmin.Subject
 		var versions []int
@@ -614,7 +615,7 @@ func TestSubjectsPage(t *testing.T) {
 
 	t.Run("When listing started show spinning indicator", func(t *testing.T) {
 
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		addSubjects(subjectsPage)
 
@@ -626,7 +627,7 @@ func TestSubjectsPage(t *testing.T) {
 	})
 
 	t.Run("Shortcuts", func(t *testing.T) {
-		subjectsPage, _ := New(sradmin.NewMock())
+		subjectsPage, _ := New(sradmin.NewMock(), tabs.NewMockSrTabNavigator())
 
 		t.Run("when there are no subjects", func(t *testing.T) {
 			subjectsPage.subjects = nil

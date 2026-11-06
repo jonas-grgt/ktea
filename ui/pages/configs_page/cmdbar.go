@@ -11,7 +11,7 @@ import (
 	"ktea/styles"
 	"ktea/ui"
 	"ktea/ui/components/notifier"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 )
 
 type state int
@@ -36,6 +36,7 @@ type CmdBarModel struct {
 	topicConfigLister kadmin.TopicConfigLister
 	topic             string
 	updated           bool
+	navigator         tabs.TopicsTabNavigator
 }
 
 type SelectedTopicConfig struct {
@@ -77,7 +78,7 @@ func (m *CmdBarModel) Update(msg tea.Msg, stc SelectedTopicConfig) (tea.Msg, tea
 			if m.IsFocused() {
 				m.state = HIDDEN
 			} else {
-				return nil, ui.PublishMsg(nav.LoadTopicsPageMsg{})
+				return nil, m.navigator.ToTopicsPage(false)
 			}
 			return nil, nil
 		} else if msg.String() == "e" && isEditable(m) {
@@ -191,7 +192,7 @@ func newEditInput(v string) *huh.Input {
 	return searchInput
 }
 
-func NewCmdBar(cu kadmin.ConfigUpdater, tcl kadmin.TopicConfigLister, topic string) *CmdBarModel {
+func NewCmdBar(cu kadmin.ConfigUpdater, tcl kadmin.TopicConfigLister, topic string, navigator tabs.TopicsTabNavigator) *CmdBarModel {
 	return &CmdBarModel{
 		topic:             topic,
 		searchInput:       newSearchInput(),
@@ -199,5 +200,6 @@ func NewCmdBar(cu kadmin.ConfigUpdater, tcl kadmin.TopicConfigLister, topic stri
 		state:             HIDDEN,
 		configUpdater:     cu,
 		topicConfigLister: tcl,
+		navigator:         navigator,
 	}
 }

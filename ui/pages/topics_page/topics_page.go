@@ -12,7 +12,6 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
-	"ktea/ui/pages/nav"
 	"ktea/ui/tabs"
 	"reflect"
 	"slices"
@@ -97,18 +96,18 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+n":
-			return ui.PublishMsg(nav.LoadCreateTopicPageMsg{})
+			return m.navigator.ToCreateTopicPage()
 		case "ctrl+o":
 			topic := m.SelectedTopic()
 			if topic == nil {
 				return nil
 			}
-			return ui.PublishMsg(nav.LoadTopicConfigPageMsg{Topic: topic.Name})
+			return m.navigator.ToTopicConfigPage(topic.Name)
 		case "ctrl+p":
 			if m.SelectedTopic() == nil {
 				return nil
 			}
-			return ui.PublishMsg(nav.LoadPublishPageMsg{Topic: m.SelectedTopic()})
+			return m.navigator.ToPublishPage(m.SelectedTopic())
 		case "f5":
 			m.topics = nil
 			m.state = stateRefreshing
@@ -121,7 +120,16 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			if m.SelectedTopic() == nil {
 				return nil
 			}
-			return ui.PublishMsg(nav.LoadLiveConsumePageMsg{Topic: m.SelectedTopic()})
+			topic := m.SelectedTopic()
+			return m.navigator.ToConsumePage(tabs.ConsumePageDetails{
+				Topic: topic,
+				ReadDetails: kadmin.ReadDetails{
+					TopicName:       topic.Name,
+					PartitionToRead: topic.Partitions(),
+					StartPoint:      kadmin.Live,
+					Limit:           500,
+				},
+			})
 		case "ctrl+f":
 			// only accept enter when the table is focussed
 			if !m.tcb.IsFocussed() {

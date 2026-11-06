@@ -11,7 +11,6 @@ import (
 	"ktea/ui/pages/configs_page"
 	"ktea/ui/pages/consume_page"
 	"ktea/ui/pages/create_topic_page"
-	"ktea/ui/pages/nav"
 	"ktea/ui/pages/publish_page"
 	"ktea/ui/pages/record_details_page"
 	"ktea/ui/pages/topics_page"
@@ -49,70 +48,42 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 
 	log.Debug("Received Update", "msg", reflect.TypeOf(msg))
 
-	var cmds []tea.Cmd
-
-	switch msg := msg.(type) {
-
-	case kadmin.TopicsListedMsg:
+	if msg, ok := msg.(kadmin.TopicsListedMsg); ok {
 		// Make sure TopicsListedMsg is explicitly captured and
-		// properly propagated in the case when cgroupsPage
-		//isn't focused anymore.
+		// properly propagated in the case when the topics page
+		// isn't focused anymore.
 		return m.topicsPage.Update(msg)
-
-	case nav.LoadTopicsPageMsg:
-		if msg.Refresh {
-			cmds = append(cmds, m.topicsPage.Refresh())
-		}
-		m.active = m.topicsPage
-
-	case nav.LoadTopicConfigPageMsg:
-		page, cmd := configs_page.New(m.ka, m.ka, msg.Topic)
-		cmds = append(cmds, cmd)
-		m.active = page
-
-	case nav.LoadCreateTopicPageMsg:
-		log.Debug("Loading create topic page")
-		m.active = create_topic_page.New(m.ka)
-
-	case nav.LoadPublishPageMsg:
-		m.active = publish_page.New(m.ka, msg.Topic)
-
-	case nav.LoadCachedConsumptionPageMsg:
-		m.active = m.consumptionPage
-
-	case nav.LoadLiveConsumePageMsg:
-		var cmd tea.Cmd
-		readDetails := kadmin.ReadDetails{
-			TopicName:       msg.Topic.Name,
-			PartitionToRead: msg.Topic.Partitions(),
-			StartPoint:      kadmin.Live,
-			Limit:           500,
-			Filter:          nil,
-		}
-		m.active, cmd = consume_page.New(
-			m.ka,
-			readDetails,
-			msg.Topic,
-			false,
-			m,
-		)
-		m.consumptionPage = m.active
-		cmds = append(cmds, cmd)
-
 	}
 
-	if cmd := m.active.Update(msg); cmd != nil {
-		cmds = append(cmds, cmd)
-	}
+	cmd := m.active.Update(msg)
 
 	// always recreate the statusbar in case the active page might have changed
 	m.statusbar.SetProvider(m.active)
 
-	return tea.Batch(cmds...)
+	return cmd
 }
 
-func (m *Model) ToTopicsPage() tea.Cmd {
+func (m *Model) ToTopicsPage(refresh bool) tea.Cmd {
 	m.active = m.topicsPage
+	if refresh {
+		return m.topicsPage.Refresh()
+	}
+	return nil
+}
+
+func (m *Model) ToCreateTopicPage() tea.Cmd {
+	m.active = create_topic_page.New(m.ka, m)
+	return nil
+}
+
+func (m *Model) ToTopicConfigPage(topic string) tea.Cmd {
+	page, cmd := configs_page.New(m.ka, m.ka, topic, m)
+	m.active = page
+	return cmd
+}
+
+func (m *Model) ToPublishPage(topic *kadmin.ListedTopic) tea.Cmd {
+	m.active = publish_page.New(m.ka, topic, m)
 	return nil
 }
 
@@ -129,8 +100,14 @@ func (m *Model) ToConsumePage(msg tabs.ConsumePageDetails) tea.Cmd {
 	return cmd
 }
 
-func (m *Model) ToRecordDetailsPage(msg tabs.LoadRecordDetailPageMsg) tea.Cmd {
-	m.active = record_details_page.New(msg.Record, msg.TopicName, msg.Records, msg.Index, clipper.New(), m.ktx)
+func (m *Model) ToCachedConsumptionPage() tea.Cmd {
+	m.active = m.consumptionPage
+	// lets the page resume its loading indicator while it was not receiving msgs
+	return ui.PublishMsg(ui.RegainedFocusMsg{})
+}
+
+func (m *Model) ToRecordDetailsPage(d tabs.RecordDetailsPageDetails) tea.Cmd {
+	m.active = record_details_page.New(d.Record, d.TopicName, d.Records, d.Index, clipper.New(), m.ktx, m)
 	m.recordDetailsPage = m.active
 	return nil
 }

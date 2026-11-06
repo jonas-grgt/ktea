@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"ktea/kadmin"
 	"ktea/tests"
+	"ktea/ui/tabs"
 
 	"strings"
 	"testing"
@@ -15,7 +16,7 @@ import (
 func TestCgroupPartsOffsetsPage(t *testing.T) {
 
 	t.Run("Show empty page and loading indicator when listing started", func(t *testing.T) {
-		model, _ := New(kadmin.NewMockKadmin(), "test-group")
+		model, _ := New(kadmin.NewMockKadmin(), "test-group", tabs.NewMockCGroupsTabNavigator())
 		model.Update(kadmin.OffsetListingStartedMsg{})
 		view := ansi.Strip(model.View(tests.NewKontext(), tests.Renderer))
 
@@ -36,7 +37,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 	})
 
 	t.Run("List consumer groups", func(t *testing.T) {
-		model, _ := New(kadmin.NewMockKadmin(), "test-group")
+		model, _ := New(kadmin.NewMockKadmin(), "test-group", tabs.NewMockCGroupsTabNavigator())
 
 		model.Update(kadmin.OffsetListedMsg{
 			Offsets: []kadmin.TopicPartitionOffset{
@@ -93,7 +94,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 	})
 
 	t.Run("List consumer groups when hwm and lag values are not available", func(t *testing.T) {
-		model, _ := New(kadmin.NewMockKadmin(), "test-group")
+		model, _ := New(kadmin.NewMockKadmin(), "test-group", tabs.NewMockCGroupsTabNavigator())
 
 		model.Update(kadmin.OffsetListedMsg{
 			Offsets: []kadmin.TopicPartitionOffset{
@@ -125,7 +126,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 	})
 
 	t.Run("Searching", func(t *testing.T) {
-		model, _ := New(kadmin.NewMockKadmin(), "test-group")
+		model, _ := New(kadmin.NewMockKadmin(), "test-group", tabs.NewMockCGroupsTabNavigator())
 
 		var topicPartOffsets []kadmin.TopicPartitionOffset
 		for i := 0; i < 25; i++ {
@@ -162,7 +163,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 	})
 
 	t.Run("Order partitions ascending", func(t *testing.T) {
-		model, _ := New(kadmin.NewMockKadmin(), "test-group")
+		model, _ := New(kadmin.NewMockKadmin(), "test-group", tabs.NewMockCGroupsTabNavigator())
 
 		var topicPartOffsets []kadmin.TopicPartitionOffset
 		for i := 0; i < 25; i++ {
@@ -205,7 +206,7 @@ func TestCgroupPartsOffsetsPage(t *testing.T) {
 	})
 
 	t.Run("Render empty page when no offsets found", func(t *testing.T) {
-		model, _ := New(kadmin.NewMockKadmin(), "test-group")
+		model, _ := New(kadmin.NewMockKadmin(), "test-group", tabs.NewMockCGroupsTabNavigator())
 
 		model.Update(kadmin.OffsetListedMsg{
 			Offsets: nil,

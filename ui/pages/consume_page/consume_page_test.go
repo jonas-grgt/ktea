@@ -617,7 +617,7 @@ func TestConsumptionPage(t *testing.T) {
 		msgs := tests.ExecuteBatchCmd(cmd)
 		assert.Len(t, msgs, 1)
 		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msgs[0])
-		msg := msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg
+		msg := msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Details
 		assert.Equal(t, "key-9", msg.Record.Key)
 		assert.Equal(t, "topic1", msg.TopicName)
 		assert.Len(t, msg.Records, 10)
@@ -634,7 +634,7 @@ func TestConsumptionPage(t *testing.T) {
 		msgs = tests.ExecuteBatchCmd(cmd)
 		assert.Len(t, msgs, 1)
 		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msgs[0])
-		msg = msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Msg
+		msg = msgs[0].(tabs.ToRecordDetailsPageCalledMsg).Details
 		assert.Equal(t, "key-9", msg.Record.Key)
 		assert.Equal(t, "topic1", msg.TopicName)
 		assert.Len(t, msg.Records, 10)
@@ -736,7 +736,7 @@ func TestConsumptionPage(t *testing.T) {
 
 		msg := cmd()
 		assert.IsType(t, tabs.ToRecordDetailsPageCalledMsg{}, msg)
-		record := (msg.(tabs.ToRecordDetailsPageCalledMsg)).Msg.Record
+		record := (msg.(tabs.ToRecordDetailsPageCalledMsg)).Details.Record
 		assert.EqualValues(t, 0, record.Partition)
 		assert.EqualValues(t, 6, record.Offset)
 

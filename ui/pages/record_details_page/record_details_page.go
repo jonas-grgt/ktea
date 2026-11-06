@@ -13,7 +13,7 @@ import (
 	"ktea/ui/components/notifier"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
-	"ktea/ui/pages/nav"
+	"ktea/ui/tabs"
 	"sort"
 	"strconv"
 	"strings"
@@ -55,6 +55,7 @@ type Model struct {
 	config         *config.Config
 	schemaVp       *viewport.Model
 	border         *border.Model
+	navigator      tabs.TopicsTabNavigator
 }
 
 type PayloadCopiedMsg struct {
@@ -109,7 +110,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
-			return ui.PublishMsg(nav.LoadCachedConsumptionPageMsg{})
+			return m.navigator.ToCachedConsumptionPage()
 		case "ctrl+n":
 			cmds = m.handleNavigateToNext(cmds)
 		case "ctrl+p":
@@ -425,6 +426,7 @@ func New(
 	recordIndex int,
 	clipWriter clipper.Writer,
 	ktx *kontext.ProgramKtx,
+	navigator tabs.TopicsTabNavigator,
 ) *Model {
 	headersTable := ktable.NewDefaultTable()
 
@@ -502,5 +504,6 @@ func New(
 		config:         ktx.Config(),
 		state:          recordView,
 		border:         b,
+		navigator:      navigator,
 	}
 }

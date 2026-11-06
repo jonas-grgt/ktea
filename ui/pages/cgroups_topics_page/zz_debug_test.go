@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"ktea/kadmin"
 	"ktea/tests"
+	"ktea/ui/tabs"
 	"testing"
 
 	"github.com/charmbracelet/x/ansi"
 )
 
 func TestZZDebug(t *testing.T) {
-	model, _ := New(kadmin.NewMockKadmin(), "test-group")
+	model, _ := New(kadmin.NewMockKadmin(), "test-group", tabs.NewMockCGroupsTabNavigator())
 	var o []kadmin.TopicPartitionOffset
 	for i := 0; i < 3; i++ {
 		o = append(o, kadmin.TopicPartitionOffset{Topic: "topic-1", Partition: int32(i), Offset: 10, HighWaterMark: 10})

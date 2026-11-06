@@ -7,6 +7,7 @@ import (
 	"ktea/kadmin"
 	"ktea/kontext"
 	"ktea/tests"
+	"ktea/ui/tabs"
 	"strings"
 	"testing"
 )
@@ -33,7 +34,7 @@ func (m *MockKAdmin) ListConfigs(topic string) tea.Msg {
 func TestConfigsPage(t *testing.T) {
 	t.Run("On Config Listing Started show loading message", func(t *testing.T) {
 		// given
-		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1")
+		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1", tabs.NewMockTopicsTabNavigator())
 
 		// when
 		section.Update(kadmin.TopicConfigListingStartedMsg{})
@@ -48,7 +49,7 @@ func TestConfigsPage(t *testing.T) {
 
 	t.Run("Keep success message after update when refresh is triggered", func(t *testing.T) {
 		// given
-		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1")
+		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1", tabs.NewMockTopicsTabNavigator())
 
 		// when
 		section.Update(kadmin.TopicConfigUpdatedMsg{})
@@ -67,7 +68,7 @@ func TestConfigsPage(t *testing.T) {
 
 	t.Run("Show error msg upon update failure", func(t *testing.T) {
 		// given
-		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1")
+		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1", tabs.NewMockTopicsTabNavigator())
 
 		// when
 		section.Update(kadmin.UpdateTopicConfigErrorMsg{
@@ -84,7 +85,7 @@ func TestConfigsPage(t *testing.T) {
 
 	t.Run("When loading ignore going back (esc)", func(t *testing.T) {
 		// given
-		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1")
+		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic1", tabs.NewMockTopicsTabNavigator())
 		section.Update(kadmin.TopicConfigListingStartedMsg{})
 
 		// when
@@ -120,7 +121,7 @@ func TestConfigsPage(t *testing.T) {
 
 func TestConfigsPage_Table(t *testing.T) {
 	t.Run("Order properties by name desc", func(t *testing.T) {
-		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic")
+		section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic", tabs.NewMockTopicsTabNavigator())
 
 		section.Update(kadmin.TopicConfigsListedMsg{
 			Configs: map[string]string{
@@ -249,7 +250,7 @@ func TestConfigsPage_Editing(t *testing.T) {
 }
 
 func newSection() *Model {
-	section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic")
+	section, _ := New(&MockKAdmin{}, &MockKAdmin{}, "topic", tabs.NewMockTopicsTabNavigator())
 
 	section.Update(kadmin.TopicConfigsListedMsg{
 		Configs: map[string]string{

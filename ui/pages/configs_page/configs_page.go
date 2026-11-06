@@ -9,6 +9,7 @@ import (
 	"ktea/ui/components/border"
 	"ktea/ui/components/statusbar"
 	ktable "ktea/ui/components/table"
+	"ktea/ui/tabs"
 	"sort"
 	"strings"
 
@@ -125,9 +126,9 @@ func (m *Model) Title() string {
 	return fmt.Sprintf("Topics / %s / Configuration", m.topic)
 }
 
-func New(configUpdater kadmin.ConfigUpdater, topicConfigLister kadmin.TopicConfigLister, topic string) (*Model, tea.Cmd) {
+func New(configUpdater kadmin.ConfigUpdater, topicConfigLister kadmin.TopicConfigLister, topic string, navigator tabs.TopicsTabNavigator) (*Model, tea.Cmd) {
 	m := &Model{}
-	m.cmdBar = NewCmdBar(configUpdater, topicConfigLister, topic)
+	m.cmdBar = NewCmdBar(configUpdater, topicConfigLister, topic, navigator)
 	t := table.New(
 		table.WithStyles(styles.Table.Styles),
 	)
