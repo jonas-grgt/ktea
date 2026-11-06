@@ -424,10 +424,10 @@ func NewModel(
 
 func main() {
 	var (
-		debugParam      bool
+		debugParam      debugFlag
 		plainFontsParam bool
 	)
-	flag.BoolVar(&debugParam, "debug", false, "enable debug")
+	flag.Var(&debugParam, "debug", "enable debug logging: --debug writes ./debug.log, --debug=PATH writes to PATH\n(a directory gets PATH/debug.log); --debug PATH with a space is not supported")
 	flag.BoolVar(&plainFontsParam, "plain-fonts", false, "disable NerdFonts (if you see weird icons)")
 	flag.Parse()
 
@@ -455,20 +455,22 @@ func main() {
 	}
 	p := tea.NewProgram(model)
 
-	if debugParam {
-		var fileErr error
-		debugFile, fileErr := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if fileErr == nil {
-			log.SetOutput(debugFile)
-			log.SetTimeFormat(time.Kitchen)
-			log.SetReportCaller(true)
-			log.SetLevel(log.DebugLevel)
-			log.Debug("Logging to debug.log")
-			log.Info("started")
-			// Kafka client logs: connections, authentication, broker errors
-			sarama.Logger = log.Default().WithPrefix("sarama").
-				StandardLog(log.StandardLogOptions{ForceLevel: log.DebugLevel})
+	if debugParam.enabled {
+		logPath := resolveDebugLogPath(debugParam.path)
+		debugFile, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "ktea: cannot open debug log %s: %v\n", logPath, err)
+			os.Exit(1)
 		}
+		log.SetOutput(debugFile)
+		log.SetTimeFormat(time.Kitchen)
+		log.SetReportCaller(true)
+		log.SetLevel(log.DebugLevel)
+		log.Debug("Logging to " + logPath)
+		log.Info("started")
+		// Kafka client logs: connections, authentication, broker errors
+		sarama.Logger = log.Default().WithPrefix("sarama").
+			StandardLog(log.StandardLogOptions{ForceLevel: log.DebugLevel})
 	} else {
 		log.SetOutput(os.Stderr)
 		log.SetLevel(log.FatalLevel)
