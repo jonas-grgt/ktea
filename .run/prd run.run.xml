@@ -4,8 +4,8 @@
     <working_directory value="$PROJECT_DIR$" />
     <go_parameters value="-tags prd" />
     <parameters value="--debug" />
-    <kind value="FILE" />
-    <package value="ktea" />
+    <kind value="PACKAGE" />
+    <package value="ktea/cmd/ktea" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/ktea/main.go" />
     <pty_enabled value="true" />
