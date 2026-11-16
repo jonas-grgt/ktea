@@ -1,6 +1,6 @@
 module ktea
 
-go 1.26.0
+go 1.26.7
 
 replace github.com/riferrei/srclient v0.7.1 => github.com/jonas-grgt/srclient v0.0.0-20250817105441-619805bcbd5b
 
@@ -42,7 +42,7 @@ require (
 	charm.land/bubbles/v2 v2.2.1
 	charm.land/bubbletea/v2 v2.1.1
 	charm.land/huh/v2 v2.0.3
-	charm.land/lipgloss/v2 v2.0.6
+	charm.land/lipgloss/v2 v2.1.0
 	charm.land/log/v2 v2.0.1
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
